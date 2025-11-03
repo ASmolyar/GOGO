@@ -1,0 +1,68 @@
+{
+  "type": "MissionSection",
+  "visible": true,
+  "backgroundColors": ["#121212", "#0a0a0a"],
+  "backgroundImage": null,
+  "overlay": { "color": null, "opacity": 0 },
+  "textAlign": "center",
+  "layoutVariant": "ticket",
+
+  "title": "Our Mission",
+  "badge": {
+    "label": "Since 2008",
+    "icon": "music",
+    "variant": "pill"
+  },
+
+  "statement": {
+    "title": "MISSION STATEMENT — ADMIT ALL",
+    "text": "Our mission is to empower youth through music, art and mentorship. Guitars Over Guns offers students from our most vulnerable communities a combination of arts education and mentorship with paid, professional musician mentors to help them overcome hardship, find their voice and reach their potential as tomorrow's leaders. Since 2008, we have served nearly 12,000 students.",
+    "serial": "SN-GOGO-2025",
+    "meta": "ISSUED 2025 • CHOOSE YOUR SOUND"
+  },
+
+  "belts": {
+    "topImages": [],
+    "bottomImages": []
+  },
+
+  "statsTitle": "At a Glance",
+  "stats": [
+    { "id": "students", "number": 1622, "label": "Students", "color": "#22C55E", "href": null, "cta": null },
+    { "id": "mentors", "number": 105, "label": "Paid Mentors", "color": "#3B82F6", "href": null, "cta": null },
+    { "id": "sites", "number": 59, "label": "School & Community Sites", "color": "#8B5CF6", "href": null, "cta": null },
+    { "id": "disciplines", "number": 12, "label": "Artistic Disciplines", "color": "#FDE047", "href": null, "cta": { "action": "openModal", "modalId": "disciplines" } }
+  ],
+
+  "modals": [
+    {
+      "id": "disciplines",
+      "title": "Artistic Disciplines",
+      "visible": false,
+      "items": [
+        { "name": "Music Production", "icon": "GraphicEq" },
+        { "name": "Guitar", "icon": "MusicNote" },
+        { "name": "Drums", "icon": "Audiotrack" },
+        { "name": "Piano", "icon": "Piano" },
+        { "name": "Vocals", "icon": "Mic" },
+        { "name": "Bass", "icon": "QueueMusic" },
+        { "name": "DJing", "icon": "GraphicEq" },
+        { "name": "Songwriting", "icon": "LibraryMusic" },
+        { "name": "Dance", "icon": "DirectionsRun" },
+        { "name": "Visual Art", "icon": "Brush" },
+        { "name": "Digital Art", "icon": "Computer" },
+        { "name": "Spoken Word", "icon": "RecordVoiceOver" },
+        { "name": "Theater", "icon": "TheaterComedy" },
+        { "name": "Sound Engineering", "icon": "Equalizer" },
+        { "name": "Brass Instruments", "icon": "MusicNote" },
+        { "name": "Woodwind Instruments", "icon": "MusicNote" },
+        { "name": "Strings", "icon": "MusicNote" }
+      ]
+    }
+  ],
+
+  "cta": null,
+  "ariaLabel": "Mission section"
+}
+
+

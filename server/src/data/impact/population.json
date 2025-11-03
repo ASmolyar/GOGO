@@ -1,0 +1,67 @@
+{
+  "type": "PopulationSection",
+  "visible": true,
+  "backgroundColors": ["#171717", "#0f0f0f"],
+  "backgroundImage": null,
+  "overlay": { "color": null, "opacity": 0 },
+  "textAlign": "center",
+  "layoutVariant": "cards",
+
+  "header": {
+    "badge": "Who We Serve",
+    "name": "Our Population",
+    "title": "TALENT IS UNIVERSALLY DISTRIBUTED, BUT OPPORTUNITY IS NOT."
+  },
+
+  "intro": [
+    "That is why, since 2008, Guitars Over Guns has used the transformative power of music, mentorship, and the arts to unlock possibilities for young people who face systemic barriers to opportunity.",
+    "The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people's psychological and social well-being."
+  ],
+
+  "graphs": {
+    "demographicsPie": {
+      "slices": [
+        { "id": "Hispanic/Latinx", "label": "Hispanic/Latinx", "value": 46, "color": "#14B8A6" },
+        { "id": "Black/African American", "label": "Black/African American", "value": 44, "color": "#3B82F6" },
+        { "id": "Other", "label": "Other", "value": 10, "color": "#8B5CF6" }
+      ],
+      "caption": "Ages 8-18: 96% at or below the Federal Poverty Level"
+    },
+    "outcomes": [
+      {
+        "value": "94%",
+        "label": "of Guitars Over Guns students made or maintained academic gains in the school year 2023-2024."
+      },
+      {
+        "value": "95%",
+        "label": "of Guitars Over Guns students improved conduct in their classes over the course of the school year in 2023-2024."
+      }
+    ]
+  },
+
+  "skillsIntro": "Through Guitars Over Guns' programs, youth develop core skills and a support system that are crucial for personal and professional success:",
+  "skills": [
+    "Confidence and self-awareness",
+    "Emotional intelligence and creativity",
+    "Self-presentation and expression",
+    "Workforce readiness and life skills",
+    "Trusted mentors & positive role models",
+    "Supportive community of peers"
+  ],
+
+  "cgas": [
+    { "value": "100%", "label": "of GOGO students with initial problems improved 5+ points" },
+    { "value": "85%", "label": "Fall 2023: students increased or maintained C-GAS" },
+    { "value": "84%", "label": "Spring 2024: students increased or maintained C-GAS" }
+  ],
+
+  "gallery": {
+    "visible": true,
+    "images": []
+  },
+
+  "ariaLabel": "Population section"
+}
+
+
+

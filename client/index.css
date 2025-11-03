@@ -1,0 +1,19 @@
+/* Import custom fonts */
+@import './assets/fonts/fonts.css';
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  background-color: #1a1a1e;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+/* centers text */
+.Button {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

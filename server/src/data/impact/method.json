@@ -1,0 +1,30 @@
+{
+  "type": "MethodSection",
+  "visible": true,
+  "backgroundColors": ["#111111", "#0a0a0a"],
+  "backgroundImage": null,
+  "overlay": { "color": null, "opacity": 0 },
+  "textAlign": "left",
+  "layoutVariant": "grid-cards",
+
+  "header": {
+    "title": "Our Method",
+    "subtitle": "Our mentoring-centric approach is delivered by paid, professional musician mentors and helps alleviate primary challenges faced by youth in vulnerable communities by providing:"
+  },
+
+  "items": [
+    { "icon": "Handshake", "text": "Trusting relationships with caring adults" },
+    { "icon": "Education", "text": "High-quality, no-cost arts education during typically unsupervised hours" },
+    { "icon": "Lightbulb", "text": "Enriching, safe activities that foster self-esteem & creative self-expression" },
+    { "icon": "Cog", "text": "Skill Development" },
+    { "icon": "Mic", "text": "Performance" },
+    { "icon": "Heart", "text": "Trauma-informed mental health support" }
+  ],
+
+  "narrative": "Our successful model pairs youth with a caring adult mentor, the unparalleled power of music, and trauma-informed mental health support. Separately, these interventions increase academic and social-emotional development as well as future employability and economic potential. We uniquely combine these to maximize their collective effectiveness. Through weekly after-school music and art instruction, mentoring, trauma-informed care, and performance opportunities across Miami, Chicago, Los Angeles, and New York, GOGO is a platform for youth to learn, grow and unleash their leadership potential.",
+
+  "ariaLabel": "Our Method section"
+}
+
+
+

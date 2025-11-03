@@ -1,0 +1,43 @@
+{
+  "type": "CurriculumSection",
+  "visible": true,
+  "backgroundColors": ["#171717", "#121212"],
+  "backgroundImage": null,
+  "overlay": { "color": null, "opacity": 0 },
+  "textAlign": "center",
+  "layoutVariant": "cards-and-timeline",
+
+  "header": {
+    "title": "Curriculum & Program Model",
+    "subtitle": "Every session runs like a band practice: we soundcheck together, pick from a shared setlist, and co‑arrange the music. Students lead artistic choices—from song selection and structure to visuals and performance planning."
+  },
+
+  "cards": [
+    {
+      "title": "Opening Chorus",
+      "text": "We start with an opening circle and a shared song to tune the room—building community, voice, and confidence. Mentors and students shape the groove together.",
+      "badges": ["Soundcheck", "House Setlist", "Band‑Led"]
+    },
+    {
+      "title": "Weekly Setlist",
+      "text": "After‑school programs rehearse twice weekly; community sites run 3‑hour jam blocks. Instruments and backline are provided at no cost.",
+      "badges": ["2 rehearsals/week", "3h jam blocks", "Backline provided"]
+    },
+    {
+      "title": "Culminating Releases",
+      "text": "Learning crescendos with live shows, studio sessions, exhibitions, and drops— students take the lead on and off stage and celebrate growth.",
+      "badges": ["Live Shows", "Studio Sessions", "Release Parties"]
+    }
+  ],
+
+  "timeline": [
+    "Soundcheck & Opening Circle → Community agreements and vibe check",
+    "Rehearsal & Groove → Skill‑building through ensemble practice",
+    "Arrangement & Reflection → Student‑led decisions and goal‑setting"
+  ],
+
+  "ariaLabel": "Curriculum section"
+}
+
+
+

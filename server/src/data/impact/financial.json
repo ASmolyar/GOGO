@@ -1,0 +1,65 @@
+{
+  "type": "FinancialSection",
+  "visible": true,
+  "backgroundColors": ["#121212", "#1e1e1e", "#121212"],
+  "backgroundImage": null,
+  "overlay": { "color": null, "opacity": 0 },
+  "textAlign": "center",
+  "layoutVariant": "dashboard",
+
+  "header": {
+    "title": "Financial Overview",
+    "subtitle": "Annual budget growth since 2015 and how resources are raised and allocated"
+  },
+
+  "timeseries": {
+    "years": [
+      "2015",
+      "2016",
+      "2017-18",
+      "2018-19",
+      "2019-20",
+      "2020-21",
+      "2021-22",
+      "2022-23"
+    ],
+    "revenue": [200000, 300000, 800000, 1400000, 2300000, 2500000, 3200000, 3400000],
+    "expenses": [150000, 280000, 500000, 1100000, 1500000, 2400000, 2950000, 3100000],
+    "maxY": 4000000
+  },
+
+  "kpis": null,
+
+  "pies": {
+    "comesFrom": [
+      { "id": "Foundations & The Children's Trust", "label": "Foundations & The Children's Trust", "value": 41, "color": "#3B82F6" },
+      { "id": "Individuals", "label": "Individuals", "value": 19, "color": "#F59E0B" },
+      { "id": "Government Grants", "label": "Government Grants", "value": 18, "color": "#8B5CF6" },
+      { "id": "Program Services & Earned Revenue", "label": "Program Services & Earned Revenue", "value": 15, "color": "#14B8A6" },
+      { "id": "Special Events", "label": "Special Events", "value": 5, "color": "#EC4899" },
+      { "id": "Corporate Contributions", "label": "Corporate Contributions", "value": 2, "color": "#bdbdbd" }
+    ],
+    "goesTo": [
+      { "id": "Program Services", "label": "Program Services", "value": 75, "color": "#3B82F6" },
+      { "id": "Administrative & General", "label": "Administrative & General", "value": 12, "color": "#8B5CF6" },
+      { "id": "Fundraising", "label": "Fundraising", "value": 13, "color": "#F59E0B" }
+    ]
+  },
+
+  "programServices": {
+    "includes": [
+      "Mentors",
+      "Staff",
+      "Performances",
+      "Field Trips",
+      "Instruments & Supplies",
+      "Mentor Training",
+      "Other operating expenses"
+    ]
+  },
+
+  "ariaLabel": "Financial section"
+}
+
+
+

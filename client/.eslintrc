@@ -1,0 +1,23 @@
+{
+  "ignorePatterns": ["*.d.ts"],
+  "rules": {
+    "import/no-extraneous-dependencies": "off"
+  },
+  "overrides": [
+    {
+      "files": ["components/map/**/*.tsx"],
+      "rules": {
+        "import/no-extraneous-dependencies": "off",
+        "react/function-component-definition": "off",
+        "no-else-return": "off",
+        "consistent-return": "off",
+        "react/no-unescaped-entities": "off",
+        "react/no-array-index-key": "off",
+        "@typescript-eslint/no-shadow": "off",
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/consistent-type-assertions": "off"
+      }
+    }
+  ]
+}
