@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <meta http-equiv="refresh" content="0; url=./" />
+  </head>
+  <body>
+    <p>Redirecting…</p>
+    <script>
+      // As a fallback if meta refresh is blocked
+      (function () {
+        var base = (document.querySelector('base') || {}).href || '/';
+        var to = base;
+        if (location && location.origin) {
+          to = location.origin + base;
+        }
+        location.replace(to);
+      })();
+    </script>
+  </body>
+  </html>
+
+

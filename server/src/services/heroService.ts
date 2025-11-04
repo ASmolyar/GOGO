@@ -54,3 +54,21 @@ export async function findHeroBySlug(slug = 'impact-report'): Promise<HeroDocume
   return doc ?? null;
 }
 
+export async function upsertHeroBySlug(slug: string, data: HeroContent): Promise<HeroDocument> {
+  const db = await getDatabase();
+  const collection = db.collection<HeroDocument>(HERO_COLLECTION);
+
+  const now = new Date();
+  const update = {
+    $set: {
+      ...data,
+      slug,
+      updatedAt: now,
+    },
+  };
+
+  await collection.updateOne({ slug }, update, { upsert: true });
+  const saved = await collection.findOne({ slug });
+  return saved as HeroDocument;
+}
+

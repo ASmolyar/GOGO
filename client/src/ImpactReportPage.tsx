@@ -302,7 +302,7 @@ function ImpactReportPage() {
     document.body.style.backgroundColor = 'var(--spotify-black, #171717)';
     document.body.style.color = 'white';
     document.body.style.fontFamily =
-      'var(--font-body, "Century Gothic", "Arial", sans-serif)';
+      'var(--font-main, "Airwaves", "Century Gothic", "Arial", sans-serif)';
     document.body.style.overflowX = 'hidden';
     document.body.classList.add('has-spotify-header');
 
