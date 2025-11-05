@@ -22,7 +22,7 @@ import PreviewIcon from '@mui/icons-material/Preview';
 import SaveIcon from '@mui/icons-material/Save';
 import { v4 as uuidv4 } from 'uuid';
 import ScreenGrid from '../components/ScreenGrid.tsx';
-import COLORS from '../assets/colors.ts';
+import COLORS from '../../assets/colors';
 import styled from 'styled-components';
 
 // Styled components for dark theme

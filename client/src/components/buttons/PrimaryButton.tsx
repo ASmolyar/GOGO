@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, ButtonProps } from '@mui/material';
-import COLORS from '../../assets/colors';
+import COLORS from '../../../assets/colors';
 
 interface PrimaryButtonProps extends ButtonProps {
     children: React.ReactNode;
