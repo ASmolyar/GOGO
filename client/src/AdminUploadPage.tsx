@@ -19,8 +19,7 @@ function composeGradient(degree: number, color1: string, color2: string): string
 }
 
 export default function AdminUploadPage() {
-  // Admin API key
-  const [apiKey, setApiKey] = React.useState<string>('');
+  // Admin API key removed
 
   // Hero basics
   const [title, setTitle] = React.useState<string>('');
@@ -29,25 +28,16 @@ export default function AdminUploadPage() {
   const [tagline, setTagline] = React.useState<string>('');
   const [bubblesCsv, setBubblesCsv] = React.useState<string>('');
 
-  // Background media type (mutually exclusive)
-  const [backgroundType, setBackgroundType] = React.useState<'image' | 'video'>('image');
-
   // Background image
   const [backgroundImage, setBackgroundImage] = React.useState<string | null>(null);
   const [backgroundImageAlt, setBackgroundImageAlt] = React.useState<string>('');
+  const [backgroundOpacity, setBackgroundOpacity] = React.useState<number>(0.25);
 
   // Gradient controls
   const [degree, setDegree] = React.useState<number>(180);
   const [color1, setColor1] = React.useState<string>('#5038a0');
   const [color2, setColor2] = React.useState<string>('#121242');
 
-  // Overlay
-  const [overlayColor, setOverlayColor] = React.useState<string>('#000000');
-  const [overlayOpacity, setOverlayOpacity] = React.useState<number>(0);
-
-  // Alignment/layout
-  const [textAlign, setTextAlign] = React.useState<string>('center');
-  const [layoutVariant, setLayoutVariant] = React.useState<string>('default');
   const [ariaLabel, setAriaLabel] = React.useState<string>('Impact report hero');
 
   // CTAs
@@ -56,12 +46,7 @@ export default function AdminUploadPage() {
   const [secondaryLabel, setSecondaryLabel] = React.useState<string>('');
   const [secondaryHref, setSecondaryHref] = React.useState<string>('');
 
-  // Background video
-  const [videoUrl, setVideoUrl] = React.useState<string>('');
-  const [videoPoster, setVideoPoster] = React.useState<string>('');
-  const [videoAutoplay, setVideoAutoplay] = React.useState<boolean>(false);
-  const [videoLoop, setVideoLoop] = React.useState<boolean>(false);
-  const [videoMuted, setVideoMuted] = React.useState<boolean>(true);
+  // Background video support removed
 
   // Media uploader (generic)
   const [file, setFile] = React.useState<File | null>(null);
@@ -78,16 +63,13 @@ export default function AdminUploadPage() {
       setYear(hero.year ?? '');
       setTagline(hero.tagline ?? '');
       setBackgroundImage(hero.backgroundImage ?? null);
+      // @ts-expect-error backgroundOpacity present on backend
+      setBackgroundOpacity(typeof (hero as any).backgroundOpacity === 'number' ? (hero as any).backgroundOpacity : 0.25);
       const g = parseGradient(hero.backgroundColor as string | null);
       setDegree(g.degree);
       setColor1(g.color1);
       setColor2(g.color2);
-      // @ts-expect-error overlay present on backend
-      const overlay = (hero as any).overlay ?? null;
-      if (overlay) {
-        setOverlayColor(overlay.color ?? '#000000');
-        setOverlayOpacity(typeof overlay.opacity === 'number' ? overlay.opacity : 0);
-      }
+      // overlay removed
       // @ts-expect-error bubbles present on backend
       const bubbles = (hero as any).bubbles as string[] | undefined;
       setBubblesCsv(Array.isArray(bubbles) ? bubbles.join(', ') : '');
@@ -99,28 +81,10 @@ export default function AdminUploadPage() {
       const secondary = (hero as any).secondaryCta ?? {};
       setSecondaryLabel(secondary.label ?? '');
       setSecondaryHref(secondary.href ?? '');
-      // @ts-expect-error
-      const bgv = (hero as any).backgroundVideo ?? {};
-      setVideoUrl(bgv.url ?? '');
-      setVideoPoster(bgv.poster ?? '');
-      setVideoAutoplay(Boolean(bgv.autoplay));
-      setVideoLoop(Boolean(bgv.loop));
-      setVideoMuted(Boolean(bgv.muted ?? true));
-      // @ts-expect-error
-      setTextAlign((hero as any).textAlign ?? 'center');
-      // @ts-expect-error
-      setLayoutVariant((hero as any).layoutVariant ?? 'default');
+      // backgroundVideo, textAlign, layoutVariant removed
       setBackgroundImageAlt((hero as any).backgroundImageAlt ?? '');
       setAriaLabel((hero as any).ariaLabel ?? 'Impact report hero');
-
-      // decide background type: prefer video if url present
-      if (bgv && bgv.url) {
-        setBackgroundType('video');
-      } else if (hero.backgroundImage) {
-        setBackgroundType('image');
-      } else {
-        setBackgroundType('image');
-      }
+      
     })();
   }, []);
 
@@ -154,7 +118,7 @@ export default function AdminUploadPage() {
   };
 
   const uploadAndSet = async (
-    kind: 'bgImage' | 'videoUrl' | 'videoPoster',
+    kind: 'bgImage',
     fileInput: HTMLInputElement | null,
   ) => {
     if (!fileInput || !fileInput.files || fileInput.files.length === 0) return;
@@ -169,55 +133,21 @@ export default function AdminUploadPage() {
         if (f.type === 'image/webp') return 'webp';
         if (f.type === 'image/avif') return 'avif';
         if (f.type === 'image/gif') return 'gif';
-        if (f.type === 'video/mp4') return 'mp4';
-        if (f.type === 'video/quicktime') return 'mov';
-        if (f.type === 'video/webm') return 'webm';
+        // video formats no longer supported for hero background
         return 'bin';
       };
 
       const ext = inferExt();
-      const key = kind === 'bgImage'
-        ? `media/hero/background.${ext}`
-        : kind === 'videoUrl'
-          ? `media/hero/video.${ext}`
-          : `media/hero/video-poster.${ext}`;
+      const key = `media/hero/background.${ext}`;
 
       const { publicUrl } = await uploadFile(f, { key });
-      if (kind === 'bgImage') {
-        setBackgroundImage(publicUrl);
-        // if switching to image via upload, enforce type and clear video
-        setBackgroundType('image');
-        setVideoUrl('');
-        setVideoPoster('');
-      }
-      if (kind === 'videoUrl') {
-        setVideoUrl(publicUrl);
-        setBackgroundType('video');
-        setBackgroundImage(null);
-      }
-      if (kind === 'videoPoster') {
-        setVideoPoster(publicUrl);
-        setBackgroundType('video');
-        setBackgroundImage(null);
-      }
+      setBackgroundImage(publicUrl);
       setStatus('Done');
     } catch (e) {
       setStatus('Failed');
     }
   };
 
-  const onChangeBackgroundType: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const next = e.target.value as 'image' | 'video';
-    setBackgroundType(next);
-    if (next === 'image') {
-      // clearing video fields
-      setVideoUrl('');
-      setVideoPoster('');
-    } else {
-      // clearing image field
-      setBackgroundImage(null);
-    }
-  };
 
   const onSaveHero = async () => {
     const backgroundColor = composeGradient(degree, color1, color2);
@@ -226,21 +156,13 @@ export default function AdminUploadPage() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const backgroundImagePayload = backgroundType === 'image' ? (backgroundImage ?? null) : null;
-    const backgroundVideoPayload = backgroundType === 'video'
-      ? {
-          url: videoUrl || null,
-          poster: videoPoster || null,
-          autoplay: videoAutoplay,
-          loop: videoLoop,
-          muted: videoMuted,
-        }
-      : null;
+    const backgroundImagePayload = backgroundImage ?? null;
 
     const payload: Record<string, unknown> = {
       backgroundColor,
       backgroundImage: backgroundImagePayload,
-      backgroundImageAlt: backgroundType === 'image' ? (backgroundImageAlt || null) : null,
+      backgroundImageAlt: backgroundImage ? (backgroundImageAlt || null) : null,
+      backgroundOpacity,
       title,
       subtitle,
       year,
@@ -254,39 +176,19 @@ export default function AdminUploadPage() {
         label: secondaryLabel || undefined,
         href: secondaryHref || undefined,
       },
-      backgroundVideo: backgroundVideoPayload,
-      overlay: {
-        color: overlayColor || null,
-        opacity: overlayOpacity,
-      },
-      textAlign,
-      layoutVariant,
       ariaLabel,
     };
 
-    const saved = await saveHeroContent(payload, { apiKey });
+    const saved = await saveHeroContent(payload);
     setStatus(saved ? 'Hero saved' : 'Failed to save hero');
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: '40px auto', padding: 16 }}>
+    <div className="admin-dark" style={{ maxWidth: 900, margin: '40px auto', padding: 16 }}>
       <h1>Admin</h1>
       <p>Upload media and edit hero content.</p>
 
-      <div style={{ border: '1px solid #ddd', padding: 16, borderRadius: 8, marginBottom: 24 }}>
-        <h2>Admin Auth</h2>
-        <label>
-          Admin API Key
-          <input
-            type="text"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Enter API key"
-            style={{ width: '100%', marginTop: 4 }}
-            title="Required to save hero (sent as X-API-Key)"
-          />
-        </label>
-      </div>
+      
 
       <div style={{ border: '1px solid #ddd', padding: 16, borderRadius: 8, marginBottom: 24 }}>
         <h2>Hero Basics</h2>
@@ -339,84 +241,35 @@ export default function AdminUploadPage() {
       </div>
 
       <div style={{ border: '1px solid #ddd', padding: 16, borderRadius: 8, marginBottom: 24 }}>
-        <h2>Overlay</h2>
-        <label title="Overlay color placed above background (often black/white with transparency)." style={{ marginRight: 16 }}>
-          Color
-          <input type="color" value={overlayColor} onChange={(e) => setOverlayColor(e.target.value)} style={{ marginLeft: 8 }} />
-        </label>
-        <label title="Opacity from 0.0 to 1.0. Lower = more transparent; higher = more solid.">
-          Opacity
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={overlayOpacity}
-            onChange={(e) => setOverlayOpacity(Number(e.target.value))}
-            style={{ marginLeft: 8, verticalAlign: 'middle' }}
-          />
-          <span style={{ marginLeft: 8 }}>{overlayOpacity.toFixed(2)}</span>
-        </label>
-      </div>
-
-      <div style={{ border: '1px solid #ddd', padding: 16, borderRadius: 8, marginBottom: 24 }}>
         <h2>Background Media</h2>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12 }}>
-          <label title="Use a static image as the background.">
-            <input type="radio" name="bgType" value="image" checked={backgroundType === 'image'} onChange={onChangeBackgroundType} /> Image
-          </label>
-          <label title="Use a video as the background.">
-            <input type="radio" name="bgType" value="video" checked={backgroundType === 'video'} onChange={onChangeBackgroundType} /> Video
+        {backgroundImage ? (
+          <div style={{ marginBottom: 12 }}>
+            <img src={backgroundImage} alt="bg" style={{ maxWidth: '100%', borderRadius: 6 }} />
+          </div>
+        ) : null}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+          <input type="file" accept="image/*" onChange={(e) => uploadAndSet('bgImage', e.target)} title="Upload a background image (optional)." />
+          <button onClick={() => setBackgroundImage(null)}>Remove</button>
+        </div>
+        <label>
+          Background Image Alt
+          <input type="text" value={backgroundImageAlt} onChange={(e) => setBackgroundImageAlt(e.target.value)} style={{ width: '100%', marginTop: 4 }} />
+        </label>
+        <div style={{ marginTop: 12 }}>
+          <label title="Opacity for the background image from 0.0 to 1.0.">
+            Background Image Opacity
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={backgroundOpacity}
+              onChange={(e) => setBackgroundOpacity(Number(e.target.value))}
+              style={{ marginLeft: 8, verticalAlign: 'middle' }}
+            />
+            <span style={{ marginLeft: 8 }}>{backgroundOpacity.toFixed(2)}</span>
           </label>
         </div>
-
-        {backgroundType === 'image' ? (
-          <div>
-            {backgroundImage ? (
-              <div style={{ marginBottom: 12 }}>
-                <img src={backgroundImage} alt="bg" style={{ maxWidth: '100%', borderRadius: 6 }} />
-              </div>
-            ) : null}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
-              <input type="file" accept="image/*" onChange={(e) => uploadAndSet('bgImage', e.target)} title="Upload a background image (optional)." />
-              <button onClick={() => setBackgroundImage(null)}>Remove</button>
-            </div>
-            <label>
-              Background Image Alt
-              <input type="text" value={backgroundImageAlt} onChange={(e) => setBackgroundImageAlt(e.target.value)} style={{ width: '100%', marginTop: 4 }} />
-            </label>
-          </div>
-        ) : null}
-
-        {backgroundType === 'video' ? (
-          <div>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-              <label style={{ flex: 1 }}>
-                Video URL
-                <input type="text" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} style={{ width: '100%', marginTop: 4 }} />
-              </label>
-              <input type="file" accept="video/*" onChange={(e) => uploadAndSet('videoUrl', e.target)} title="Upload a background video (optional)." />
-            </div>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-              <label style={{ flex: 1 }}>
-                Poster URL
-                <input type="text" value={videoPoster} onChange={(e) => setVideoPoster(e.target.value)} style={{ width: '100%', marginTop: 4 }} />
-              </label>
-              <input type="file" accept="image/*" onChange={(e) => uploadAndSet('videoPoster', e.target)} title="Upload a poster image (optional)." />
-            </div>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-              <label>
-                <input type="checkbox" checked={videoAutoplay} onChange={(e) => setVideoAutoplay(e.target.checked)} /> Autoplay
-              </label>
-              <label>
-                <input type="checkbox" checked={videoLoop} onChange={(e) => setVideoLoop(e.target.checked)} /> Loop
-              </label>
-              <label title="Recommended ON for background videos to avoid unexpected audio.">
-                <input type="checkbox" checked={videoMuted} onChange={(e) => setVideoMuted(e.target.checked)} /> Muted
-              </label>
-            </div>
-          </div>
-        ) : null}
       </div>
 
       <div style={{ border: '1px solid #ddd', padding: 16, borderRadius: 8, marginBottom: 24 }}>

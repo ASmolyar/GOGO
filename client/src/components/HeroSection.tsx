@@ -21,6 +21,9 @@ const HeroContainer = styled.section<{ $background?: string }>`
   position: relative;
   background: ${(props) =>
     props.$background || 'linear-gradient(180deg, #5038a0 0%, #121242 100%)'};
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
   padding: 0;
   /* Ensure this container receives all mouse events */
@@ -46,7 +49,7 @@ const WaveBackground = styled.div`
 `;
 
 // Backdrop image behind everything
-const BackdropImage = styled.div<{ $image?: string }>`
+const BackdropImage = styled.div<{ $image?: string; $opacity?: number }>`
   position: absolute;
   inset: 0;
   background-image: ${(props) =>
@@ -54,7 +57,7 @@ const BackdropImage = styled.div<{ $image?: string }>`
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.25;
+  opacity: ${(props) => (typeof props.$opacity === 'number' ? props.$opacity : 0.25)};
   z-index: 0;
   pointer-events: none;
   filter: brightness(0.3);
@@ -255,7 +258,8 @@ const Chip = styled.span`
     transform: translateY(-1px);
   }
 `;
-function HeroSection(): JSX.Element {
+function HeroSection(props: { disableFetch?: boolean; heroOverride?: Partial<HeroContent> } = {}): JSX.Element {
+  const { disableFetch = false, heroOverride } = props;
   const [hero, setHero] = useState<HeroContent | null>(null);
 
   // Create refs for animations
@@ -431,8 +435,12 @@ function HeroSection(): JSX.Element {
 
   // Set up everything on mount and handle cleanup
   useEffect(() => {
-    // Load hero content
-    fetchHeroContent().then((data) => setHero(data));
+    // Load hero content unless disabled (admin preview can pass data instead)
+    if (!disableFetch) {
+      fetchHeroContent().then((data) => setHero(data));
+    } else if (heroOverride) {
+      setHero((prev) => ({ ...(prev ?? ({} as HeroContent)), ...(heroOverride as HeroContent) }));
+    }
 
     // Initialize animations for text elements using direct AnimeJS calls
     if (titleRef.current) {
@@ -599,6 +607,8 @@ function HeroSection(): JSX.Element {
     handleMouseMove,
     mouseLeaveHandler,
     startAnimationLoop,
+    disableFetch,
+    heroOverride,
   ]);
 
   // Reduced number of wave bars for better performance
@@ -625,12 +635,25 @@ function HeroSection(): JSX.Element {
   };
   const background = hero?.backgroundColor;
   const backgroundImage = hero?.backgroundImage;
+  const backgroundOpacity = (hero as any)?.backgroundOpacity as number | undefined;
+
+  const isValidGradient = (s?: string) => {
+    if (!s) return false;
+    if (/undefined/i.test(s)) return false;
+    return /linear-gradient\(/i.test(s);
+  };
+
+  const composedBackground = (() => {
+    const gradientOk = isValidGradient(background || undefined);
+    if (backgroundImage) {
+      return `${gradientOk ? background : ''}${gradientOk ? ', ' : ''}url(${backgroundImage})`;
+    }
+    return gradientOk ? (background as string) : undefined;
+  })();
 
   return (
-    <HeroContainer $background={background}>
-      {backgroundImage !== null && (
-        <BackdropImage $image={backgroundImage || undefined} />
-      )}
+    <HeroContainer $background={composedBackground}>
+      {/* Background image is now composed underneath the gradient via CSS backgrounds */}
       {/* Music waveform visualization */}
       <WaveBackground ref={waveBackgroundRef}>
         {Array.from({ length: numWaveBars }).map((_, i) => {

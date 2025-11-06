@@ -27,12 +27,17 @@
 body {
   background-color: var(--spotify-black);
   color: white;
-  font-family: var(--font-main);
+  font-family: var(--font-body);
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   position: relative;
+}
+
+/* Use Airwaves for headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-main);
 }
 
 html {
@@ -1438,6 +1443,7 @@ section:hover h2::after {
   border: none;
   background: none;
   box-sizing: border-box;
+  font-family: var(--font-main);
 }
 
 .logo-container {

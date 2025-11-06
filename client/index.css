@@ -17,3 +17,48 @@ html {
   align-items: center;
   justify-content: center;
 }
+
+/* Admin dark mode scope */
+.admin-dark {
+  color: #ffffff;
+}
+
+.admin-dark input[type="text"],
+.admin-dark input[type="number"],
+.admin-dark input[type="email"],
+.admin-dark input[type="password"],
+.admin-dark input[type="file"],
+.admin-dark input[type="range"],
+.admin-dark input[type="color"],
+.admin-dark input[type="url"],
+.admin-dark input[type="radio"],
+.admin-dark input[type="checkbox"],
+.admin-dark select,
+.admin-dark textarea,
+.admin-dark button {
+  background-color: #0f1115;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-dark button {
+  background-color: #1c1f26;
+  cursor: pointer;
+}
+
+.admin-dark button:hover {
+  background-color: #232831;
+}
+
+/* Sections in AdminUpload with inline borders - force darker borders/backgrounds */
+.admin-dark div[style*="border: 1px solid #ddd"],
+.admin-dark div[style*="border: 1px solid #eee"],
+.admin-dark div[style*="border: 1px dashed #ddd"] {
+  background-color: #121212 !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Small utility tweaks for inputs inside labels */
+.admin-dark label { color: rgba(255, 255, 255, 0.85); }
+.admin-dark input::placeholder,
+.admin-dark textarea::placeholder { color: rgba(255, 255, 255, 0.5); }

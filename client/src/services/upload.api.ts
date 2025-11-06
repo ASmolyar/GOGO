@@ -19,6 +19,7 @@ const API_BASE_URL =
 export async function signUpload(
   payload: SignUploadRequest,
 ): Promise<SignUploadResponse> {
+  console.log("[client][upload] sign request", payload);
   const res = await fetch(`${API_BASE_URL}/api/uploads/sign`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -28,7 +29,13 @@ export async function signUpload(
   if (!res.ok) {
     throw new Error('Failed to sign upload');
   }
-  return (await res.json()) as SignUploadResponse;
+  const json = (await res.json()) as SignUploadResponse;
+  console.log("[client][upload] sign response", {
+    key: json.key,
+    publicUrl: json.publicUrl,
+    expiresInSeconds: json.expiresInSeconds,
+  });
+  return json;
 }
 
 export async function uploadToSignedUrl(args: {
@@ -37,6 +44,10 @@ export async function uploadToSignedUrl(args: {
   contentType?: string;
 }): Promise<Response> {
   const { uploadUrl, file, contentType } = args;
+  console.log("[client][upload] PUT to signed URL", {
+    size: (file as File).size ?? undefined,
+    contentType,
+  });
   return fetch(uploadUrl, {
     method: 'PUT',
     headers: contentType ? { 'Content-Type': contentType } : undefined,
@@ -49,6 +60,12 @@ export async function uploadFile(
   options?: { folder?: string; key?: string },
 ): Promise<{ key: string; publicUrl: string }>
 {
+  console.log("[client][upload] start", {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    options,
+  });
   const extension = file.name.includes('.')
     ? file.name.split('.').pop() ?? undefined
     : undefined;
@@ -67,8 +84,16 @@ export async function uploadFile(
   });
 
   if (!putRes.ok) {
+    console.error("[client][upload] PUT failed", {
+      status: putRes.status,
+      statusText: putRes.statusText,
+    });
     throw new Error('Failed to upload to storage');
   }
 
+  console.log("[client][upload] success", {
+    key: signed.key,
+    publicUrl: signed.publicUrl,
+  });
   return { key: signed.key, publicUrl: signed.publicUrl };
 }

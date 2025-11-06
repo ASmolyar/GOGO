@@ -2,17 +2,25 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ImpactReportPage from './src/ImpactReportPage.tsx';
-import AdminUploadPage from './src/AdminUploadPage.tsx';
-import './index.css';
+import ImpactReportCustomizationPage from "./src/pages/ImpactReportCustomizationPage.tsx";
+import { Provider } from "react-redux";
+import { store } from "./src/util/redux/store.ts";
+import { SnackbarProvider } from "notistack";
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<ImpactReportPage />} />
-        <Route path="/admin" element={<AdminUploadPage />} />
-      </Routes>
-    </BrowserRouter>
-  </React.StrictMode>,
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <Provider store={store}>
+    <SnackbarProvider
+      maxSnack={3}
+      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+    >
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<ImpactReportPage />} />
+          <Route path="/admin" element={<ImpactReportCustomizationPage />} />
+        </Routes>
+      </BrowserRouter>
+    </SnackbarProvider>
+  </Provider>,
 );
 

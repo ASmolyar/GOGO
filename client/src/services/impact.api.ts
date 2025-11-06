@@ -10,6 +10,7 @@ export interface HeroCta {
 export interface HeroContent {
   backgroundColor?: string;
   backgroundImage?: string | null;
+  backgroundOpacity?: number;
   title?: string;
   subtitle?: string;
   year?: string;
@@ -31,15 +32,19 @@ const API_BASE_URL =
 
 export async function fetchHeroContent(): Promise<HeroContent | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/impact/hero`, {
+    const url = `${API_BASE_URL}/api/impact/hero`;
+    console.log('[client][hero] GET', { url });
+    const response = await fetch(url, {
       credentials: 'include',
     });
 
     if (!response.ok) {
+      console.warn('[client][hero] GET failed', { status: response.status });
       return null;
     }
 
     const payload = (await response.json()) as HeroApiResponse<HeroContent>;
+    console.log('[client][hero] GET success', { fields: Object.keys(payload?.data || {}) });
     return payload?.data ?? null;
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -50,26 +55,28 @@ export async function fetchHeroContent(): Promise<HeroContent | null> {
 
 export async function saveHeroContent(
   data: Record<string, unknown>,
-  options?: { apiKey?: string; slug?: string },
+  options?: { slug?: string },
 ): Promise<HeroContent | null> {
   try {
     const url = new URL(`${API_BASE_URL}/api/impact/hero`);
     if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][hero] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
     const response = await fetch(url.toString(), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...(options?.apiKey ? { 'x-api-key': options.apiKey } : {}),
       },
       credentials: 'include',
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
+      console.warn('[client][hero] PUT failed', { status: response.status });
       return null;
     }
 
     const payload = (await response.json()) as HeroApiResponse<HeroContent>;
+    console.log('[client][hero] PUT success', { fields: Object.keys(payload?.data || {}) });
     return payload?.data ?? null;
   } catch (error) {
     // eslint-disable-next-line no-console

@@ -8,23 +8,13 @@ export interface HeroCta {
   trackingId?: string | null;
 }
 
-export interface HeroBackgroundVideo {
-  url?: string | null;
-  poster?: string | null;
-  autoplay?: boolean;
-  loop?: boolean;
-  muted?: boolean;
-}
-
-export interface HeroOverlay {
-  color?: string | null;
-  opacity?: number;
-}
+// Removed background video and overlay support
 
 export interface HeroContent {
   backgroundColor?: string | null;
   backgroundImage?: string | null;
   backgroundImageAlt?: string | null;
+  backgroundOpacity?: number;
   title?: string;
   subtitle?: string;
   year?: string;
@@ -32,8 +22,6 @@ export interface HeroContent {
   bubbles?: string[];
   primaryCta?: HeroCta | null;
   secondaryCta?: HeroCta | null;
-  backgroundVideo?: HeroBackgroundVideo | null;
-  overlay?: HeroOverlay | null;
   textAlign?: string;
   layoutVariant?: string;
   ariaLabel?: string;

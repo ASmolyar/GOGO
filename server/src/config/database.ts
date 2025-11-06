@@ -20,7 +20,14 @@ export async function getDatabase(): Promise<Db> {
   }
 
   if (!client) {
-    client = new MongoClient(uri);
+    client = new MongoClient(uri, {
+      serverSelectionTimeoutMS: 8000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 0,
+      retryWrites: true,
+      retryReads: true,
+    } as any);
   }
 
   await client.connect();

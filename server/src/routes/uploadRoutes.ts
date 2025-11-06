@@ -31,6 +31,15 @@ router.post('/uploads/sign', async (req, res) => {
       return res.status(400).json({ error: 'contentType is required' });
     }
 
+    // Observability: log incoming request metadata
+    // Note: do NOT log the signed uploadUrl itself
+    console.log('[uploads] sign request', {
+      contentType,
+      extension,
+      folder,
+      providedKey: providedKey ?? null,
+    });
+
     // If caller provides a key, sanitize and use it (enables S3 object versioning via stable keys)
     // Otherwise, generate a dated UUID key as before
     let key: string;
@@ -47,6 +56,8 @@ router.post('/uploads/sign', async (req, res) => {
       key = `${baseFolder}/${datePrefix}/${crypto.randomUUID()}.${safeExt}`;
     }
 
+    console.log('[uploads] key generated', { key, contentType });
+
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET as string,
       Key: key,
@@ -55,6 +66,8 @@ router.post('/uploads/sign', async (req, res) => {
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 60 });
     const publicUrlBase = process.env.CDN_BASE_URL ?? `https://${process.env.S3_BUCKET}.s3.amazonaws.com`;
+
+    console.log('[uploads] sign success', { key, expiresInSeconds: 60, publicUrlBase });
 
     return res.json({
       uploadUrl,
