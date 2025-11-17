@@ -1,5 +1,5 @@
-import React from "react";
-import { Popover, Box, Button } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Popover, Box, Button, InputBase } from "@mui/material";
 import { HexColorPicker } from "react-colorful";
 import ColorizeIcon from "@mui/icons-material/Colorize";
 import COLORS from "../../assets/colors";
@@ -27,6 +27,51 @@ function ColorPickerPopover(props: ColorPickerPopoverProps) {
 
   const canUseDropper =
     typeof window !== "undefined" && typeof (window as any).EyeDropper === "function";
+
+  const [hexInput, setHexInput] = useState<string>("#000000");
+
+  useEffect(() => {
+    const v = typeof value === "string" ? value : "#000000";
+    const normalized = v.startsWith("#") ? v : `#${v}`;
+    setHexInput(normalized.toUpperCase());
+  }, [value]);
+
+  const expandShortHex = (raw: string) => {
+    if (raw.length === 3) {
+      return raw
+        .split("")
+        .map((c) => c + c)
+        .join("");
+    }
+    return raw;
+  };
+
+  const handleHexInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    const withoutHash = next.startsWith("#") ? next.slice(1) : next;
+    const cleaned = withoutHash.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+    const display = `#${cleaned}`.toUpperCase();
+    setHexInput(display);
+
+    if (cleaned.length === 3 || cleaned.length === 6) {
+      const expanded = expandShortHex(cleaned).toLowerCase();
+      onChange(`#${expanded}`);
+    }
+  };
+
+  const handleHexInputBlur = () => {
+    const raw = hexInput.replace("#", "");
+    if (!raw) {
+      setHexInput("#000000");
+      onChange("#000000");
+      return;
+    }
+    const cleaned = raw.replace(/[^0-9a-fA-F]/g, "");
+    const expanded = expandShortHex(cleaned.padEnd(6, cleaned.slice(-1) || "0")).slice(0, 6);
+    const normalized = `#${expanded}`.toLowerCase();
+    setHexInput(normalized.toUpperCase());
+    onChange(normalized);
+  };
 
   const handleEyeDropperPick = async () => {
     try {
@@ -98,6 +143,26 @@ function ColorPickerPopover(props: ColorPickerPopoverProps) {
         </Box>
         <Box sx={{ width: "100%" }}>
           <HexColorPicker color={value} onChange={onChange} style={{ width: "100%" }} />
+        </Box>
+        <Box sx={{ mt: 0.5 }}>
+          <InputBase
+            value={hexInput}
+            onChange={handleHexInputChange}
+            onBlur={handleHexInputBlur}
+            inputProps={{ "aria-label": "Hex color", spellCheck: false }}
+            sx={{
+              width: "100%",
+              fontSize: 12,
+              px: 1,
+              py: 0.5,
+              height: 28,
+              color: "rgba(255,255,255,0.92)",
+              bgcolor: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              borderRadius: 1,
+            }}
+            placeholder="#RRGGBB"
+          />
         </Box>
       </Box>
     </Popover>

@@ -35,15 +35,15 @@ body {
   position: relative;
 }
 
-/* Use Airwaves for headings */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-main);
-}
-
 html {
   scroll-padding-top: 80px; /* Prevents scrolling behind the header */
   scroll-padding-bottom: 90px; /* Prevents scrolling behind the now playing bar */
   scroll-behavior: smooth;
+}
+
+/* Typography: headings in Airwaves, body in Century Gothic */
+h1, h2, h3, h4 {
+  font-family: var(--font-main);
 }
 
 /* Accessible focus styles */
@@ -1443,7 +1443,6 @@ section:hover h2::after {
   border: none;
   background: none;
   box-sizing: border-box;
-  font-family: var(--font-main);
 }
 
 .logo-container {
@@ -2299,6 +2298,7 @@ body.has-spotify-header {
 .measure-impact-section h2,
 .measure-impact-section h3,
 .measure-impact-section h4 {
+  font-family: var(--font-main);
   background: none;
   -webkit-background-clip: initial;
   -webkit-text-fill-color: initial;

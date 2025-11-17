@@ -741,7 +741,6 @@ function ImpactReportCustomizationPage() {
       imagePreview: string | null;
     };
   } | null>(null);
-  const [isMobilePreview, setIsMobilePreview] = useState(false);
   const [colorPickerAnchor, setColorPickerAnchor] =
     useState<HTMLElement | null>(null);
   const [colorPickerField, setColorPickerField] = useState<
@@ -1750,25 +1749,6 @@ function ImpactReportCustomizationPage() {
                   flexWrap: "wrap",
                 }}
               >
-                <Box>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={isMobilePreview}
-                        onChange={(e) => setIsMobilePreview(e.target.checked)}
-                        sx={{
-                          "& .MuiSwitch-switchBase.Mui-checked": {
-                            color: COLORS.gogo_blue,
-                          },
-                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                            { backgroundColor: COLORS.gogo_blue },
-                        }}
-                      />
-                    }
-                    label="Mobile margins"
-                    sx={{ color: "white" }}
-                  />
-                </Box>
                 <Box>
                   <TextField
                     select
