@@ -494,10 +494,11 @@ const photos = [Photo1, Photo2, Photo3, Photo4, Photo5, Photo6];
 
 interface PopulationProps {
   inline?: boolean;
+  previewMode?: boolean;
   populationOverride?: PopulationContent | null;
 }
 
-function PopulationComponent({ inline = false, populationOverride }: PopulationProps) {
+function PopulationComponent({ inline = false, previewMode = false, populationOverride }: PopulationProps) {
   const [activeSliceId, setActiveSliceId] = useState<string | null>(null);
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
