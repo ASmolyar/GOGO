@@ -112,6 +112,66 @@ export interface MissionContent {
 }
 
 // =========================
+// Population content interfaces
+// =========================
+export interface PopulationStat {
+  value: string;
+  label: string;
+  color: string;
+}
+
+export interface DemographicItem {
+  id: string;
+  label: string;
+  value: number;
+  color: string;
+}
+
+export interface PopulationContent {
+  // Section Header
+  sectionBadge?: string;
+  sectionTitle?: string;
+  
+  // Main Title
+  title?: string;
+  titleGradientStart?: string;
+  titleGradientEnd?: string;
+  
+  // Glow Blobs
+  blob1ColorA?: string;
+  blob1ColorB?: string;
+  blob2ColorA?: string;
+  blob2ColorB?: string;
+  
+  // Info Cards
+  infoCard1Text?: string;
+  infoCard2Text?: string;
+  
+  // Demographics Pie
+  demographicsTitle?: string;
+  demographicsData?: DemographicItem[];
+  demographicsCaption?: string;
+  
+  // Stats
+  stat1Percent?: number;
+  stat1Text?: string;
+  stat1Color?: string;
+  
+  stat2Percent?: number;
+  stat2Text?: string;
+  stat2Color?: string;
+
+  // C-GAS
+  cgasTitle?: string;
+  cgasTooltip?: string;
+  cgasStats?: PopulationStat[]; // Array of 3
+  
+  // Skills
+  skillsTitle?: string;
+  skillsList?: string[];
+}
+
+// =========================
 // Defaults content interfaces
 // =========================
 export interface DefaultsContent {
@@ -277,6 +337,57 @@ export async function saveHeroContent(
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('[ImpactReport] Failed to save hero content', error);
+    return null;
+  }
+}
+
+export async function fetchPopulationContent(): Promise<PopulationContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/population`;
+    console.log('[client][population] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      console.warn('[client][population] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<PopulationContent>;
+    console.log('[client][population] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to fetch population content', error);
+    return null;
+  }
+}
+
+export async function savePopulationContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<PopulationContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/population`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][population] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][population] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<PopulationContent>;
+    console.log('[client][population] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[ImpactReport] Failed to save population content', error);
     return null;
   }
 }

@@ -33,6 +33,7 @@ import COLORS from "../../assets/colors.ts";
 import styled from "styled-components";
 import HeroSection from "../components/HeroSection.tsx";
 import MissionSection from "../sections/MissionSection.tsx";
+import PopulationComponent from "../components/Population.tsx";
 import { signUpload } from "../services/upload.api.ts";
 import { saveMedia } from "../services/media.api.ts";
 import {
@@ -40,8 +41,11 @@ import {
   saveHeroContent,
   fetchMissionContent,
   saveMissionContent,
+  fetchPopulationContent,
+  savePopulationContent,
   fetchDefaults,
   saveDefaults,
+  PopulationContent,
 } from "../services/impact.api.ts";
 import "../../assets/fonts/fonts.css";
 import { useSnackbar } from "notistack";
@@ -50,11 +54,13 @@ import { useNavigate, useParams } from "react-router-dom";
 
 const MemoHeroSection = React.memo(HeroSection);
 const MemoMissionSection = React.memo(MissionSection);
+const MemoPopulationComponent = React.memo(PopulationComponent);
 
 const ADMIN_TABS = [
   { label: "Defaults", value: 0, routeKey: "defaults" as const },
   { label: "Hero Section", value: 1, routeKey: "hero" as const },
   { label: "Mission Section", value: 2, routeKey: "mission" as const },
+  { label: "Population Section", value: 3, routeKey: "population" as const },
 ] as const;
 
 type AdminTabRouteKey = (typeof ADMIN_TABS)[number]["routeKey"];
@@ -610,7 +616,8 @@ type MissionStatAction =
   | "openDisciplinesModal"
   | "openStudentMusicModal"
   | "openMentorMusicModal"
-  | "scrollToMap";
+  | "scrollToMap"
+  | "openMapModal";
 type MissionStatNumberSource = "explicit" | "modalItemsLength";
 
 interface MissionBadgeIcon {
@@ -681,6 +688,11 @@ interface MissionSection {
   titleUnderlineGradientColor1: string;
   titleUnderlineGradientColor2: string;
   titleUnderlineGradient?: string | null;
+  // ticket stripe gradient
+  ticketStripeGradient?: string | null;
+  ticketStripeGradientDegree: number;
+  ticketStripeGradientColor1: string;
+  ticketStripeGradientColor2: string;
   // background controls (parity with hero)
   degree: number;
   color1: string;
@@ -693,7 +705,6 @@ interface MissionSection {
   stats: MissionStat[];
   modalTitle?: string;
   disciplinesItems: MissionDisciplineItem[];
-  backgroundLogo: MissionBackgroundLogo;
 }
 
 interface ImpactSection {
@@ -745,6 +756,7 @@ interface TestimonialSection {
 interface ImpactReportForm {
   hero: HeroSection;
   mission: MissionSection;
+  population: PopulationContent;
   impact: ImpactSection;
   programs: ProgramsSection;
   locations: LocationsSection;
@@ -890,6 +902,10 @@ function ImpactReportCustomizationPage() {
       titleUnderlineGradientColor1: "#5fa8d3",
       titleUnderlineGradientColor2: "#7b7fd1",
       titleUnderlineGradient: "linear-gradient(to right, #5fa8d3, #7b7fd1)",
+      ticketStripeGradient: "linear-gradient(180deg, #1946f5, #00cc99)",
+      ticketStripeGradientDegree: 180,
+      ticketStripeGradientColor1: "#1946f5",
+      ticketStripeGradientColor2: "#00cc99",
       degree: 180,
       color1: "#5038a0",
       color2: "#121242",
@@ -962,13 +978,71 @@ function ImpactReportCustomizationPage() {
         { name: "Woodwind Instruments", iconKey: null },
         { name: "Strings", iconKey: null },
       ],
-      backgroundLogo: {
-        enabled: true,
-        svgKey: "gogoLogoBK",
-        opacity: 0.08,
-        rotationDeg: 90,
-        scale: 0.82,
-      },
+    },
+    population: {
+      sectionBadge: "Who We Serve",
+      sectionTitle: "Our Population",
+      title: "TALENT IS UNIVERSALLY DISTRIBUTED, BUT OPPORTUNITY IS NOT.",
+      infoCard1Text:
+        "That is why, since 2008, Guitars Over Guns has used the transformative power of music, mentorship, and the arts to unlock possibilities for young people who face systemic barriers to opportunity.",
+      infoCard2Text:
+        "The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people's psychological and social well-being.",
+      demographicsData: [
+        {
+          id: "Hispanic/Latinx",
+          label: "Hispanic/Latinx",
+          value: 46,
+          color: COLORS.gogo_teal,
+        },
+        {
+          id: "Black/African American",
+          label: "Black/African American",
+          value: 44,
+          color: COLORS.gogo_blue,
+        },
+        { id: "Other", label: "Other", value: 10, color: COLORS.gogo_purple },
+      ],
+      demographicsCaption:
+        "Ages 8-18: 96% at or below the Federal Poverty Level",
+      stat1Percent: 94,
+      stat1Text: "of students made or maintained academic gains (2023-2024)",
+      stat1Color: COLORS.gogo_teal,
+      stat2Percent: 95,
+      stat2Text: "of students improved conduct in their classes (2023-2024)",
+      stat2Color: COLORS.gogo_pink,
+      cgasTitle: "Mental Health & Well-being (C-GAS)",
+      cgasTooltip:
+        "The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people's psychological and social well-being.",
+      cgasStats: [
+        {
+          value: "100%",
+          label: "Improved 5+ points\n(High Risk Students)",
+          color: COLORS.gogo_blue,
+        },
+        {
+          value: "85%",
+          label: "Maintained or Increased\n(Fall 2023)",
+          color: COLORS.gogo_purple,
+        },
+        {
+          value: "84%",
+          label: "Maintained or Increased\n(Spring 2024)",
+          color: COLORS.gogo_teal,
+        },
+      ],
+      skillsTitle: "Core Skills Developed",
+      skillsList: [
+        "Confidence and self-awareness",
+        "Emotional intelligence and creativity",
+        "Self-presentation and expression",
+        "Workforce readiness and life skills",
+        "Trusted mentors & positive role models",
+        "Supportive community of peers",
+      ],
+      blob1ColorA: `${COLORS.gogo_blue}55`,
+      blob1ColorB: `${COLORS.gogo_purple}22`,
+      blob2ColorA: `${COLORS.gogo_pink}55`,
+      blob2ColorB: `${COLORS.gogo_yellow}22`,
     },
     impact: {
       title: "Our Impact",
@@ -1043,13 +1117,6 @@ function ImpactReportCustomizationPage() {
     } as MissionBadgeIcon);
   const badgeIconType = badgeIconConfig.type ?? "glyph";
   const badgeIconValue = badgeIconConfig.value ?? "♫";
-  const backgroundLogoState = impactReportForm.mission.backgroundLogo ?? {
-    enabled: false,
-    svgKey: BACKGROUND_LOGO_OPTIONS[0]?.key ?? "gogoLogoBK",
-    opacity: 0.08,
-    rotationDeg: 90,
-    scale: 0.82,
-  };
 
   // Error states
   const [errors, setErrors] = useState<{
@@ -1138,6 +1205,12 @@ function ImpactReportCustomizationPage() {
   // Mission color picker (separate instance so hero logic remains untouched)
   const [missionColorPickerAnchor, setMissionColorPickerAnchor] =
     useState<HTMLElement | null>(null);
+  
+  const [populationColorPickerAnchor, setPopulationColorPickerAnchor] =
+    useState<HTMLElement | null>(null);
+  const [populationColorPickerField, setPopulationColorPickerField] =
+    useState<keyof PopulationContent | null>(null);
+
   const [missionColorPickerField, setMissionColorPickerField] = useState<
     | "statementTitleColor"
     | "statementTextColor"
@@ -1154,6 +1227,8 @@ function ImpactReportCustomizationPage() {
     | "titleGradientColor2"
     | "titleUnderlineGradientColor1"
     | "titleUnderlineGradientColor2"
+    | "ticketStripeGradientColor1"
+    | "ticketStripeGradientColor2"
     | null
   >(null);
   const missionPickerOpen = Boolean(missionColorPickerAnchor);
@@ -1196,7 +1271,15 @@ function ImpactReportCustomizationPage() {
                                     "titleUnderlineGradientColor2"
                                   ? impactReportForm.mission
                                       .titleUnderlineGradientColor2
-                                  : "#000000"
+                                  : missionColorPickerField ===
+                                      "ticketStripeGradientColor1"
+                                    ? impactReportForm.mission
+                                        .ticketStripeGradientColor1
+                                    : missionColorPickerField ===
+                                        "ticketStripeGradientColor2"
+                                      ? impactReportForm.mission
+                                          .ticketStripeGradientColor2
+                                      : "#000000"
     : "#000000";
 
   // Refs for file inputs
@@ -1290,6 +1373,37 @@ function ImpactReportCustomizationPage() {
         mission: {
           ...mission,
           titleUnderlineGradient: gradient,
+        },
+      };
+    });
+    setIsDirty(true);
+  };
+
+  const updateMissionTicketStripeGradient = (
+    partial: Partial<
+      Pick<
+        MissionSection,
+        | "ticketStripeGradientDegree"
+        | "ticketStripeGradientColor1"
+        | "ticketStripeGradientColor2"
+      >
+    >,
+  ) => {
+    setImpactReportForm((prev) => {
+      const mission = {
+        ...prev.mission,
+        ...partial,
+      };
+      const gradient = composeSimpleGradient(
+        mission.ticketStripeGradientDegree,
+        mission.ticketStripeGradientColor1,
+        mission.ticketStripeGradientColor2,
+      );
+      return {
+        ...prev,
+        mission: {
+          ...mission,
+          ticketStripeGradient: gradient,
         },
       };
     });
@@ -1590,6 +1704,9 @@ function ImpactReportCustomizationPage() {
       const titleUnderlineParsed = parseGradient(
         ((mission as any)?.titleUnderlineGradient as string) ?? null,
       );
+      const ticketStripeParsed = parseGradient(
+        ((mission as any)?.ticketStripeGradient as string) ?? null,
+      );
       const alphaMatch = (mission.backgroundColor as string | "").match(
         /rgba\([^,]+,[^,]+,[^,]+,\s*(\d*\.?\d+)\)/i,
       );
@@ -1629,7 +1746,8 @@ function ImpactReportCustomizationPage() {
               rawAction === "openDisciplinesModal" ||
               rawAction === "openStudentMusicModal" ||
               rawAction === "openMentorMusicModal" ||
-              rawAction === "scrollToMap"
+              rawAction === "scrollToMap" ||
+              rawAction === "openMapModal"
             ) {
               action = rawAction as MissionStatAction;
             } else if (rawAction === "openModal") {
@@ -1702,8 +1820,21 @@ function ImpactReportCustomizationPage() {
           nextUnderlineColor2,
         );
 
+        const nextStripeDegree =
+          ticketStripeParsed?.degree ?? prev.mission.ticketStripeGradientDegree;
+        const nextStripeColor1 = ticketStripeParsed?.color1
+          ? toHex(ticketStripeParsed.color1)
+          : prev.mission.ticketStripeGradientColor1;
+        const nextStripeColor2 = ticketStripeParsed?.color2
+          ? toHex(ticketStripeParsed.color2)
+          : prev.mission.ticketStripeGradientColor2;
+        const composedStripeGradient = composeSimpleGradient(
+          nextStripeDegree,
+          nextStripeColor1,
+          nextStripeColor2,
+        );
+
         const prevEqualizer = prev.mission.statsEqualizer;
-        const prevBackgroundLogo = prev.mission.backgroundLogo;
         const next: ImpactReportForm = {
           ...prev,
           mission: {
@@ -1738,6 +1869,11 @@ function ImpactReportCustomizationPage() {
             titleUnderlineGradientDegree: nextUnderlineDegree,
             titleUnderlineGradientColor1: nextUnderlineColor1,
             titleUnderlineGradientColor2: nextUnderlineColor2,
+            ticketStripeGradient:
+              (mission as any)?.ticketStripeGradient ?? composedStripeGradient,
+            ticketStripeGradientDegree: nextStripeDegree,
+            ticketStripeGradientColor1: nextStripeColor1,
+            ticketStripeGradientColor2: nextStripeColor2,
             badgeLabel: (mission as any)?.badgeLabel ?? prev.mission.badgeLabel,
             badgeIcon:
               typeof (mission as any)?.badgeIcon?.value === "string"
@@ -1806,28 +1942,6 @@ function ImpactReportCustomizationPage() {
             modalTitle: disciplinesModal?.title ?? prev.mission.modalTitle,
             disciplinesItems:
               sanitizedDisciplines ?? prev.mission.disciplinesItems,
-            backgroundLogo: {
-              enabled:
-                (mission as any)?.backgroundLogo?.enabled === false
-                  ? false
-                  : true,
-              svgKey:
-                (mission as any)?.backgroundLogo?.svgKey ??
-                prevBackgroundLogo?.svgKey,
-              opacity:
-                typeof (mission as any)?.backgroundLogo?.opacity === "number"
-                  ? (mission as any)?.backgroundLogo?.opacity
-                  : prevBackgroundLogo?.opacity,
-              rotationDeg:
-                typeof (mission as any)?.backgroundLogo?.rotationDeg ===
-                "number"
-                  ? (mission as any)?.backgroundLogo?.rotationDeg
-                  : prevBackgroundLogo?.rotationDeg,
-              scale:
-                typeof (mission as any)?.backgroundLogo?.scale === "number"
-                  ? (mission as any)?.backgroundLogo?.scale
-                  : prevBackgroundLogo?.scale,
-            },
           },
         };
         setSavedSnapshot(next);
@@ -1858,6 +1972,21 @@ function ImpactReportCustomizationPage() {
         (_, i) => incoming[i] ?? brand[i % brand.length],
       );
       setDefaultSwatch(normalized);
+    })();
+  }, []);
+
+  // Prefill population from backend
+  useEffect(() => {
+    (async () => {
+      const population = await fetchPopulationContent();
+      if (!population) return;
+      setImpactReportForm((prev) => ({
+        ...prev,
+        population: {
+          ...prev.population,
+          ...population,
+        },
+      }));
     })();
   }, []);
 
@@ -1977,6 +2106,11 @@ function ImpactReportCustomizationPage() {
       };
       console.log("[admin][hero] save payload", payload);
       await saveHeroContent(payload);
+      // Save Population content
+      await savePopulationContent(impactReportForm.population, {
+        slug: "population",
+      });
+
       // Save Defaults (swatch)
       if (defaultSwatch && defaultSwatch.length > 0) {
         await saveDefaults({ colorSwatch: defaultSwatch });
@@ -2015,6 +2149,11 @@ function ImpactReportCustomizationPage() {
         impactReportForm.mission.titleUnderlineGradientColor1,
         impactReportForm.mission.titleUnderlineGradientColor2,
       );
+      const composedMissionTicketStripeGradient = composeSimpleGradient(
+        impactReportForm.mission.ticketStripeGradientDegree,
+        impactReportForm.mission.ticketStripeGradientColor1,
+        impactReportForm.mission.ticketStripeGradientColor2,
+      );
 
       const missionPayload: Record<string, unknown> = {
         visible: impactReportForm.mission.enabled,
@@ -2027,6 +2166,7 @@ function ImpactReportCustomizationPage() {
         titleColor: impactReportForm.mission.titleColor || undefined,
         titleGradient: composedMissionTitleGradient || undefined,
         titleUnderlineGradient: composedMissionUnderlineGradient || undefined,
+        ticketStripeGradient: composedMissionTicketStripeGradient || undefined,
         badgeLabel: impactReportForm.mission.badgeLabel,
         badgeIcon: impactReportForm.mission.badgeIcon || undefined,
         badgeTextColor: impactReportForm.mission.badgeTextColor || undefined,
@@ -2047,7 +2187,6 @@ function ImpactReportCustomizationPage() {
         statsTitle: impactReportForm.mission.statsTitle || undefined,
         statsTitleColor: impactReportForm.mission.statsTitleColor || undefined,
         statsEqualizer: impactReportForm.mission.statsEqualizer,
-        backgroundLogo: impactReportForm.mission.backgroundLogo,
         // stats
         stats: impactReportForm.mission.stats.map((s) => ({
           id: s.id,
@@ -2076,6 +2215,11 @@ function ImpactReportCustomizationPage() {
       };
       console.log("[admin][mission] save payload", missionPayload);
       await saveMissionContent(missionPayload);
+
+      // Save Population content
+      const populationPayload = { ...impactReportForm.population };
+      await savePopulationContent(populationPayload);
+
       enqueueSnackbar("Impact report saved", { variant: "success" });
       setIsDirty(false);
       setLastSavedAt(new Date());
@@ -2199,6 +2343,11 @@ function ImpactReportCustomizationPage() {
       impactReportForm.mission.titleUnderlineGradientColor1,
       impactReportForm.mission.titleUnderlineGradientColor2,
     );
+    const missionTicketStripeGradient = composeSimpleGradient(
+      impactReportForm.mission.ticketStripeGradientDegree,
+      impactReportForm.mission.ticketStripeGradientColor1,
+      impactReportForm.mission.ticketStripeGradientColor2,
+    );
     return {
       enabled: impactReportForm.mission.enabled,
       ariaLabel: impactReportForm.mission.ariaLabel,
@@ -2209,6 +2358,7 @@ function ImpactReportCustomizationPage() {
       titleColor: impactReportForm.mission.titleColor || undefined,
       titleGradient: missionTitleGradient,
       titleUnderlineGradient: missionTitleUnderlineGradient,
+      ticketStripeGradient: missionTicketStripeGradient,
       badgeLabel: impactReportForm.mission.badgeLabel,
       badgeIcon: impactReportForm.mission.badgeIcon,
       badgeTextColor: impactReportForm.mission.badgeTextColor || undefined,
@@ -2244,7 +2394,6 @@ function ImpactReportCustomizationPage() {
         iconKey: s.iconKey || undefined,
         numberSource: s.numberSource || "explicit",
       })),
-      backgroundLogo: impactReportForm.mission.backgroundLogo,
       modals: [
         {
           id: "disciplines",
@@ -2260,6 +2409,15 @@ function ImpactReportCustomizationPage() {
     };
   }, [impactReportForm.mission]);
   const debouncedMissionOverride = useDebouncedValue(liveMissionOverride, 300);
+
+  const livePopulationOverride = useMemo(
+    () => impactReportForm.population,
+    [impactReportForm.population],
+  );
+  const debouncedPopulationOverride = useDebouncedValue(
+    livePopulationOverride,
+    300,
+  );
 
   // Viewport simulator (desktop/tablet/mobile artboard)
   const VIEWPORTS = [
@@ -2542,6 +2700,18 @@ function ImpactReportCustomizationPage() {
                         <MemoMissionSection
                           previewMode
                           missionOverride={debouncedMissionOverride as any}
+                        />
+                      ) : currentTab === 3 ? (
+                        <MemoPopulationComponent
+                          inline
+                          previewMode
+                          populationOverride={debouncedPopulationOverride}
+                        />
+                      ) : currentTab === 3 ? (
+                        <MemoPopulationComponent
+                          inline
+                          previewMode
+                          populationOverride={debouncedPopulationOverride}
                         />
                       ) : (
                         <MemoHeroSection
@@ -3212,36 +3382,6 @@ function ImpactReportCustomizationPage() {
                       }}
                       presets={defaultSwatch ?? undefined}
                     />
-                    <Grid item xs={12} md={9}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
-                      >
-                        <Typography
-                          variant="caption"
-                          color="rgba(255,255,255,0.7)"
-                        >
-                          Gradient Opacity
-                        </Typography>
-                        <input
-                          type="range"
-                          min={0}
-                          max={1}
-                          step={0.05}
-                          value={impactReportForm.hero.gradientOpacity}
-                          onChange={(e) =>
-                            handleSectionChange(
-                              "hero",
-                              "gradientOpacity",
-                              Number(e.target.value),
-                            )
-                          }
-                        />
-                        <Typography variant="body2">
-                          {impactReportForm.hero.gradientOpacity.toFixed(2)}
-                        </Typography>
-                      </Box>
-                    </Grid>
-
                     {/* Background Image */}
                     <Grid item xs={12}>
                       <Typography variant="subtitle1" gutterBottom>
@@ -3655,6 +3795,42 @@ function ImpactReportCustomizationPage() {
                           impactReportForm.mission.titleUnderlineGradientDegree,
                           impactReportForm.mission.titleUnderlineGradientColor1,
                           impactReportForm.mission.titleUnderlineGradientColor2,
+                        )}
+                      />
+                      <GradientEditor
+                        label="Ticket Strip Gradient"
+                        degree={
+                          impactReportForm.mission.ticketStripeGradientDegree
+                        }
+                        color1={
+                          impactReportForm.mission.ticketStripeGradientColor1
+                        }
+                        color2={
+                          impactReportForm.mission.ticketStripeGradientColor2
+                        }
+                        opacity={1}
+                        showOpacity={false}
+                        onChangeDegree={(deg) =>
+                          updateMissionTicketStripeGradient({
+                            ticketStripeGradientDegree: deg,
+                          })
+                        }
+                        onPickColor1={(el) => {
+                          setMissionColorPickerField(
+                            "ticketStripeGradientColor1",
+                          );
+                          setMissionColorPickerAnchor(el);
+                        }}
+                        onPickColor2={(el) => {
+                          setMissionColorPickerField(
+                            "ticketStripeGradientColor2",
+                          );
+                          setMissionColorPickerAnchor(el);
+                        }}
+                        previewBackground={composeSimpleGradient(
+                          impactReportForm.mission.ticketStripeGradientDegree,
+                          impactReportForm.mission.ticketStripeGradientColor1,
+                          impactReportForm.mission.ticketStripeGradientColor2,
                         )}
                       />
                       <CustomTextField
@@ -4139,279 +4315,384 @@ function ImpactReportCustomizationPage() {
                         }
                       />
                     </Grid>
-                    {/* Click actions for stats */}
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" sx={{ mt: 1 }}>
-                        Click Actions
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.mission.stats.some(
-                              (s) =>
-                                s.id === "disciplines" &&
-                                (s.action === "openDisciplinesModal" ||
-                                  (s.action === "openModal" &&
-                                    s.modalId === "disciplines")),
+                    {impactReportForm.mission.stats.map((s, idx) => {
+                      const isStudents = s.id === "students";
+                      const isMentors = s.id === "mentors";
+                      const isSites = s.id === "sites";
+                      const isDisciplines = s.id === "disciplines";
+
+                      const displayLabel =
+                        s.label ||
+                        (isStudents
+                          ? "Students"
+                          : isMentors
+                            ? "Paid Mentors"
+                            : isSites
+                              ? "Sites"
+                              : isDisciplines
+                                ? "Disciplines"
+                                : "Stat Item");
+
+                      return (
+                        <Grid item xs={12} key={`mission-stat-${s.id}`}>
+                          <Box
+                            sx={{
+                              mb: 1.5,
+                              mt: 3,
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              borderBottom: "1px solid rgba(255,255,255,0.1)",
+                              pb: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              sx={{
+                                fontWeight: 600,
+                                color: "rgba(255,255,255,0.9)",
+                              }}
+                            >
+                              {displayLabel}
+                            </Typography>
+
+                            {isStudents && (
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={
+                                      s.action === "openStudentMusicModal"
+                                    }
+                                    onChange={(e) => {
+                                      const enabled = e.target.checked;
+                                      const next = [
+                                        ...impactReportForm.mission.stats,
+                                      ];
+                                      next[idx] = {
+                                        ...s,
+                                        action: enabled
+                                          ? ("openStudentMusicModal" as MissionStatAction)
+                                          : ("none" as MissionStatAction),
+                                      };
+                                      handleSectionChange(
+                                        "mission",
+                                        "stats",
+                                        next,
+                                      );
+                                    }}
+                                  />
+                                }
+                                label="Interactive (Music Modal)"
+                              />
                             )}
-                            onChange={(e) => {
-                              const enabled = e.target.checked;
-                              const next = impactReportForm.mission.stats.map(
-                                (s) =>
-                                  s.id === "disciplines"
-                                    ? {
+                            {isMentors && (
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={
+                                      s.action === "openMentorMusicModal"
+                                    }
+                                    onChange={(e) => {
+                                      const enabled = e.target.checked;
+                                      const next = [
+                                        ...impactReportForm.mission.stats,
+                                      ];
+                                      next[idx] = {
+                                        ...s,
+                                        action: enabled
+                                          ? ("openMentorMusicModal" as MissionStatAction)
+                                          : ("none" as MissionStatAction),
+                                      };
+                                      handleSectionChange(
+                                        "mission",
+                                        "stats",
+                                        next,
+                                      );
+                                    }}
+                                  />
+                                }
+                                label="Interactive (Music Modal)"
+                              />
+                            )}
+                            {isSites && (
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={
+                                      s.action === "openMapModal" ||
+                                      s.action === "scrollToMap"
+                                    }
+                                    onChange={(e) => {
+                                      const enabled = e.target.checked;
+                                      const next = [
+                                        ...impactReportForm.mission.stats,
+                                      ];
+                                      next[idx] = {
+                                        ...s,
+                                        action: enabled
+                                          ? ("openMapModal" as MissionStatAction)
+                                          : ("none" as MissionStatAction),
+                                      };
+                                      handleSectionChange(
+                                        "mission",
+                                        "stats",
+                                        next,
+                                      );
+                                    }}
+                                  />
+                                }
+                                label="Interactive (Map Modal)"
+                              />
+                            )}
+                            {isDisciplines && (
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={
+                                      s.action === "openDisciplinesModal" ||
+                                      (s.action === "openModal" &&
+                                        s.modalId === "disciplines")
+                                    }
+                                    onChange={(e) => {
+                                      const enabled = e.target.checked;
+                                      const next = [
+                                        ...impactReportForm.mission.stats,
+                                      ];
+                                      next[idx] = {
                                         ...s,
                                         action: enabled
                                           ? ("openDisciplinesModal" as MissionStatAction)
                                           : ("none" as MissionStatAction),
                                         modalId: enabled ? "disciplines" : null,
-                                      }
-                                    : s,
-                              );
-                              handleSectionChange("mission", "stats", next);
-                            }}
-                          />
-                        }
-                        label='"Disciplines" stat opens disciplines modal'
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.mission.stats.some(
-                              (s) =>
-                                s.id === "students" &&
-                                s.action === "openStudentMusicModal",
+                                      };
+                                      handleSectionChange(
+                                        "mission",
+                                        "stats",
+                                        next,
+                                      );
+                                    }}
+                                  />
+                                }
+                                label="Interactive (Disciplines Modal)"
+                              />
                             )}
-                            onChange={(e) => {
-                              const enabled = e.target.checked;
-                              const next = impactReportForm.mission.stats.map(
-                                (s) =>
-                                  s.id === "students"
-                                    ? {
-                                        ...s,
-                                        action: enabled
-                                          ? ("openStudentMusicModal" as MissionStatAction)
-                                          : ("none" as MissionStatAction),
-                                      }
-                                    : s,
-                              );
-                              handleSectionChange("mission", "stats", next);
-                            }}
-                          />
-                        }
-                        label='"Students" stat opens Student Music modal'
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.mission.stats.some(
-                              (s) =>
-                                s.id === "mentors" &&
-                                s.action === "openMentorMusicModal",
-                            )}
-                            onChange={(e) => {
-                              const enabled = e.target.checked;
-                              const next = impactReportForm.mission.stats.map(
-                                (s) =>
-                                  s.id === "mentors"
-                                    ? {
-                                        ...s,
-                                        action: enabled
-                                          ? ("openMentorMusicModal" as MissionStatAction)
-                                          : ("none" as MissionStatAction),
-                                      }
-                                    : s,
-                              );
-                              handleSectionChange("mission", "stats", next);
-                            }}
-                          />
-                        }
-                        label='"Paid Mentors" stat opens Mentor Music modal'
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={impactReportForm.mission.stats.some(
-                              (s) =>
-                                s.id === "sites" && s.action === "scrollToMap",
-                            )}
-                            onChange={(e) => {
-                              const enabled = e.target.checked;
-                              const next = impactReportForm.mission.stats.map(
-                                (s) =>
-                                  s.id === "sites"
-                                    ? {
-                                        ...s,
-                                        action: enabled
-                                          ? ("scrollToMap" as MissionStatAction)
-                                          : ("none" as MissionStatAction),
-                                      }
-                                    : s,
-                              );
-                              handleSectionChange("mission", "stats", next);
-                            }}
-                          />
-                        }
-                        label='"School & Community Sites" stat skips ahead to map'
-                      />
-                    </Grid>
-                    {impactReportForm.mission.stats.map((s, idx) => (
-                      <Grid item xs={12} key={`mission-stat-${s.id}`}>
-                        <Card
-                          variant="outlined"
-                          sx={{ bgcolor: "transparent" }}
-                        >
-                          <CardContent>
-                            <Grid container spacing={2}>
-                              <Grid item xs={12} sm={4}>
-                                <CustomTextField
-                                  label="Label"
-                                  value={s.label}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = { ...s, label: e.target.value };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={4}>
-                                <CustomTextField
-                                  label="Number"
-                                  value={String(s.number ?? "")}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = {
-                                      ...s,
-                                      number: e.target.value,
-                                    };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={4}>
-                                <CustomTextField
-                                  label="Color"
-                                  value={s.color || ""}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = { ...s, color: e.target.value };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  placeholder="#22C55E"
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <CustomTextField
-                                  select
-                                  label="Number Source"
-                                  value={s.numberSource || "explicit"}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = {
-                                      ...s,
-                                      numberSource: e.target
-                                        .value as MissionStatNumberSource,
-                                    };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  fullWidth
-                                >
-                                  <MenuItem value="explicit">
-                                    Manual value
-                                  </MenuItem>
-                                  <MenuItem value="modalItemsLength">
-                                    Disciplines count
-                                  </MenuItem>
-                                </CustomTextField>
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <IconSelector
-                                  label="Icon"
-                                  value={(s.iconKey as ImpactIconKey) || ""}
-                                  onChange={(iconKey) => {
-                                    const next = [
-                                      ...impactReportForm.mission.stats,
-                                    ];
-                                    next[idx] = {
-                                      ...s,
-                                      iconKey: iconKey || null,
-                                    };
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
-                                  }}
-                                  noneLabel="Default"
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6} />
-                              <Grid
-                                item
-                                xs={12}
-                                sm={6}
+                          </Box>
+                          <Card
+                            variant="outlined"
+                            sx={{ bgcolor: "transparent" }}
+                          >
+                            <CardContent>
+                              <Box
                                 sx={{
                                   display: "flex",
-                                  justifyContent: "flex-end",
+                                  flexDirection: "column",
+                                  gap: 2,
                                 }}
                               >
-                                <IconButton
-                                  onClick={() => {
-                                    const next =
-                                      impactReportForm.mission.stats.filter(
-                                        (_, i) => i !== idx,
+                                <Box sx={{ width: "100%" }}>
+                                  <CustomTextField
+                                    label="Label"
+                                    value={s.label}
+                                    onChange={(e) => {
+                                      const next = [
+                                        ...impactReportForm.mission.stats,
+                                      ];
+                                      next[idx] = {
+                                        ...s,
+                                        label: e.target.value,
+                                      };
+                                      handleSectionChange(
+                                        "mission",
+                                        "stats",
+                                        next,
                                       );
-                                    handleSectionChange(
-                                      "mission",
-                                      "stats",
-                                      next,
-                                    );
+                                    }}
+                                    fullWidth
+                                  />
+                                </Box>
+
+                                {isDisciplines || isSites ? (
+                                  <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={6}>
+                                      <CustomTextField
+                                        select
+                                        label="Number Source"
+                                        value={s.numberSource || "explicit"}
+                                        onChange={(e) => {
+                                          const next = [
+                                            ...impactReportForm.mission.stats,
+                                          ];
+                                          next[idx] = {
+                                            ...s,
+                                            numberSource: e.target
+                                              .value as MissionStatNumberSource,
+                                          };
+                                          handleSectionChange(
+                                            "mission",
+                                            "stats",
+                                            next,
+                                          );
+                                        }}
+                                        fullWidth
+                                      >
+                                        <MenuItem value="explicit">
+                                          Manual value
+                                        </MenuItem>
+                                        {isDisciplines && (
+                                          <MenuItem value="modalItemsLength">
+                                            Disciplines count
+                                          </MenuItem>
+                                        )}
+                                        {isSites && (
+                                          <MenuItem value="mapLocationsLength">
+                                            Map sites count
+                                          </MenuItem>
+                                        )}
+                                      </CustomTextField>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                      {s.numberSource === "explicit" ? (
+                                        <CustomTextField
+                                          label="Number"
+                                          value={String(s.number ?? "")}
+                                          onChange={(e) => {
+                                            const next = [
+                                              ...impactReportForm.mission.stats,
+                                            ];
+                                            next[idx] = {
+                                              ...s,
+                                              number: e.target.value,
+                                            };
+                                            handleSectionChange(
+                                              "mission",
+                                              "stats",
+                                              next,
+                                            );
+                                          }}
+                                          fullWidth
+                                        />
+                                      ) : (
+                                        <Box
+                                          sx={{
+                                            p: 1.5,
+                                            border:
+                                              "1px dashed rgba(255,255,255,0.2)",
+                                            borderRadius: 1,
+                                            color: "rgba(255,255,255,0.5)",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            height: "100%",
+                                          }}
+                                        >
+                                          <Typography variant="caption">
+                                            Value pulled from{" "}
+                                            {isDisciplines
+                                              ? "Disciplines"
+                                              : "Map"}
+                                          </Typography>
+                                        </Box>
+                                      )}
+                                    </Grid>
+                                  </Grid>
+                                ) : (
+                                  <Box sx={{ width: "100%" }}>
+                                    <CustomTextField
+                                      label="Number"
+                                      value={String(s.number ?? "")}
+                                      onChange={(e) => {
+                                        const next = [
+                                          ...impactReportForm.mission.stats,
+                                        ];
+                                        next[idx] = {
+                                          ...s,
+                                          number: e.target.value,
+                                        };
+                                        handleSectionChange(
+                                          "mission",
+                                          "stats",
+                                          next,
+                                        );
+                                      }}
+                                      fullWidth
+                                    />
+                                  </Box>
+                                )}
+
+                                <Box sx={{ width: "100%" }}>
+                                  <CustomTextField
+                                    label="Color"
+                                    value={s.color || ""}
+                                    onChange={(e) => {
+                                      const next = [
+                                        ...impactReportForm.mission.stats,
+                                      ];
+                                      next[idx] = {
+                                        ...s,
+                                        color: e.target.value,
+                                      };
+                                      handleSectionChange(
+                                        "mission",
+                                        "stats",
+                                        next,
+                                      );
+                                    }}
+                                    placeholder="#22C55E"
+                                    fullWidth
+                                  />
+                                </Box>
+
+                                <Box sx={{ width: "100%" }}>
+                                  <IconSelector
+                                    label="Icon"
+                                    value={(s.iconKey as ImpactIconKey) || ""}
+                                    onChange={(iconKey) => {
+                                      const next = [
+                                        ...impactReportForm.mission.stats,
+                                      ];
+                                      next[idx] = {
+                                        ...s,
+                                        iconKey: iconKey || null,
+                                      };
+                                      handleSectionChange(
+                                        "mission",
+                                        "stats",
+                                        next,
+                                      );
+                                    }}
+                                    noneLabel="Default"
+                                  />
+                                </Box>
+
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "flex-end",
                                   }}
-                                  color="error"
                                 >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Grid>
-                            </Grid>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
+                                  <IconButton
+                                    onClick={() => {
+                                      const next =
+                                        impactReportForm.mission.stats.filter(
+                                          (_, i) => i !== idx,
+                                        );
+                                      handleSectionChange(
+                                        "mission",
+                                        "stats",
+                                        next,
+                                      );
+                                    }}
+                                    color="error"
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </Box>
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
                     <Grid item xs={12}>
                       <Button
                         startIcon={<AddIcon />}
@@ -4436,6 +4717,148 @@ function ImpactReportCustomizationPage() {
                       >
                         Add Stat
                       </Button>
+                    </Grid>
+
+                    {/* Disciplines Editor */}
+                    <Grid item xs={12}>
+                      <Divider
+                        sx={{ my: 1.5, bgcolor: "rgba(255,255,255,0.08)" }}
+                      />
+                      <Typography variant="h6" sx={{ mb: 1.5 }}>
+                        Disciplines Modal Content
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={12}>
+                      <CustomTextField
+                        label="Modal Title"
+                        value={impactReportForm.mission.modalTitle || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "mission",
+                            "modalTitle",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        placeholder="Artistic Disciplines"
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        Discipline Items
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {impactReportForm.mission.disciplinesItems.map(
+                          (item, idx) => (
+                            <Grid item xs={12} key={idx}>
+                              <Card
+                                variant="outlined"
+                                sx={{ bgcolor: "transparent" }}
+                              >
+                                <CardContent
+                                  sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 2,
+                                      alignItems: "flex-start",
+                                    }}
+                                  >
+                                    <Box sx={{ width: "100%" }}>
+                                      <CustomTextField
+                                        label="Name"
+                                        size="small"
+                                        value={item.name}
+                                        onChange={(e) => {
+                                          const next = [
+                                            ...impactReportForm.mission
+                                              .disciplinesItems,
+                                          ];
+                                          next[idx] = {
+                                            ...item,
+                                            name: e.target.value,
+                                          };
+                                          handleSectionChange(
+                                            "mission",
+                                            "disciplinesItems",
+                                            next,
+                                          );
+                                        }}
+                                        fullWidth
+                                      />
+                                    </Box>
+                                    <Box sx={{ width: "100%" }}>
+                                      <IconSelector
+                                        value={
+                                          (item.iconKey as ImpactIconKey) || ""
+                                        }
+                                        onChange={(iconKey) => {
+                                          const next = [
+                                            ...impactReportForm.mission
+                                              .disciplinesItems,
+                                          ];
+                                          next[idx] = {
+                                            ...item,
+                                            iconKey: iconKey || null,
+                                          };
+                                          handleSectionChange(
+                                            "mission",
+                                            "disciplinesItems",
+                                            next,
+                                          );
+                                        }}
+                                        label="Icon"
+                                        noneLabel="None"
+                                      />
+                                    </Box>
+                                    <Box sx={{ alignSelf: "flex-end" }}>
+                                      <IconButton
+                                        size="small"
+                                        color="error"
+                                        onClick={() => {
+                                          const next =
+                                            impactReportForm.mission.disciplinesItems.filter(
+                                              (_, i) => i !== idx,
+                                            );
+                                          handleSectionChange(
+                                            "mission",
+                                            "disciplinesItems",
+                                            next,
+                                          );
+                                        }}
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
+                                  </Box>
+                                </CardContent>
+                              </Card>
+                            </Grid>
+                          ),
+                        )}
+                        <Grid item xs={12}>
+                          <Button
+                            startIcon={<AddIcon />}
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {
+                              const next = [
+                                ...impactReportForm.mission.disciplinesItems,
+                                { name: "", iconKey: null },
+                              ];
+                              handleSectionChange(
+                                "mission",
+                                "disciplinesItems",
+                                next,
+                              );
+                            }}
+                          >
+                            Add Discipline
+                          </Button>
+                        </Grid>
+                      </Grid>
                     </Grid>
                   </Grid>
 
@@ -4496,6 +4919,500 @@ function ImpactReportCustomizationPage() {
                         missionColorPickerField,
                         val,
                       );
+                    }}
+                    presets={defaultSwatch ?? undefined}
+                  />
+                </Box>
+              )}
+
+              {currentTab === 3 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily:
+                          "'Airwaves', 'Century Gothic', 'Arial', sans-serif",
+                      }}
+                    >
+                      Population Section
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
+
+                  <Grid container spacing={{ xs: 2, md: 3 }}>
+                    {/* Section Header */}
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Badge Label"
+                        value={impactReportForm.population.sectionBadge || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "sectionBadge",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CustomTextField
+                        label="Section Title"
+                        value={impactReportForm.population.sectionTitle || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "sectionTitle",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+
+                    {/* Main Title */}
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Main Title"
+                        value={impactReportForm.population.title || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "title",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        multiline
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'rgba(255,255,255,0.7)' }}>Title Gradient Start</Typography>
+                      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                        <div
+                          style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: 4,
+                            background:
+                              impactReportForm.population.titleGradientStart || "#ffffff",
+                            border: "1px solid rgba(255,255,255,0.3)",
+                          }}
+                        />
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={(e) => {
+                            setPopulationColorPickerField("titleGradientStart");
+                            setPopulationColorPickerAnchor(e.currentTarget);
+                          }}
+                          sx={{ borderColor: "rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.9)" }}
+                        >
+                          Pick Color
+                        </Button>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'rgba(255,255,255,0.7)' }}>Title Gradient End</Typography>
+                      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                        <div
+                          style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: 4,
+                            background:
+                              impactReportForm.population.titleGradientEnd || COLORS.gogo_teal,
+                            border: "1px solid rgba(255,255,255,0.3)",
+                          }}
+                        />
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={(e) => {
+                            setPopulationColorPickerField("titleGradientEnd");
+                            setPopulationColorPickerAnchor(e.currentTarget);
+                          }}
+                          sx={{ borderColor: "rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.9)" }}
+                        >
+                          Pick Color
+                        </Button>
+                      </Box>
+                    </Grid>
+
+                    {/* Info Cards */}
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Info Card 1 Text"
+                        value={impactReportForm.population.infoCard1Text || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "infoCard1Text",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        multiline
+                        minRows={3}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <CustomTextField
+                        label="Info Card 2 Text"
+                        value={impactReportForm.population.infoCard2Text || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "infoCard2Text",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        multiline
+                        minRows={3}
+                      />
+                    </Grid>
+
+                    {/* Demographics */}
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>Demographics</Typography>
+                      <CustomTextField
+                        label="Chart Title"
+                        value={impactReportForm.population.demographicsTitle || "Student Demographics"}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "demographicsTitle",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                        sx={{ mb: 2 }}
+                      />
+                      {impactReportForm.population.demographicsData?.map(
+                        (demo, idx) => (
+                          <Box
+                            key={idx}
+                            sx={{
+                              mb: 2,
+                              display: "flex",
+                              gap: 2,
+                              alignItems: "center",
+                            }}
+                          >
+                            <CustomTextField
+                              label="Label"
+                              value={demo.label}
+                              onChange={(e) => {
+                                const next = [
+                                  ...(impactReportForm.population
+                                    .demographicsData || []),
+                                ];
+                                next[idx] = {
+                                  ...next[idx],
+                                  label: e.target.value,
+                                  id: e.target.value,
+                                };
+                                handleSectionChange(
+                                  "population",
+                                  "demographicsData",
+                                  next,
+                                );
+                              }}
+                              sx={{ flex: 1 }}
+                            />
+                            <CustomTextField
+                              label="Value %"
+                              type="number"
+                              value={demo.value}
+                              onChange={(e) => {
+                                const next = [
+                                  ...(impactReportForm.population
+                                    .demographicsData || []),
+                                ];
+                                next[idx] = {
+                                  ...next[idx],
+                                  value: Number(e.target.value),
+                                };
+                                handleSectionChange(
+                                  "population",
+                                  "demographicsData",
+                                  next,
+                                );
+                              }}
+                              sx={{ width: 100 }}
+                            />
+                            <div
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 4,
+                                  background: demo.color,
+                                  border: "1px solid rgba(255,255,255,0.3)",
+                                  cursor: "pointer",
+                                  flexShrink: 0
+                                }}
+                                onClick={(e) => {
+                                  // We can't use the shared state easily for array items without complex logic
+                                  // So we'll use a temporary workaround or just assume we can modify the array directly via ColorPicker if we tracked index.
+                                  // For now, let's use standard input color as fallback or implement a dedicated handler
+                                }}
+                            >
+                                <input
+                                  type="color"
+                                  value={toHex(demo.color)}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...(impactReportForm.population
+                                        .demographicsData || []),
+                                    ];
+                                    next[idx] = {
+                                      ...next[idx],
+                                      color: e.target.value,
+                                    };
+                                    handleSectionChange(
+                                      "population",
+                                      "demographicsData",
+                                      next,
+                                    );
+                                  }}
+                                  style={{ opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                                />
+                            </div>
+                          </Box>
+                        ),
+                      )}
+                      <CustomTextField
+                        label="Caption"
+                        value={impactReportForm.population.demographicsCaption || ""}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "demographicsCaption",
+                            e.target.value,
+                          )
+                        }
+                        fullWidth
+                      />
+                    </Grid>
+
+                    {/* Stats */}
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>Impact Stats</Typography>
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="subtitle2" gutterBottom>Stat 1</Typography>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <CustomTextField
+                                label="Percent"
+                                type="number"
+                                value={impactReportForm.population.stat1Percent || 0}
+                                onChange={(e) => handleSectionChange("population", "stat1Percent", Number(e.target.value))}
+                                sx={{ width: 100 }}
+                            />
+                            <CustomTextField
+                                label="Text"
+                                value={impactReportForm.population.stat1Text || ""}
+                                onChange={(e) => handleSectionChange("population", "stat1Text", e.target.value)}
+                                fullWidth
+                            />
+                            <Box>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>Color</Typography>
+                                <input
+                                  type="color"
+                                  value={toHex(impactReportForm.population.stat1Color || COLORS.gogo_teal)}
+                                  onChange={(e) => handleSectionChange("population", "stat1Color", e.target.value)}
+                                  style={{ width: 40, height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                />
+                            </Box>
+                        </Box>
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle2" gutterBottom>Stat 2</Typography>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <CustomTextField
+                                label="Percent"
+                                type="number"
+                                value={impactReportForm.population.stat2Percent || 0}
+                                onChange={(e) => handleSectionChange("population", "stat2Percent", Number(e.target.value))}
+                                sx={{ width: 100 }}
+                            />
+                            <CustomTextField
+                                label="Text"
+                                value={impactReportForm.population.stat2Text || ""}
+                                onChange={(e) => handleSectionChange("population", "stat2Text", e.target.value)}
+                                fullWidth
+                            />
+                            <Box>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>Color</Typography>
+                                <input
+                                  type="color"
+                                  value={toHex(impactReportForm.population.stat2Color || COLORS.gogo_pink)}
+                                  onChange={(e) => handleSectionChange("population", "stat2Color", e.target.value)}
+                                  style={{ width: 40, height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                />
+                            </Box>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* C-GAS */}
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>C-GAS</Typography>
+                      <CustomTextField
+                        label="Section Title"
+                        value={impactReportForm.population.cgasTitle || ""}
+                        onChange={(e) => handleSectionChange("population", "cgasTitle", e.target.value)}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                      />
+                      <CustomTextField
+                        label="Tooltip Text"
+                        value={impactReportForm.population.cgasTooltip || ""}
+                        onChange={(e) => handleSectionChange("population", "cgasTooltip", e.target.value)}
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        sx={{ mb: 2 }}
+                      />
+                      <Grid container spacing={2}>
+                        {impactReportForm.population.cgasStats?.map((stat, idx) => (
+                            <Grid item xs={12} md={4} key={idx}>
+                                <Box sx={{ p: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 2 }}>
+                                    <CustomTextField
+                                        label="Value"
+                                        value={stat.value}
+                                        onChange={(e) => {
+                                            const next = [...(impactReportForm.population.cgasStats || [])];
+                                            next[idx] = { ...next[idx], value: e.target.value };
+                                            handleSectionChange("population", "cgasStats", next);
+                                        }}
+                                        fullWidth
+                                        sx={{ mb: 1 }}
+                                    />
+                                    <CustomTextField
+                                        label="Label"
+                                        value={stat.label}
+                                        onChange={(e) => {
+                                            const next = [...(impactReportForm.population.cgasStats || [])];
+                                            next[idx] = { ...next[idx], label: e.target.value };
+                                            handleSectionChange("population", "cgasStats", next);
+                                        }}
+                                        fullWidth
+                                        multiline
+                                        minRows={2}
+                                        sx={{ mb: 1 }}
+                                    />
+                                    <input
+                                      type="color"
+                                      value={toHex(stat.color)}
+                                      onChange={(e) => {
+                                        const next = [...(impactReportForm.population.cgasStats || [])];
+                                        next[idx] = { ...next[idx], color: e.target.value };
+                                        handleSectionChange("population", "cgasStats", next);
+                                      }}
+                                      style={{ width: '100%', height: 30, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                    />
+                                </Box>
+                            </Grid>
+                        ))}
+                      </Grid>
+                    </Grid>
+
+                    {/* Skills */}
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>Skills</Typography>
+                      <CustomTextField
+                        label="Skills Title"
+                        value={impactReportForm.population.skillsTitle || ""}
+                        onChange={(e) => handleSectionChange("population", "skillsTitle", e.target.value)}
+                        fullWidth
+                        sx={{ mb: 2 }}
+                      />
+                      <CustomTextField
+                        label="Skills (Comma Separated)"
+                        value={(impactReportForm.population.skillsList || []).join(", ")}
+                        onChange={(e) => handleSectionChange("population", "skillsList", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                        fullWidth
+                        multiline
+                        minRows={3}
+                      />
+                    </Grid>
+
+                    {/* Background Glows */}
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
+                      <Typography variant="h6" sx={{ mb: 2 }}>Background Glows</Typography>
+                      <Grid container spacing={2}>
+                          <Grid item xs={6} md={3}>
+                              <Typography variant="caption">Blob 1 Inner</Typography>
+                              <input
+                                  type="color"
+                                  value={toHex(impactReportForm.population.blob1ColorA || "#000000")}
+                                  onChange={(e) => handleSectionChange("population", "blob1ColorA", e.target.value)}
+                                  style={{ width: '100%', height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                />
+                          </Grid>
+                          <Grid item xs={6} md={3}>
+                              <Typography variant="caption">Blob 1 Outer</Typography>
+                              <input
+                                  type="color"
+                                  value={toHex(impactReportForm.population.blob1ColorB || "#000000")}
+                                  onChange={(e) => handleSectionChange("population", "blob1ColorB", e.target.value)}
+                                  style={{ width: '100%', height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                />
+                          </Grid>
+                          <Grid item xs={6} md={3}>
+                              <Typography variant="caption">Blob 2 Inner</Typography>
+                              <input
+                                  type="color"
+                                  value={toHex(impactReportForm.population.blob2ColorA || "#000000")}
+                                  onChange={(e) => handleSectionChange("population", "blob2ColorA", e.target.value)}
+                                  style={{ width: '100%', height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                />
+                          </Grid>
+                          <Grid item xs={6} md={3}>
+                              <Typography variant="caption">Blob 2 Outer</Typography>
+                              <input
+                                  type="color"
+                                  value={toHex(impactReportForm.population.blob2ColorB || "#000000")}
+                                  onChange={(e) => handleSectionChange("population", "blob2ColorB", e.target.value)}
+                                  style={{ width: '100%', height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
+                                />
+                          </Grid>
+                      </Grid>
+                    </Grid>
+
+                  </Grid>
+
+                  {/* Shared Color Picker for simple fields */}
+                  <ColorPickerPopover
+                    open={Boolean(populationColorPickerAnchor)}
+                    anchorEl={populationColorPickerAnchor}
+                    onClose={() => {
+                      setPopulationColorPickerAnchor(null);
+                      setPopulationColorPickerField(null);
+                    }}
+                    value={
+                        populationColorPickerField && impactReportForm.population[populationColorPickerField] 
+                        ? (impactReportForm.population[populationColorPickerField] as string)
+                        : "#000000"
+                    }
+                    onChange={(val) => {
+                      if (populationColorPickerField) {
+                        handleSectionChange("population", populationColorPickerField, val);
+                      }
                     }}
                     presets={defaultSwatch ?? undefined}
                   />

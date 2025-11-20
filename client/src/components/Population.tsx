@@ -2,10 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ResponsivePieCanvas } from '@nivo/pie';
 import styled from 'styled-components';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
 import CloseIcon from '@mui/icons-material/Close';
 import Tooltip from '@mui/material/Tooltip';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -17,6 +14,7 @@ import Photo3 from '../../assets/populationPhotos/Photo3.jpg';
 import Photo4 from '../../assets/populationPhotos/Photo4.jpg';
 import Photo5 from '../../assets/populationPhotos/Photo5.jpg';
 import Photo6 from '../../assets/populationPhotos/Photo6.jpg';
+import { PopulationContent } from '../services/impact.api';
 
 // --- Styled Components ---
 
@@ -48,14 +46,14 @@ const Container = styled.section`
   }
 `;
 
-const Title = styled.h1`
+const Title = styled.h1<{ $gradient?: string }>`
   font-size: clamp(2rem, 4.5vw, 3.2rem);
   font-weight: 900;
   margin-bottom: 1.25rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-family: 'Airwaves', sans-serif;
-  background: linear-gradient(90deg, #ffffff, ${COLORS.gogo_teal} 65%);
+  background: ${(p) => p.$gradient || `linear-gradient(90deg, #ffffff, ${COLORS.gogo_teal} 65%)`};
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -71,7 +69,7 @@ const SectionHeaderWrap = styled.div`
   margin-bottom: 1.25rem;
 `;
 
-const SectionBadge = styled.span`
+const SectionBadge = styled.span<{ $gradient?: string }>`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -80,7 +78,7 @@ const SectionBadge = styled.span`
   font-weight: 800;
   letter-spacing: 0.05em;
   color: #0f0f0f;
-  background: linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal});
+  background: ${(p) => p.$gradient || `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`};
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35),
     0 1px 0 rgba(255, 255, 255, 0.06) inset;
 `;
@@ -453,10 +451,10 @@ const PercentCircle = styled.div<{ $percent: number; $accent: string }>`
   }
 `;
 
-const PercentText = styled.span`
+const PercentText = styled.span<{ $gradient?: string }>`
   font-size: 2.8rem;
   font-weight: 800;
-  background: linear-gradient(90deg, #ffffff, ${COLORS.gogo_teal});
+  background: ${(p) => p.$gradient || `linear-gradient(90deg, #ffffff, ${COLORS.gogo_teal})`};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -482,8 +480,8 @@ const pieTheme = {
   tooltip: { container: { background: '#2a2a2a', color: '#fff' } },
 } as const;
 
-// Data
-const skills = [
+// Default Data
+const defaultSkills = [
   "Confidence and self-awareness",
   "Emotional intelligence and creativity",
   "Self-presentation and expression",
@@ -496,9 +494,10 @@ const photos = [Photo1, Photo2, Photo3, Photo4, Photo5, Photo6];
 
 interface PopulationProps {
   inline?: boolean;
+  populationOverride?: PopulationContent | null;
 }
 
-function PopulationComponent({ inline = false }: PopulationProps) {
+function PopulationComponent({ inline = false, populationOverride }: PopulationProps) {
   const [activeSliceId, setActiveSliceId] = useState<string | null>(null);
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
@@ -507,19 +506,84 @@ function PopulationComponent({ inline = false }: PopulationProps) {
     window.scrollTo(0, 0);
   }, []);
 
+  // --- Data Mapping ---
+  const sectionBadge = populationOverride?.sectionBadge ?? "Who We Serve";
+  const sectionTitle = populationOverride?.sectionTitle ?? "Our Population";
+  const title = populationOverride?.title ?? "TALENT IS UNIVERSALLY DISTRIBUTED, BUT OPPORTUNITY IS NOT.";
+  
+  const titleGradient = populationOverride?.titleGradientStart && populationOverride?.titleGradientEnd 
+    ? `linear-gradient(90deg, ${populationOverride.titleGradientStart}, ${populationOverride.titleGradientEnd} 65%)`
+    : undefined;
+
+  const blob1ColorA = populationOverride?.blob1ColorA ?? `${COLORS.gogo_blue}55`;
+  const blob1ColorB = populationOverride?.blob1ColorB ?? `${COLORS.gogo_purple}22`;
+  const blob2ColorA = populationOverride?.blob2ColorA ?? `${COLORS.gogo_pink}55`;
+  const blob2ColorB = populationOverride?.blob2ColorB ?? `${COLORS.gogo_yellow}22`;
+
+  const infoCard1Text = populationOverride?.infoCard1Text ?? 
+    "That is why, since 2008, Guitars Over Guns has used the transformative power of music, mentorship, and the arts to unlock possibilities for young people who face systemic barriers to opportunity.";
+  
+  const infoCard2Text = populationOverride?.infoCard2Text ?? 
+    "The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people's psychological and social well-being.";
+
+  const demographicsData = populationOverride?.demographicsData ?? [
+    {
+      id: 'Hispanic/Latinx',
+      label: 'Hispanic/Latinx',
+      value: 46,
+      color: COLORS.gogo_teal,
+    },
+    {
+      id: 'Black/African American',
+      label: 'Black/African American',
+      value: 44,
+      color: COLORS.gogo_blue,
+    },
+    {
+      id: 'Other',
+      label: 'Other',
+      value: 10,
+      color: COLORS.gogo_purple,
+    },
+  ];
+
+  const demographicsCaption = populationOverride?.demographicsCaption ?? "Ages 8-18: 96% at or below the Federal Poverty Level";
+
+  const stat1Percent = populationOverride?.stat1Percent ?? 94;
+  const stat1Text = populationOverride?.stat1Text ?? "of students made or maintained academic gains (2023-2024)";
+  const stat1Color = populationOverride?.stat1Color ?? COLORS.gogo_teal;
+
+  const stat2Percent = populationOverride?.stat2Percent ?? 95;
+  const stat2Text = populationOverride?.stat2Text ?? "of students improved conduct in their classes (2023-2024)";
+  const stat2Color = populationOverride?.stat2Color ?? COLORS.gogo_pink;
+
+  const cgasTitle = populationOverride?.cgasTitle ?? "Mental Health & Well-being (C-GAS)";
+  const cgasTooltip = populationOverride?.cgasTooltip ?? "The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people's psychological and social well-being.";
+  
+  const defaultCgasStats = [
+    { value: "100%", label: "Improved 5+ points\n(High Risk Students)", color: COLORS.gogo_blue },
+    { value: "85%", label: "Maintained or Increased\n(Fall 2023)", color: COLORS.gogo_purple },
+    { value: "84%", label: "Maintained or Increased\n(Spring 2024)", color: COLORS.gogo_teal },
+  ];
+
+  const cgasStats = populationOverride?.cgasStats ?? defaultCgasStats;
+
+  const skillsTitle = populationOverride?.skillsTitle ?? "Core Skills Developed";
+  const skillsList = populationOverride?.skillsList ?? defaultSkills;
+
   const content = (
     <Container>
       <GlowBlob
         $size={240}
-        $colorA={`${COLORS.gogo_blue}55`}
-        $colorB={`${COLORS.gogo_purple}22`}
+        $colorA={blob1ColorA}
+        $colorB={blob1ColorB}
         $top="-60px"
         $left="-60px"
       />
       <GlowBlob
         $size={220}
-        $colorA={`${COLORS.gogo_pink}55`}
-        $colorB={`${COLORS.gogo_yellow}22`}
+        $colorA={blob2ColorA}
+        $colorB={blob2ColorB}
         $bottom="-40px"
         $right="-40px"
       />
@@ -533,28 +597,23 @@ function PopulationComponent({ inline = false }: PopulationProps) {
             justifyContent: 'center',
           }}
         >
-          <SectionBadge>Who We Serve</SectionBadge>
-          <SectionName>Our Population</SectionName>
+          <SectionBadge>{sectionBadge}</SectionBadge>
+          <SectionName>{sectionTitle}</SectionName>
         </div>
       </SectionHeaderWrap>
       <SectionDivider />
-      <Title style={{ textAlign: 'center' }}>
-        TALENT IS UNIVERSALLY DISTRIBUTED, BUT OPPORTUNITY IS NOT.
+      <Title $gradient={titleGradient} style={{ textAlign: 'center' }}>
+        {title}
       </Title>
       <InfoGrid style={{ justifyItems: 'center', textAlign: 'center' }}>
         <InfoCard>
           <Text $white>
-            That is why, since 2008, Guitars Over Guns has used the
-            transformative power of music, mentorship, and the arts to unlock
-            possibilities for young people who face systemic barriers to
-            opportunity.
+            {infoCard1Text}
           </Text>
         </InfoCard>
         <InfoCard>
           <Text $white>
-            The Childhood Global Assessment Scale (C-GAS) is a widely recognized
-            tool to measure young people&apos;s psychological and social
-            well-being.
+            {infoCard2Text}
           </Text>
         </InfoCard>
       </InfoGrid>
@@ -566,26 +625,7 @@ function PopulationComponent({ inline = false }: PopulationProps) {
           <PieChartWrapper>
             <PieContainer>
               <ResponsivePieCanvas
-                data={[
-                  {
-                    id: 'Hispanic/Latinx',
-                    label: 'Hispanic/Latinx',
-                    value: 46,
-                    color: COLORS.gogo_teal,
-                  },
-                  {
-                    id: 'Black/African American',
-                    label: 'Black/African American',
-                    value: 44,
-                    color: COLORS.gogo_blue,
-                  },
-                  {
-                    id: 'Other',
-                    label: 'Other',
-                    value: 10,
-                    color: COLORS.gogo_purple,
-                  },
-                ]}
+                data={demographicsData}
                 innerRadius={0.6}
                 theme={pieTheme}
                 colors={
@@ -611,57 +651,48 @@ function PopulationComponent({ inline = false }: PopulationProps) {
               />
             </PieContainer>
             <LegendRow>
-              <LegendChip
-                onMouseEnter={() => setActiveSliceId('Hispanic/Latinx')}
-                onMouseLeave={() => setActiveSliceId(null)}
-              >
-                <LegendDot $color={COLORS.gogo_teal} /> 46% Hispanic/Latinx
-              </LegendChip>
-              <LegendChip
-                onMouseEnter={() => setActiveSliceId('Black/African American')}
-                onMouseLeave={() => setActiveSliceId(null)}
-              >
-                <LegendDot $color={COLORS.gogo_blue} /> 44% Black/African American
-              </LegendChip>
-              <LegendChip
-                onMouseEnter={() => setActiveSliceId('Other')}
-                onMouseLeave={() => setActiveSliceId(null)}
-              >
-                <LegendDot $color={COLORS.gogo_purple} /> 10% Other
-              </LegendChip>
+              {demographicsData.map((item) => (
+                <LegendChip
+                  key={item.id}
+                  onMouseEnter={() => setActiveSliceId(item.id)}
+                  onMouseLeave={() => setActiveSliceId(null)}
+                >
+                  <LegendDot $color={item.color} /> {item.value}% {item.label}
+                </LegendChip>
+              ))}
             </LegendRow>
           </PieChartWrapper>
           <PieCaption>
-            Ages 8-18: 96% at or below the Federal Poverty Level
+            {demographicsCaption}
           </PieCaption>
         </BentoCard>
 
         {/* Academic Gains */}
         <BentoCard $colSpan={3}>
-           <PercentCircle $percent={94} $accent={COLORS.gogo_teal}>
-            <PercentText>94%</PercentText>
+           <PercentCircle $percent={stat1Percent} $accent={stat1Color}>
+            <PercentText>{stat1Percent}%</PercentText>
           </PercentCircle>
           <CardLabel>
-            of students made or maintained academic gains (2023-2024)
+            {stat1Text}
           </CardLabel>
         </BentoCard>
 
         {/* Conduct Improvement */}
         <BentoCard $colSpan={3}>
-          <PercentCircle $percent={95} $accent={COLORS.gogo_pink}>
-            <PercentText>95%</PercentText>
+          <PercentCircle $percent={stat2Percent} $accent={stat2Color}>
+            <PercentText>{stat2Percent}%</PercentText>
           </PercentCircle>
           <CardLabel>
-            of students improved conduct in their classes (2023-2024)
+            {stat2Text}
           </CardLabel>
         </BentoCard>
 
         {/* C-GAS Stats - Wide Strip */}
         <BentoCard $colSpan={12} $bg="#161616" className="animate-in">
           <CardTitle>
-            Mental Health & Well-being (C-GAS)
+            {cgasTitle}
             <Tooltip 
-              title="The Childhood Global Assessment Scale (C-GAS) is a widely recognized tool to measure young people's psychological and social well-being." 
+              title={cgasTooltip} 
               arrow 
               placement="top"
               componentsProps={{
@@ -681,27 +712,21 @@ function PopulationComponent({ inline = false }: PopulationProps) {
             </Tooltip>
           </CardTitle>
           <CGasGrid>
-            <CGasItem>
-              <CGasValue $color={COLORS.gogo_blue}>100%</CGasValue>
-              <CGasLabel>Improved 5+ points<br/>(High Risk Students)</CGasLabel>
-            </CGasItem>
-            <CGasItem>
-              <CGasValue $color={COLORS.gogo_purple}>85%</CGasValue>
-              <CGasLabel>Maintained or Increased<br/>(Fall 2023)</CGasLabel>
-            </CGasItem>
-            <CGasItem>
-              <CGasValue $color={COLORS.gogo_teal}>84%</CGasValue>
-              <CGasLabel>Maintained or Increased<br/>(Spring 2024)</CGasLabel>
-            </CGasItem>
+            {cgasStats.map((stat, index) => (
+              <CGasItem key={index}>
+                <CGasValue $color={stat.color}>{stat.value}</CGasValue>
+                <CGasLabel style={{ whiteSpace: 'pre-wrap' }}>{stat.label}</CGasLabel>
+              </CGasItem>
+            ))}
           </CGasGrid>
         </BentoCard>
 
       </BentoGrid>
 
       <div className="animate-in" style={{ textAlign: 'center' }}>
-        <h3 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.2rem' }}>Core Skills Developed</h3>
+        <h3 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.2rem' }}>{skillsTitle}</h3>
         <SkillsContainer>
-          {skills.map(skill => (
+          {skillsList.map(skill => (
             <SkillChip key={skill}>{skill}</SkillChip>
           ))}
         </SkillsContainer>
