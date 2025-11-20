@@ -698,6 +698,11 @@ interface MissionSection {
   color1: string;
   color2: string;
   gradientOpacity: number;
+  // background blobs
+  blob1ColorA?: string | null;
+  blob1ColorB?: string | null;
+  blob2ColorA?: string | null;
+  blob2ColorB?: string | null;
   // stats and modal editing
   statsTitle?: string;
   statsTitleColor?: string | null;
@@ -1206,11 +1211,18 @@ function ImpactReportCustomizationPage() {
   // Mission color picker (separate instance so hero logic remains untouched)
   const [missionColorPickerAnchor, setMissionColorPickerAnchor] =
     useState<HTMLElement | null>(null);
-  
+
   const [populationColorPickerAnchor, setPopulationColorPickerAnchor] =
     useState<HTMLElement | null>(null);
-  const [populationColorPickerField, setPopulationColorPickerField] =
-    useState<keyof PopulationContent | null>(null);
+  const [populationColorPickerField, setPopulationColorPickerField] = useState<
+    keyof PopulationContent | null
+  >(null);
+  const [
+    populationDemographicPickerIndex,
+    setPopulationDemographicPickerIndex,
+  ] = useState<number | null>(null);
+  const [populationCgasStatPickerIndex, setPopulationCgasStatPickerIndex] =
+    useState<number | null>(null);
 
   const [missionColorPickerField, setMissionColorPickerField] = useState<
     | "statementTitleColor"
@@ -1233,6 +1245,20 @@ function ImpactReportCustomizationPage() {
     | null
   >(null);
   const missionPickerOpen = Boolean(missionColorPickerAnchor);
+
+  // State for Mission Stats color picker
+  const [missionStatColorPickerAnchor, setMissionStatColorPickerAnchor] =
+    useState<HTMLElement | null>(null);
+  const [missionStatColorPickerIndex, setMissionStatColorPickerIndex] =
+    useState<number | null>(null);
+  const missionStatPickerOpen = Boolean(missionStatColorPickerAnchor);
+  const currentMissionStatPickerColor =
+    missionStatColorPickerIndex !== null &&
+    impactReportForm.mission.stats[missionStatColorPickerIndex]
+      ? impactReportForm.mission.stats[missionStatColorPickerIndex].color ||
+        "#22C55E"
+      : "#22C55E";
+
   const currentMissionPickerColor = missionColorPickerField
     ? missionColorPickerField === "statementTitleColor"
       ? impactReportForm.mission.statementTitleColor || "#ffffff"
@@ -1240,22 +1266,22 @@ function ImpactReportCustomizationPage() {
         ? impactReportForm.mission.statementTextColor || "#b8ffe9"
         : missionColorPickerField === "statementMetaColor"
           ? impactReportForm.mission.statementMetaColor ||
-          "rgba(255,255,255,0.75)"
+            "rgba(255,255,255,0.75)"
           : missionColorPickerField === "serialColor"
             ? impactReportForm.mission.serialColor || "rgba(255,255,255,0.55)"
             : missionColorPickerField === "titleColor"
               ? impactReportForm.mission.titleColor || "#ffffff"
               : missionColorPickerField === "badgeTextColor"
                 ? impactReportForm.mission.badgeTextColor ||
-                "rgba(255,255,255,0.8)"
+                  "rgba(255,255,255,0.8)"
                 : missionColorPickerField === "badgeBgColor"
                   ? impactReportForm.mission.badgeBgColor || "rgba(0,0,0,0.4)"
                   : missionColorPickerField === "badgeBorderColor"
                     ? impactReportForm.mission.badgeBorderColor ||
-                    "rgba(255,255,255,0.1)"
+                      "rgba(255,255,255,0.1)"
                     : missionColorPickerField === "statsTitleColor"
                       ? impactReportForm.mission.statsTitleColor ||
-                      "rgba(255,255,255,0.7)"
+                        "rgba(255,255,255,0.7)"
                       : missionColorPickerField === "color1"
                         ? impactReportForm.mission.color1
                         : missionColorPickerField === "color2"
@@ -1265,11 +1291,11 @@ function ImpactReportCustomizationPage() {
                             : missionColorPickerField === "titleGradientColor2"
                               ? impactReportForm.mission.titleGradientColor2
                               : missionColorPickerField ===
-                                "titleUnderlineGradientColor1"
+                                  "titleUnderlineGradientColor1"
                                 ? impactReportForm.mission
-                                  .titleUnderlineGradientColor1
+                                    .titleUnderlineGradientColor1
                                 : missionColorPickerField ===
-                                  "titleUnderlineGradientColor2"
+                                    "titleUnderlineGradientColor2"
                                   ? impactReportForm.mission
                                       .titleUnderlineGradientColor2
                                   : missionColorPickerField ===
@@ -1638,21 +1664,23 @@ function ImpactReportCustomizationPage() {
           hero: {
             ...prev.hero,
             title: hero.title !== undefined ? hero.title : prev.hero.title,
-            subtitle: hero.subtitle !== undefined ? hero.subtitle : prev.hero.subtitle,
+            subtitle:
+              hero.subtitle !== undefined ? hero.subtitle : prev.hero.subtitle,
             year: hero.year !== undefined ? hero.year : prev.hero.year,
-            tagline: hero.tagline !== undefined ? hero.tagline : prev.hero.tagline,
+            tagline:
+              hero.tagline !== undefined ? hero.tagline : prev.hero.tagline,
             ariaLabel:
               typeof hero.ariaLabel === "string"
                 ? hero.ariaLabel
                 : prev.hero.ariaLabel,
             textAlign:
               hero.textAlign &&
-                (["left", "center", "right"] as string[]).includes(hero.textAlign)
+              (["left", "center", "right"] as string[]).includes(hero.textAlign)
                 ? (hero.textAlign as MissionTextAlign)
                 : prev.hero.textAlign,
             layoutVariant:
               hero.layoutVariant === "ticket" ||
-                hero.layoutVariant === "default"
+              hero.layoutVariant === "default"
                 ? hero.layoutVariant
                 : prev.hero.layoutVariant,
             titleColor: (hero as any)?.titleColor ?? prev.hero.titleColor,
@@ -1879,12 +1907,12 @@ function ImpactReportCustomizationPage() {
             badgeIcon:
               typeof (mission as any)?.badgeIcon?.value === "string"
                 ? {
-                  type:
-                    (mission as any)?.badgeIcon?.type === "iconKey"
-                      ? "iconKey"
-                      : "glyph",
-                  value: (mission as any)?.badgeIcon?.value,
-                }
+                    type:
+                      (mission as any)?.badgeIcon?.type === "iconKey"
+                        ? "iconKey"
+                        : "glyph",
+                    value: (mission as any)?.badgeIcon?.value,
+                  }
                 : prev.mission.badgeIcon,
             badgeTextColor:
               (mission as any)?.badgeTextColor ??
@@ -1957,7 +1985,7 @@ function ImpactReportCustomizationPage() {
                   : prevBackgroundLogo?.opacity,
               rotationDeg:
                 typeof (mission as any)?.backgroundLogo?.rotationDeg ===
-                  "number"
+                "number"
                   ? (mission as any)?.backgroundLogo?.rotationDeg
                   : prevBackgroundLogo?.rotationDeg,
               scale:
@@ -1987,8 +2015,8 @@ function ImpactReportCustomizationPage() {
       ];
       const incoming =
         defs?.colorSwatch &&
-          Array.isArray(defs.colorSwatch) &&
-          defs.colorSwatch.length > 0
+        Array.isArray(defs.colorSwatch) &&
+        defs.colorSwatch.length > 0
           ? defs.colorSwatch
           : brand;
       const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
@@ -2237,7 +2265,9 @@ function ImpactReportCustomizationPage() {
       console.log("[admin][mission] save payload", missionPayload);
       const missionSaveResult = await saveMissionContent(missionPayload);
       if (!missionSaveResult) {
-        throw new Error("Failed to save mission content: server returned no data");
+        throw new Error(
+          "Failed to save mission content: server returned no data",
+        );
       }
       enqueueSnackbar("Impact report saved", { variant: "success" });
       setIsDirty(false);
@@ -2247,14 +2277,18 @@ function ImpactReportCustomizationPage() {
       );
     } catch (error) {
       console.error("Error saving impact report:", error);
-      const errorMessage = error instanceof Error
-        ? error.message
-        : "An error occurred while saving. Please try again.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred while saving. Please try again.";
       setErrors((prev) => ({
         ...prev,
         general: errorMessage,
       }));
-      enqueueSnackbar(errorMessage, { variant: "error", autoHideDuration: 6000 });
+      enqueueSnackbar(errorMessage, {
+        variant: "error",
+        autoHideDuration: 6000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -2288,8 +2322,8 @@ function ImpactReportCustomizationPage() {
       ];
       const incoming =
         defs?.colorSwatch &&
-          Array.isArray(defs.colorSwatch) &&
-          defs.colorSwatch.length > 0
+        Array.isArray(defs.colorSwatch) &&
+        defs.colorSwatch.length > 0
           ? defs.colorSwatch
           : brand;
       const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
@@ -2618,7 +2652,7 @@ function ImpactReportCustomizationPage() {
                               const text = getReadableTextColor(c);
                               const accent =
                                 (defaultSwatch ?? [])[
-                                (i + 1) % (defaultSwatch?.length || 1) || 0
+                                  (i + 1) % (defaultSwatch?.length || 1) || 0
                                 ] || c;
                               const subtle = withAlphaHex(
                                 text === "#ffffff" ? "#000000" : "#ffffff",
@@ -3522,9 +3556,9 @@ function ImpactReportCustomizationPage() {
                                   color: COLORS.gogo_blue,
                                 },
                                 "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                {
-                                  backgroundColor: COLORS.gogo_blue,
-                                },
+                                  {
+                                    backgroundColor: COLORS.gogo_blue,
+                                  },
                               }}
                             />
                           }
@@ -3608,9 +3642,9 @@ function ImpactReportCustomizationPage() {
                               color: COLORS.gogo_blue,
                             },
                             "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                            {
-                              backgroundColor: COLORS.gogo_blue,
-                            },
+                              {
+                                backgroundColor: COLORS.gogo_blue,
+                              },
                           }}
                         />
                       }
@@ -3695,9 +3729,9 @@ function ImpactReportCustomizationPage() {
                                 color: COLORS.gogo_blue,
                               },
                               "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                              {
-                                backgroundColor: COLORS.gogo_blue,
-                              },
+                                {
+                                  backgroundColor: COLORS.gogo_blue,
+                                },
                             }}
                           />
                         }
@@ -4642,26 +4676,50 @@ function ImpactReportCustomizationPage() {
                                 )}
 
                                 <Box sx={{ width: "100%" }}>
-                                  <CustomTextField
-                                    label="Color"
-                                    value={s.color || ""}
-                                    onChange={(e) => {
-                                      const next = [
-                                        ...impactReportForm.mission.stats,
-                                      ];
-                                      next[idx] = {
-                                        ...s,
-                                        color: e.target.value,
-                                      };
-                                      handleSectionChange(
-                                        "mission",
-                                        "stats",
-                                        next,
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      display: "block",
+                                      mb: 0.5,
+                                      color: "rgba(255,255,255,0.7)",
+                                    }}
+                                  >
+                                    Color
+                                  </Typography>
+                                  <Button
+                                    size="medium"
+                                    variant="outlined"
+                                    fullWidth
+                                    onClick={(e) => {
+                                      setMissionStatColorPickerIndex(idx);
+                                      setMissionStatColorPickerAnchor(
+                                        e.currentTarget as HTMLElement,
                                       );
                                     }}
-                                    placeholder="#22C55E"
-                                    fullWidth
-                                  />
+                                    sx={{
+                                      borderColor: "rgba(255,255,255,0.23)",
+                                      color: "rgba(255,255,255,0.9)",
+                                      justifyContent: "flex-start",
+                                      height: 53.13, // Standard MUI input height
+                                      px: 1.5,
+                                      "&:hover": {
+                                        borderColor: "rgba(255,255,255,0.87)",
+                                      },
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: 20,
+                                        height: 20,
+                                        borderRadius: 0.5,
+                                        bgcolor: s.color || "#22C55E",
+                                        border:
+                                          "1px solid rgba(255,255,255,0.2)",
+                                        mr: 1.5,
+                                      }}
+                                    />
+                                    {s.color || "#22C55E"}
+                                  </Button>
                                 </Box>
 
                                 <Box sx={{ width: "100%" }}>
@@ -4944,6 +5002,29 @@ function ImpactReportCustomizationPage() {
                     }}
                     presets={defaultSwatch ?? undefined}
                   />
+
+                  {/* Mission stats color picker popover */}
+                  <ColorPickerPopover
+                    open={missionStatPickerOpen}
+                    anchorEl={missionStatColorPickerAnchor}
+                    onClose={() => {
+                      setMissionStatColorPickerAnchor(null);
+                      setMissionStatColorPickerIndex(null);
+                    }}
+                    value={currentMissionStatPickerColor}
+                    onChange={(val) => {
+                      if (missionStatColorPickerIndex === null) return;
+                      const next = [...impactReportForm.mission.stats];
+                      if (next[missionStatColorPickerIndex]) {
+                        next[missionStatColorPickerIndex] = {
+                          ...next[missionStatColorPickerIndex],
+                          color: val,
+                        };
+                        handleSectionChange("mission", "stats", next);
+                      }
+                    }}
+                    presets={defaultSwatch ?? undefined}
+                  />
                 </Box>
               )}
 
@@ -4971,7 +5052,7 @@ function ImpactReportCustomizationPage() {
 
                   <Grid container spacing={{ xs: 2, md: 3 }}>
                     {/* Section Header */}
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12}>
                       <CustomTextField
                         label="Badge Label"
                         value={impactReportForm.population.sectionBadge || ""}
@@ -4984,8 +5065,46 @@ function ImpactReportCustomizationPage() {
                         }
                         fullWidth
                       />
+                      <Box sx={{ mt: 3 }}>
+                        <GradientEditor
+                          label="Badge Gradient"
+                          degree={
+                            impactReportForm.population
+                              .sectionBadgeGradientDegree ?? 90
+                          }
+                          color1={
+                            impactReportForm.population
+                              .sectionBadgeGradientStart || COLORS.gogo_blue
+                          }
+                          color2={
+                            impactReportForm.population
+                              .sectionBadgeGradientEnd || COLORS.gogo_teal
+                          }
+                          showOpacity={false}
+                          previewBackground={`linear-gradient(${impactReportForm.population.sectionBadgeGradientDegree ?? 90}deg, ${impactReportForm.population.sectionBadgeGradientStart || COLORS.gogo_blue}, ${impactReportForm.population.sectionBadgeGradientEnd || COLORS.gogo_teal})`}
+                          onChangeDegree={(deg) =>
+                            handleSectionChange(
+                              "population",
+                              "sectionBadgeGradientDegree",
+                              deg,
+                            )
+                          }
+                          onPickColor1={(anchor) => {
+                            setPopulationColorPickerField(
+                              "sectionBadgeGradientStart",
+                            );
+                            setPopulationColorPickerAnchor(anchor);
+                          }}
+                          onPickColor2={(anchor) => {
+                            setPopulationColorPickerField(
+                              "sectionBadgeGradientEnd",
+                            );
+                            setPopulationColorPickerAnchor(anchor);
+                          }}
+                        />
+                      </Box>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12}>
                       <CustomTextField
                         label="Section Title"
                         value={impactReportForm.population.sectionTitle || ""}
@@ -4998,6 +5117,51 @@ function ImpactReportCustomizationPage() {
                         }
                         fullWidth
                       />
+                      <Box sx={{ mt: 2 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "rgba(255,255,255,0.7)",
+                            mb: 1,
+                            display: "block",
+                          }}
+                        >
+                          Horizontal Line Color
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          onClick={(e) => {
+                            setPopulationColorPickerField(
+                              "sectionTitleUnderlineColor",
+                            );
+                            setPopulationColorPickerAnchor(e.currentTarget);
+                          }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            width: "100%",
+                            justifyContent: "flex-start",
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 20,
+                              height: 20,
+                              borderRadius: 4,
+                              background:
+                                impactReportForm.population
+                                  .sectionTitleUnderlineColor ||
+                                COLORS.gogo_blue,
+                              border: "1px solid rgba(255,255,255,0.3)",
+                              marginRight: 8,
+                            }}
+                          />
+                          Pick Color
+                        </Button>
+                      </Box>
                     </Grid>
 
                     {/* Main Title */}
@@ -5015,55 +5179,81 @@ function ImpactReportCustomizationPage() {
                         fullWidth
                         multiline
                       />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'rgba(255,255,255,0.7)' }}>Title Gradient Start</Typography>
-                      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                        <div
-                          style={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: 4,
-                            background:
-                              impactReportForm.population.titleGradientStart || "#ffffff",
-                            border: "1px solid rgba(255,255,255,0.3)",
-                          }}
-                        />
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={(e) => {
+                      <Box sx={{ mt: 3 }}>
+                        <GradientEditor
+                          label="Title Gradient"
+                          degree={
+                            impactReportForm.population.titleGradientDegree ??
+                            90
+                          }
+                          color1={
+                            impactReportForm.population.titleGradientStart ||
+                            "#ffffff"
+                          }
+                          color2={
+                            impactReportForm.population.titleGradientEnd ||
+                            COLORS.gogo_teal
+                          }
+                          showOpacity={false}
+                          previewBackground={`linear-gradient(${impactReportForm.population.titleGradientDegree ?? 90}deg, ${impactReportForm.population.titleGradientStart || "#ffffff"}, ${impactReportForm.population.titleGradientEnd || COLORS.gogo_teal})`}
+                          onChangeDegree={(deg) =>
+                            handleSectionChange(
+                              "population",
+                              "titleGradientDegree",
+                              deg,
+                            )
+                          }
+                          onPickColor1={(anchor) => {
                             setPopulationColorPickerField("titleGradientStart");
-                            setPopulationColorPickerAnchor(e.currentTarget);
+                            setPopulationColorPickerAnchor(anchor);
                           }}
-                          sx={{ borderColor: "rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.9)" }}
-                        >
-                          Pick Color
-                        </Button>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'rgba(255,255,255,0.7)' }}>Title Gradient End</Typography>
-                      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                        <div
-                          style={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: 4,
-                            background:
-                              impactReportForm.population.titleGradientEnd || COLORS.gogo_teal,
-                            border: "1px solid rgba(255,255,255,0.3)",
+                          onPickColor2={(anchor) => {
+                            setPopulationColorPickerField("titleGradientEnd");
+                            setPopulationColorPickerAnchor(anchor);
                           }}
                         />
+                      </Box>
+                      <Box sx={{ mt: 3 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "rgba(255,255,255,0.7)",
+                            mb: 1,
+                            display: "block",
+                          }}
+                        >
+                          Animated Underline Color
+                        </Typography>
                         <Button
                           variant="outlined"
-                          size="small"
                           onClick={(e) => {
-                            setPopulationColorPickerField("titleGradientEnd");
+                            setPopulationColorPickerField(
+                              "titleUnderlineColor",
+                            );
                             setPopulationColorPickerAnchor(e.currentTarget);
                           }}
-                          sx={{ borderColor: "rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.9)" }}
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.3)",
+                            color: "rgba(255,255,255,0.9)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            width: "100%",
+                            justifyContent: "flex-start",
+                          }}
                         >
+                          <span
+                            style={{
+                              width: 20,
+                              height: 20,
+                              borderRadius: 4,
+                              background:
+                                impactReportForm.population
+                                  .titleUnderlineColor || COLORS.gogo_teal,
+                              border: "1px solid rgba(255,255,255,0.3)",
+                              marginRight: 8,
+                            }}
+                          />
                           Pick Color
                         </Button>
                       </Box>
@@ -5105,11 +5295,18 @@ function ImpactReportCustomizationPage() {
 
                     {/* Demographics */}
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
-                      <Typography variant="h6" sx={{ mb: 2 }}>Demographics</Typography>
+                      <Divider
+                        sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }}
+                      />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Demographics
+                      </Typography>
                       <CustomTextField
                         label="Chart Title"
-                        value={impactReportForm.population.demographicsTitle || "Student Demographics"}
+                        value={
+                          impactReportForm.population.demographicsTitle ||
+                          "Student Demographics"
+                        }
                         onChange={(e) =>
                           handleSectionChange(
                             "population",
@@ -5174,48 +5371,28 @@ function ImpactReportCustomizationPage() {
                               sx={{ width: 100 }}
                             />
                             <div
-                                style={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 4,
-                                  background: demo.color,
-                                  border: "1px solid rgba(255,255,255,0.3)",
-                                  cursor: "pointer",
-                                  flexShrink: 0
-                                }}
-                                onClick={(e) => {
-                                  // We can't use the shared state easily for array items without complex logic
-                                  // So we'll use a temporary workaround or just assume we can modify the array directly via ColorPicker if we tracked index.
-                                  // For now, let's use standard input color as fallback or implement a dedicated handler
-                                }}
-                            >
-                                <input
-                                  type="color"
-                                  value={toHex(demo.color)}
-                                  onChange={(e) => {
-                                    const next = [
-                                      ...(impactReportForm.population
-                                        .demographicsData || []),
-                                    ];
-                                    next[idx] = {
-                                      ...next[idx],
-                                      color: e.target.value,
-                                    };
-                                    handleSectionChange(
-                                      "population",
-                                      "demographicsData",
-                                      next,
-                                    );
-                                  }}
-                                  style={{ opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-                                />
-                            </div>
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 4,
+                                background: demo.color,
+                                border: "1px solid rgba(255,255,255,0.3)",
+                                cursor: "pointer",
+                                flexShrink: 0,
+                              }}
+                              onClick={(e) => {
+                                setPopulationDemographicPickerIndex(idx);
+                                setPopulationColorPickerAnchor(e.currentTarget);
+                              }}
+                            />
                           </Box>
                         ),
                       )}
                       <CustomTextField
                         label="Caption"
-                        value={impactReportForm.population.demographicsCaption || ""}
+                        value={
+                          impactReportForm.population.demographicsCaption || ""
+                        }
                         onChange={(e) =>
                           handleSectionChange(
                             "population",
@@ -5229,143 +5406,280 @@ function ImpactReportCustomizationPage() {
 
                     {/* Stats */}
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
-                      <Typography variant="h6" sx={{ mb: 2 }}>Impact Stats</Typography>
+                      <Divider
+                        sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }}
+                      />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Impact Stats
+                      </Typography>
                       <Box sx={{ mb: 3 }}>
-                        <Typography variant="subtitle2" gutterBottom>Stat 1</Typography>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                            <CustomTextField
-                                label="Percent"
-                                type="number"
-                                value={impactReportForm.population.stat1Percent || 0}
-                                onChange={(e) => handleSectionChange("population", "stat1Percent", Number(e.target.value))}
-                                sx={{ width: 100 }}
+                        <Typography variant="subtitle2" gutterBottom>
+                          Stat 1
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <CustomTextField
+                            label="Percent"
+                            type="number"
+                            value={
+                              impactReportForm.population.stat1Percent || 0
+                            }
+                            onChange={(e) =>
+                              handleSectionChange(
+                                "population",
+                                "stat1Percent",
+                                Number(e.target.value),
+                              )
+                            }
+                            sx={{ width: 100 }}
+                          />
+                          <CustomTextField
+                            label="Text"
+                            value={impactReportForm.population.stat1Text || ""}
+                            onChange={(e) =>
+                              handleSectionChange(
+                                "population",
+                                "stat1Text",
+                                e.target.value,
+                              )
+                            }
+                            fullWidth
+                          />
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              sx={{ display: "block", mb: 0.5 }}
+                            >
+                              Color
+                            </Typography>
+                            <div
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 4,
+                                background:
+                                  impactReportForm.population.stat1Color ||
+                                  COLORS.gogo_teal,
+                                border: "1px solid rgba(255,255,255,0.3)",
+                                cursor: "pointer",
+                              }}
+                              onClick={(e) => {
+                                setPopulationColorPickerField("stat1Color");
+                                setPopulationColorPickerAnchor(e.currentTarget);
+                              }}
                             />
-                            <CustomTextField
-                                label="Text"
-                                value={impactReportForm.population.stat1Text || ""}
-                                onChange={(e) => handleSectionChange("population", "stat1Text", e.target.value)}
-                                fullWidth
-                            />
-                            <Box>
-                                <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>Color</Typography>
-                                <input
-                                  type="color"
-                                  value={toHex(impactReportForm.population.stat1Color || COLORS.gogo_teal)}
-                                  onChange={(e) => handleSectionChange("population", "stat1Color", e.target.value)}
-                                  style={{ width: 40, height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                />
-                            </Box>
+                          </Box>
                         </Box>
                       </Box>
                       <Box>
-                        <Typography variant="subtitle2" gutterBottom>Stat 2</Typography>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                            <CustomTextField
-                                label="Percent"
-                                type="number"
-                                value={impactReportForm.population.stat2Percent || 0}
-                                onChange={(e) => handleSectionChange("population", "stat2Percent", Number(e.target.value))}
-                                sx={{ width: 100 }}
+                        <Typography variant="subtitle2" gutterBottom>
+                          Stat 2
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <CustomTextField
+                            label="Percent"
+                            type="number"
+                            value={
+                              impactReportForm.population.stat2Percent || 0
+                            }
+                            onChange={(e) =>
+                              handleSectionChange(
+                                "population",
+                                "stat2Percent",
+                                Number(e.target.value),
+                              )
+                            }
+                            sx={{ width: 100 }}
+                          />
+                          <CustomTextField
+                            label="Text"
+                            value={impactReportForm.population.stat2Text || ""}
+                            onChange={(e) =>
+                              handleSectionChange(
+                                "population",
+                                "stat2Text",
+                                e.target.value,
+                              )
+                            }
+                            fullWidth
+                          />
+                          <Box>
+                            <Typography
+                              variant="caption"
+                              sx={{ display: "block", mb: 0.5 }}
+                            >
+                              Color
+                            </Typography>
+                            <div
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 4,
+                                background:
+                                  impactReportForm.population.stat2Color ||
+                                  COLORS.gogo_pink,
+                                border: "1px solid rgba(255,255,255,0.3)",
+                                cursor: "pointer",
+                              }}
+                              onClick={(e) => {
+                                setPopulationColorPickerField("stat2Color");
+                                setPopulationColorPickerAnchor(e.currentTarget);
+                              }}
                             />
-                            <CustomTextField
-                                label="Text"
-                                value={impactReportForm.population.stat2Text || ""}
-                                onChange={(e) => handleSectionChange("population", "stat2Text", e.target.value)}
-                                fullWidth
-                            />
-                            <Box>
-                                <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>Color</Typography>
-                                <input
-                                  type="color"
-                                  value={toHex(impactReportForm.population.stat2Color || COLORS.gogo_pink)}
-                                  onChange={(e) => handleSectionChange("population", "stat2Color", e.target.value)}
-                                  style={{ width: 40, height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                />
-                            </Box>
+                          </Box>
                         </Box>
                       </Box>
                     </Grid>
 
                     {/* C-GAS */}
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
-                      <Typography variant="h6" sx={{ mb: 2 }}>C-GAS</Typography>
+                      <Divider
+                        sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }}
+                      />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        C-GAS
+                      </Typography>
                       <CustomTextField
                         label="Section Title"
                         value={impactReportForm.population.cgasTitle || ""}
-                        onChange={(e) => handleSectionChange("population", "cgasTitle", e.target.value)}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "cgasTitle",
+                            e.target.value,
+                          )
+                        }
                         fullWidth
                         sx={{ mb: 2 }}
                       />
                       <CustomTextField
                         label="Tooltip Text"
                         value={impactReportForm.population.cgasTooltip || ""}
-                        onChange={(e) => handleSectionChange("population", "cgasTooltip", e.target.value)}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "cgasTooltip",
+                            e.target.value,
+                          )
+                        }
                         fullWidth
                         multiline
                         minRows={2}
                         sx={{ mb: 2 }}
                       />
                       <Grid container spacing={2}>
-                        {impactReportForm.population.cgasStats?.map((stat, idx) => (
+                        {impactReportForm.population.cgasStats?.map(
+                          (stat, idx) => (
                             <Grid item xs={12} md={4} key={idx}>
-                                <Box sx={{ p: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 2 }}>
-                                    <CustomTextField
-                                        label="Value"
-                                        value={stat.value}
-                                        onChange={(e) => {
-                                            const next = [...(impactReportForm.population.cgasStats || [])];
-                                            next[idx] = { ...next[idx], value: e.target.value };
-                                            handleSectionChange("population", "cgasStats", next);
-                                        }}
-                                        fullWidth
-                                        sx={{ mb: 1 }}
-                                    />
-                                    <CustomTextField
-                                        label="Label"
-                                        value={stat.label}
-                                        onChange={(e) => {
-                                            const next = [...(impactReportForm.population.cgasStats || [])];
-                                            next[idx] = { ...next[idx], label: e.target.value };
-                                            handleSectionChange("population", "cgasStats", next);
-                                        }}
-                                        fullWidth
-                                        multiline
-                                        minRows={2}
-                                        sx={{ mb: 1 }}
-                                    />
-                                    <input
-                                      type="color"
-                                      value={toHex(stat.color)}
-                                      onChange={(e) => {
-                                        const next = [...(impactReportForm.population.cgasStats || [])];
-                                        next[idx] = { ...next[idx], color: e.target.value };
-                                        handleSectionChange("population", "cgasStats", next);
-                                      }}
-                                      style={{ width: '100%', height: 30, border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                    />
-                                </Box>
+                              <Box
+                                sx={{
+                                  p: 2,
+                                  border: "1px solid rgba(255,255,255,0.1)",
+                                  borderRadius: 2,
+                                }}
+                              >
+                                <CustomTextField
+                                  label="Value"
+                                  value={stat.value}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...(impactReportForm.population
+                                        .cgasStats || []),
+                                    ];
+                                    next[idx] = {
+                                      ...next[idx],
+                                      value: e.target.value,
+                                    };
+                                    handleSectionChange(
+                                      "population",
+                                      "cgasStats",
+                                      next,
+                                    );
+                                  }}
+                                  fullWidth
+                                  sx={{ mb: 1 }}
+                                />
+                                <CustomTextField
+                                  label="Label"
+                                  value={stat.label}
+                                  onChange={(e) => {
+                                    const next = [
+                                      ...(impactReportForm.population
+                                        .cgasStats || []),
+                                    ];
+                                    next[idx] = {
+                                      ...next[idx],
+                                      label: e.target.value,
+                                    };
+                                    handleSectionChange(
+                                      "population",
+                                      "cgasStats",
+                                      next,
+                                    );
+                                  }}
+                                  fullWidth
+                                  multiline
+                                  minRows={2}
+                                  sx={{ mb: 1 }}
+                                />
+                                <div
+                                  style={{
+                                    width: "100%",
+                                    height: 30,
+                                    borderRadius: 4,
+                                    background: stat.color,
+                                    border: "1px solid rgba(255,255,255,0.3)",
+                                    cursor: "pointer",
+                                  }}
+                                  onClick={(e) => {
+                                    setPopulationCgasStatPickerIndex(idx);
+                                    setPopulationColorPickerAnchor(
+                                      e.currentTarget,
+                                    );
+                                  }}
+                                />
+                              </Box>
                             </Grid>
-                        ))}
+                          ),
+                        )}
                       </Grid>
                     </Grid>
 
                     {/* Skills */}
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
-                      <Typography variant="h6" sx={{ mb: 2 }}>Skills</Typography>
+                      <Divider
+                        sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }}
+                      />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Skills
+                      </Typography>
                       <CustomTextField
                         label="Skills Title"
                         value={impactReportForm.population.skillsTitle || ""}
-                        onChange={(e) => handleSectionChange("population", "skillsTitle", e.target.value)}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "skillsTitle",
+                            e.target.value,
+                          )
+                        }
                         fullWidth
                         sx={{ mb: 2 }}
                       />
                       <CustomTextField
                         label="Skills (Comma Separated)"
-                        value={(impactReportForm.population.skillsList || []).join(", ")}
-                        onChange={(e) => handleSectionChange("population", "skillsList", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                        value={(
+                          impactReportForm.population.skillsList || []
+                        ).join(", ")}
+                        onChange={(e) =>
+                          handleSectionChange(
+                            "population",
+                            "skillsList",
+                            e.target.value
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean),
+                          )
+                        }
                         fullWidth
                         multiline
                         minRows={3}
@@ -5374,48 +5688,195 @@ function ImpactReportCustomizationPage() {
 
                     {/* Background Glows */}
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
-                      <Typography variant="h6" sx={{ mb: 2 }}>Background Glows</Typography>
+                      <Divider
+                        sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }}
+                      />
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Background Glows
+                      </Typography>
                       <Grid container spacing={2}>
-                          <Grid item xs={6} md={3}>
-                              <Typography variant="caption">Blob 1 Inner</Typography>
-                              <input
-                                  type="color"
-                                  value={toHex(impactReportForm.population.blob1ColorA || "#000000")}
-                                  onChange={(e) => handleSectionChange("population", "blob1ColorA", e.target.value)}
-                                  style={{ width: '100%', height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                />
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                              <Typography variant="caption">Blob 1 Outer</Typography>
-                              <input
-                                  type="color"
-                                  value={toHex(impactReportForm.population.blob1ColorB || "#000000")}
-                                  onChange={(e) => handleSectionChange("population", "blob1ColorB", e.target.value)}
-                                  style={{ width: '100%', height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                />
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                              <Typography variant="caption">Blob 2 Inner</Typography>
-                              <input
-                                  type="color"
-                                  value={toHex(impactReportForm.population.blob2ColorA || "#000000")}
-                                  onChange={(e) => handleSectionChange("population", "blob2ColorA", e.target.value)}
-                                  style={{ width: '100%', height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                />
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                              <Typography variant="caption">Blob 2 Outer</Typography>
-                              <input
-                                  type="color"
-                                  value={toHex(impactReportForm.population.blob2ColorB || "#000000")}
-                                  onChange={(e) => handleSectionChange("population", "blob2ColorB", e.target.value)}
-                                  style={{ width: '100%', height: 40, border: 'none', background: 'transparent', cursor: 'pointer' }}
-                                />
-                          </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              display: "block",
+                              mb: 0.5,
+                              color: "rgba(255,255,255,0.7)",
+                            }}
+                          >
+                            Blob 1 Inner
+                          </Typography>
+                          <Button
+                            size="medium"
+                            variant="outlined"
+                            fullWidth
+                            onClick={(e) => {
+                              setPopulationColorPickerField("blob1ColorA");
+                              setPopulationColorPickerAnchor(e.currentTarget);
+                            }}
+                            sx={{
+                              borderColor: "rgba(255,255,255,0.23)",
+                              color: "rgba(255,255,255,0.9)",
+                              justifyContent: "flex-start",
+                              height: 40,
+                              px: 1.5,
+                              "&:hover": {
+                                borderColor: "rgba(255,255,255,0.87)",
+                              },
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: 0.5,
+                                bgcolor:
+                                  impactReportForm.population.blob1ColorA ||
+                                  "#000000",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                mr: 1.5,
+                              }}
+                            />
+                            Pick
+                          </Button>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              display: "block",
+                              mb: 0.5,
+                              color: "rgba(255,255,255,0.7)",
+                            }}
+                          >
+                            Blob 1 Outer
+                          </Typography>
+                          <Button
+                            size="medium"
+                            variant="outlined"
+                            fullWidth
+                            onClick={(e) => {
+                              setPopulationColorPickerField("blob1ColorB");
+                              setPopulationColorPickerAnchor(e.currentTarget);
+                            }}
+                            sx={{
+                              borderColor: "rgba(255,255,255,0.23)",
+                              color: "rgba(255,255,255,0.9)",
+                              justifyContent: "flex-start",
+                              height: 40,
+                              px: 1.5,
+                              "&:hover": {
+                                borderColor: "rgba(255,255,255,0.87)",
+                              },
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: 0.5,
+                                bgcolor:
+                                  impactReportForm.population.blob1ColorB ||
+                                  "#000000",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                mr: 1.5,
+                              }}
+                            />
+                            Pick
+                          </Button>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              display: "block",
+                              mb: 0.5,
+                              color: "rgba(255,255,255,0.7)",
+                            }}
+                          >
+                            Blob 2 Inner
+                          </Typography>
+                          <Button
+                            size="medium"
+                            variant="outlined"
+                            fullWidth
+                            onClick={(e) => {
+                              setPopulationColorPickerField("blob2ColorA");
+                              setPopulationColorPickerAnchor(e.currentTarget);
+                            }}
+                            sx={{
+                              borderColor: "rgba(255,255,255,0.23)",
+                              color: "rgba(255,255,255,0.9)",
+                              justifyContent: "flex-start",
+                              height: 40,
+                              px: 1.5,
+                              "&:hover": {
+                                borderColor: "rgba(255,255,255,0.87)",
+                              },
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: 0.5,
+                                bgcolor:
+                                  impactReportForm.population.blob2ColorA ||
+                                  "#000000",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                mr: 1.5,
+                              }}
+                            />
+                            Pick
+                          </Button>
+                        </Grid>
+                        <Grid item xs={6} md={3}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              display: "block",
+                              mb: 0.5,
+                              color: "rgba(255,255,255,0.7)",
+                            }}
+                          >
+                            Blob 2 Outer
+                          </Typography>
+                          <Button
+                            size="medium"
+                            variant="outlined"
+                            fullWidth
+                            onClick={(e) => {
+                              setPopulationColorPickerField("blob2ColorB");
+                              setPopulationColorPickerAnchor(e.currentTarget);
+                            }}
+                            sx={{
+                              borderColor: "rgba(255,255,255,0.23)",
+                              color: "rgba(255,255,255,0.9)",
+                              justifyContent: "flex-start",
+                              height: 40,
+                              px: 1.5,
+                              "&:hover": {
+                                borderColor: "rgba(255,255,255,0.87)",
+                              },
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: 0.5,
+                                bgcolor:
+                                  impactReportForm.population.blob2ColorB ||
+                                  "#000000",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                mr: 1.5,
+                              }}
+                            />
+                            Pick
+                          </Button>
+                        </Grid>
                       </Grid>
                     </Grid>
-
                   </Grid>
 
                   {/* Shared Color Picker for simple fields */}
@@ -5425,15 +5886,67 @@ function ImpactReportCustomizationPage() {
                     onClose={() => {
                       setPopulationColorPickerAnchor(null);
                       setPopulationColorPickerField(null);
+                      setPopulationDemographicPickerIndex(null);
+                      setPopulationCgasStatPickerIndex(null);
                     }}
                     value={
-                        populationColorPickerField && impactReportForm.population[populationColorPickerField] 
-                        ? (impactReportForm.population[populationColorPickerField] as string)
-                        : "#000000"
+                      populationDemographicPickerIndex !== null &&
+                      impactReportForm.population.demographicsData?.[
+                        populationDemographicPickerIndex
+                      ]
+                        ? impactReportForm.population.demographicsData[
+                            populationDemographicPickerIndex
+                          ].color
+                        : populationCgasStatPickerIndex !== null &&
+                            impactReportForm.population.cgasStats?.[
+                              populationCgasStatPickerIndex
+                            ]
+                          ? impactReportForm.population.cgasStats[
+                              populationCgasStatPickerIndex
+                            ].color
+                          : populationColorPickerField &&
+                              impactReportForm.population[
+                                populationColorPickerField
+                              ]
+                            ? (impactReportForm.population[
+                                populationColorPickerField
+                              ] as string)
+                            : "#000000"
                     }
                     onChange={(val) => {
-                      if (populationColorPickerField) {
-                        handleSectionChange("population", populationColorPickerField, val);
+                      if (populationDemographicPickerIndex !== null) {
+                        const next = [
+                          ...(impactReportForm.population.demographicsData ||
+                            []),
+                        ];
+                        if (next[populationDemographicPickerIndex]) {
+                          next[populationDemographicPickerIndex] = {
+                            ...next[populationDemographicPickerIndex],
+                            color: val,
+                          };
+                          handleSectionChange(
+                            "population",
+                            "demographicsData",
+                            next,
+                          );
+                        }
+                      } else if (populationCgasStatPickerIndex !== null) {
+                        const next = [
+                          ...(impactReportForm.population.cgasStats || []),
+                        ];
+                        if (next[populationCgasStatPickerIndex]) {
+                          next[populationCgasStatPickerIndex] = {
+                            ...next[populationCgasStatPickerIndex],
+                            color: val,
+                          };
+                          handleSectionChange("population", "cgasStats", next);
+                        }
+                      } else if (populationColorPickerField) {
+                        handleSectionChange(
+                          "population",
+                          populationColorPickerField,
+                          val,
+                        );
                       }
                     }}
                     presets={defaultSwatch ?? undefined}
@@ -5441,13 +5954,7 @@ function ImpactReportCustomizationPage() {
                 </Box>
               )}
 
-              {/* Impact Stats Section removed */}
-
-              {/* Programs Section removed */}
-
-              {/* Locations Section removed */}
-
-              {/* Testimonials Section removed */}
+             
             </CustomPaper>
           </Grid>
 

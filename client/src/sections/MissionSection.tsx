@@ -72,7 +72,12 @@ const pulseEqualizer = keyframes`
   }
 `;
 
-const SectionContainer = styled.section<{ $textAlign?: 'left' | 'center' | 'right' }>`
+const SectionContainer = styled.section<{ 
+  $textAlign?: 'left' | 'center' | 'right';
+  $overlayColor1?: string | null;
+  $overlayColor2?: string | null;
+  $overlayOpacity?: number | null;
+}>`
   position: relative;
   padding: 4rem 0; /* inner content controls side spacing */
   background: linear-gradient(180deg, #121212 0%, #0a0a0a 100%);
@@ -93,14 +98,15 @@ const SectionContainer = styled.section<{ $textAlign?: 'left' | 'center' | 'righ
     height: 100%;
     background: radial-gradient(
         circle at 30% 20%,
-        ${COLORS.gogo_blue}08,
+        ${(p) => p.$overlayColor1 ?? `${COLORS.gogo_blue}08`},
         transparent 40%
       ),
       radial-gradient(
         circle at 70% 80%,
-        ${COLORS.gogo_purple}08,
+        ${(p) => p.$overlayColor2 ?? `${COLORS.gogo_purple}08`},
         transparent 40%
       );
+    opacity: ${(p) => p.$overlayOpacity ?? 1};
     z-index: 0;
   }
 
@@ -227,7 +233,7 @@ const AtGlanceLabel = styled.div<{ $color?: string | null }>`
   }
 `;
 
-const StatItem = styled.div`
+const StatItem = styled.div<{ $borderColor?: string }>`
   position: relative;
   background: rgba(25, 25, 25, 0.6);
   border-radius: 12px;
@@ -248,17 +254,11 @@ const StatItem = styled.div`
     left: 0;
     width: 4px;
     height: 100%;
-    background: ${COLORS.gogo_green};
+    background: ${(p) => p.$borderColor || COLORS.gogo_green};
     transition: width 0.3s ease, opacity 0.3s ease;
   }
 
-  &:nth-child(2)::before {
-    background: ${COLORS.gogo_blue};
-  }
-
-  &:nth-child(3)::before {
-    background: ${COLORS.gogo_purple};
-  }
+  /* Removed hardcoded nth-child colors to support customization */
 
   &:hover {
     transform: translateY(-10px);
@@ -500,6 +500,8 @@ function MissionSection(
   const modalGridRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [mission, setMission] = useState<MissionContent | null>(null);
+  const [loading, setLoading] = useState(!previewMode);
+  const [error, setError] = useState(false);
 
   // Reveal immediately; no intersection gating for mission section
   // Kept for potential future hooks but does nothing now
@@ -510,9 +512,17 @@ function MissionSection(
   // Load mission content (or apply preview override)
   useEffect(() => {
     if (!previewMode) {
-      fetchMissionContent().then((data) => setMission(data));
+      fetchMissionContent().then((data) => {
+        if (data) {
+          setMission(data);
+        } else {
+          setError(true);
+        }
+        setLoading(false);
+      });
     } else if (missionOverride) {
       setMission((prev) => ({ ...(prev ?? {}), ...(missionOverride as MissionContent) }));
+      setLoading(false);
     }
   }, [previewMode, missionOverride]);
 
@@ -558,6 +568,19 @@ function MissionSection(
     { name: 'Strings', students: 25, projects: 40 },
   ];
 
+  if (error) {
+    return (
+      <div style={{ padding: '4rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
+        <h3>Failed to load impact report data</h3>
+        <p>Please try refreshing the page.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <></>; // Or a loading spinner
+  }
+
   const missionHidden =
     mission &&
     (((mission as any)?.visible === false) ||
@@ -583,19 +606,8 @@ function MissionSection(
     (mission?.modals ?? undefined)?.find((m) => m?.id === 'disciplines') ?? null;
   const statsSource =
     mission?.stats && mission.stats.length > 0
-      ? mission.stats
-      : [
-          { id: 'students', number: '1622', label: 'Students', color: COLORS.gogo_green, action: 'openStudentMusicModal' },
-          { id: 'mentors', number: '105', label: 'Paid Mentors', color: COLORS.gogo_blue, action: 'openMentorMusicModal' },
-          { id: 'sites', number: '59', label: 'School & Community Sites', color: COLORS.gogo_purple, action: 'openMapModal' },
-          {
-            id: 'disciplines',
-            number: fallbackDisciplinesData.length,
-            label: 'Artistic Disciplines',
-            color: COLORS.gogo_yellow,
-            action: 'openDisciplinesModal'
-          },
-        ];
+      ? mission.stats.filter((s) => s.visible !== false)
+      : []; // No default fallback stats if empty
 
   const getActionForStatId = (id: string) => {
     switch (id) {
@@ -746,6 +758,9 @@ function MissionSection(
     <SectionContainer
       aria-label={mission?.ariaLabel || 'Mission section'}
       $textAlign={textAlign}
+      $overlayColor1={mission?.overlayColor1}
+      $overlayColor2={mission?.overlayColor2}
+      $overlayOpacity={mission?.overlayOpacity}
       data-variant={layoutVariant}
       className={`mission-section${
         animationsEnabled && inView ? ' fade-in' : ''
@@ -865,6 +880,7 @@ function MissionSection(
                 className={
                   animationsEnabled && inView ? 'slide-up' : undefined
                 }
+                $borderColor={stat.color}
                 style={{
                   animationDelay: animationsEnabled ? `${stat.delay}s` : undefined,
                   transitionDelay: animationsEnabled

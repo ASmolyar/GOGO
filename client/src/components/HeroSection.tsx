@@ -794,6 +794,8 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
   // In preview mode, keep the static visuals (including waveform) but skip heavy JS/audio animation
   const disableAnimations = previewMode;
   const [hero, setHero] = useState<HeroContent | null>(null);
+  const [loading, setLoading] = useState(!previewMode);
+  const [error, setError] = useState(false);
   const padConfigMap = useMemo(
     () =>
       PAD_CONFIG.reduce((acc, pad) => {
@@ -1436,9 +1438,17 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
   useEffect(() => {
     // Load hero content unless disabled (admin preview can pass data instead)
     if (!previewMode) {
-      fetchHeroContent().then((data) => setHero(data));
+      fetchHeroContent().then((data) => {
+        if (data) {
+          setHero(data);
+        } else {
+          setError(true);
+        }
+        setLoading(false);
+      });
     } else if (heroOverride) {
       setHero((prev) => ({ ...(prev ?? ({} as HeroContent)), ...(heroOverride as HeroContent) }));
+      setLoading(false);
     }
 
     // Initialize animations for text elements using direct AnimeJS calls
@@ -1785,6 +1795,22 @@ function HeroSection(props: { previewMode?: boolean; heroOverride?: Partial<Hero
     }
     return gradientOk ? (background as string) : undefined;
   })();
+
+  if (error) {
+    return (
+      <HeroContainer $background="#121212" style={{ minHeight: '50vh' }}>
+        <HeroTextBlock>
+          <h2 style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.5rem' }}>
+            Failed to load impact report data
+          </h2>
+        </HeroTextBlock>
+      </HeroContainer>
+    );
+  }
+
+  if (loading) {
+    return <HeroContainer $background="#121212" />;
+  }
 
   return (
     <HeroContainer

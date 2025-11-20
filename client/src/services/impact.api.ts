@@ -53,6 +53,7 @@ export interface MissionStat {
   action?: 'none' | 'openModal';
   modalId?: string | null;
   numberSource?: 'explicit' | 'modalItemsLength';
+  visible?: boolean;
 }
 
 export interface MissionContent {
@@ -102,6 +103,9 @@ export interface MissionContent {
   statsTitle?: string | null;
   statsTitleColor?: string | null;
   stats?: MissionStat[] | null;
+  overlayColor1?: string | null;
+  overlayColor2?: string | null;
+  overlayOpacity?: number | null;
 
   statsEqualizer?: {
     enabled: boolean;
@@ -130,12 +134,18 @@ export interface DemographicItem {
 export interface PopulationContent {
   // Section Header
   sectionBadge?: string;
+  sectionBadgeGradientStart?: string;
+  sectionBadgeGradientEnd?: string;
+  sectionBadgeGradientDegree?: number;
   sectionTitle?: string;
+  sectionTitleUnderlineColor?: string;
   
   // Main Title
   title?: string;
   titleGradientStart?: string;
   titleGradientEnd?: string;
+  titleGradientDegree?: number;
+  titleUnderlineColor?: string; // Animated underline under the main title
   
   // Glow Blobs
   blob1ColorA?: string;

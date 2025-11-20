@@ -438,9 +438,9 @@ const TicketRight = styled.div`
     left: -7px; /* Center on the 2px border */
     width: 12px;
     height: 12px;
-    background-color: #0b0b0f; /* Matches section dark bg */
+    background-color: white;
+    mix-blend-mode: destination-out;
     border-radius: 50%;
-    box-shadow: inset -1px 0 2px rgba(255, 255, 255, 0.05);
     z-index: 3;
   }
 

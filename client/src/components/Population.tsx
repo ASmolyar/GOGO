@@ -91,16 +91,47 @@ const SectionName = styled.h2`
   letter-spacing: 0.02em;
 `;
 
-const SectionDivider = styled.div`
+const SectionDivider = styled.div<{ $color?: string }>`
   height: 2px;
   width: 100%;
   margin: 0.5rem 0 1.25rem 0;
-  background: linear-gradient(
-    90deg,
-    ${COLORS.gogo_blue}66,
-    ${COLORS.gogo_teal}66,
-    transparent 80%
-  );
+  background: ${(p) =>
+    p.$color
+      ? `linear-gradient(90deg, ${p.$color}, transparent 80%)`
+      : `linear-gradient(90deg, ${COLORS.gogo_blue}66, ${COLORS.gogo_teal}66, transparent 80%)`};
+`;
+
+const TitleUnderline = styled.div<{ $color?: string }>`
+  width: 120px;
+  height: 4px;
+  background: ${(p) => p.$color || COLORS.gogo_teal};
+  margin: 1rem auto 2rem;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
 `;
 
 const GlowBlob = styled.div<{
@@ -509,12 +540,20 @@ function PopulationComponent({ inline = false, previewMode = false, populationOv
 
   // --- Data Mapping ---
   const sectionBadge = populationOverride?.sectionBadge ?? "Who We Serve";
+  const sectionBadgeGradient = populationOverride?.sectionBadgeGradientStart && populationOverride?.sectionBadgeGradientEnd
+    ? `linear-gradient(${populationOverride.sectionBadgeGradientDegree ?? 90}deg, ${populationOverride.sectionBadgeGradientStart}, ${populationOverride.sectionBadgeGradientEnd})`
+    : undefined;
+
   const sectionTitle = populationOverride?.sectionTitle ?? "Our Population";
+  const sectionTitleUnderlineColor = populationOverride?.sectionTitleUnderlineColor;
+
   const title = populationOverride?.title ?? "TALENT IS UNIVERSALLY DISTRIBUTED, BUT OPPORTUNITY IS NOT.";
   
   const titleGradient = populationOverride?.titleGradientStart && populationOverride?.titleGradientEnd 
-    ? `linear-gradient(90deg, ${populationOverride.titleGradientStart}, ${populationOverride.titleGradientEnd} 65%)`
+    ? `linear-gradient(${populationOverride.titleGradientDegree ?? 90}deg, ${populationOverride.titleGradientStart}, ${populationOverride.titleGradientEnd} 65%)`
     : undefined;
+  
+  const titleUnderlineColor = populationOverride?.titleUnderlineColor;
 
   const blob1ColorA = populationOverride?.blob1ColorA ?? `${COLORS.gogo_blue}55`;
   const blob1ColorB = populationOverride?.blob1ColorB ?? `${COLORS.gogo_purple}22`;
@@ -598,14 +637,15 @@ function PopulationComponent({ inline = false, previewMode = false, populationOv
             justifyContent: 'center',
           }}
         >
-          <SectionBadge>{sectionBadge}</SectionBadge>
+          <SectionBadge $gradient={sectionBadgeGradient}>{sectionBadge}</SectionBadge>
           <SectionName>{sectionTitle}</SectionName>
         </div>
       </SectionHeaderWrap>
-      <SectionDivider />
+      <SectionDivider $color={sectionTitleUnderlineColor} />
       <Title $gradient={titleGradient} style={{ textAlign: 'center' }}>
         {title}
       </Title>
+      <TitleUnderline $color={titleUnderlineColor} />
       <InfoGrid style={{ justifyItems: 'center', textAlign: 'center' }}>
         <InfoCard>
           <Text $white>
