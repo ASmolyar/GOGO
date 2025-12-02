@@ -23,7 +23,7 @@ import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import MissionStatement from '../components/MissionStatement';
 import COLORS from '../../assets/colors.ts';
-import { fetchMissionContent, type MissionContent } from '../services/impact.api';
+import { fetchMissionContent, fetchNationalImpactContent, fetchHearOurImpactContent, type MissionContent, type NationalImpactContent, type HearOurImpactContent } from '../services/impact.api';
 import EnhancedLeafletMap from '../components/map/EnhancedLeafletMap';
 import { getImpactIconByKey } from '../components/IconSelector';
 
@@ -390,6 +390,7 @@ const ModalHeader = styled.div`
 `;
 
 const ModalSubtitle = styled.p`
+  font-family: 'Century Gothic', 'Arial', sans-serif;
   color: rgba(255, 255, 255, 0.8);
   margin: 8px 0 20px;
 `;
@@ -445,6 +446,7 @@ const ModalIcon = styled.div`
 `;
 
 const ModalName = styled.h3`
+  font-family: 'Century Gothic', 'Arial', sans-serif;
   font-size: 1.05rem;
   color: white;
   margin: 0 0 6px;
@@ -496,6 +498,8 @@ const ShineOverlay = styled.div`
 interface MissionSectionProps {
   /** Data passed directly from parent - used for production */
   missionData?: MissionContent;
+  /** National impact data passed from parent - used for sites count */
+  nationalImpactData?: NationalImpactContent;
   /** Preview mode for admin editor */
   previewMode?: boolean;
   /** Override data for admin preview */
@@ -503,13 +507,18 @@ interface MissionSectionProps {
 }
 
 function MissionSection(props: MissionSectionProps = {}): JSX.Element {
-  const { missionData, previewMode = false, missionOverride } = props;
+  const { missionData, nationalImpactData, previewMode = false, missionOverride } = props;
   const [inView, setInView] = useState(true);
   const [showDisciplines, setShowDisciplines] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [showStudentMusic, setShowStudentMusic] = useState(false);
+  const [showMentorMusic, setShowMentorMusic] = useState(false);
   const modalGridRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const [mission, setMission] = useState<MissionContent | null>(missionData || null);
+  const [nationalImpact, setNationalImpact] = useState<NationalImpactContent | null>(nationalImpactData || null);
+  const [hearOurImpact, setHearOurImpact] = useState<HearOurImpactContent | null>(null);
   const [loading, setLoading] = useState(!previewMode && !missionData);
   const [error, setError] = useState(false);
 
@@ -545,26 +554,36 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
     }
   }, [missionData, previewMode, missionOverride]);
 
-  // Artistic disciplines mapped to vector icons
-  const disciplineNameIcons: Record<string, React.ReactNode> = {
-    "Music Production": <GraphicEqIcon />,
-    Guitar: <MusicNoteIcon />,
-    Drums: <AudiotrackIcon />,
-    Piano: <PianoIcon />,
-    Vocals: <MicIcon />,
-    Bass: <QueueMusicIcon />,
-    DJing: <GraphicEqIcon />,
-    Songwriting: <LibraryMusicIcon />,
-    Dance: <DirectionsRunIcon />,
-    "Visual Art": <BrushIcon />,
-    "Digital Art": <ComputerIcon />,
-    "Spoken Word": <RecordVoiceOverIcon />,
-    Theater: <TheaterComedyIcon />,
-    "Sound Engineering": <EqualizerIcon />,
-    "Brass Instruments": <MusicNoteIcon />,
-    "Woodwind Instruments": <MusicNoteIcon />,
-    Strings: <MusicNoteIcon />,
-  };
+  // Load national impact data for sites count (if not provided)
+  useEffect(() => {
+    if (nationalImpactData) {
+      setNationalImpact(nationalImpactData);
+    } else {
+      // Always fetch if not provided, even in preview mode (for sites count)
+      fetchNationalImpactContent().then((data) => {
+        if (data) {
+          setNationalImpact(data);
+        }
+      });
+    }
+  }, [nationalImpactData]);
+
+  // Compute total map locations count from national impact data
+  const mapLocationsCount = React.useMemo(() => {
+    if (!nationalImpact?.regions) return 0;
+    return nationalImpact.regions.reduce((total, region) => {
+      return total + (region.locations?.length ?? 0);
+    }, 0);
+  }, [nationalImpact]);
+
+  // Load HearOurImpact data for music modals (student/mentor embeds)
+  useEffect(() => {
+    fetchHearOurImpactContent().then((data) => {
+      if (data) {
+        setHearOurImpact(data);
+      }
+    });
+  }, []);
 
   // Fallback disciplines dataset for modal (used if none provided)
   const fallbackDisciplinesData = [
@@ -704,15 +723,20 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
   };
 
   const computedStats = statsSource.map((s, idx) => {
-    const useModalCount = s.numberSource === "modalItemsLength";
-    const displayNumber =
-      useModalCount && disciplinesModal?.items
-        ? disciplinesModal.items.length
-        : (s.number ?? "");
+    // Determine display number based on numberSource
+    let displayNumber: string | number = s.number ?? "";
+    if (s.numberSource === "modalItemsLength" && disciplinesModal?.items) {
+      displayNumber = disciplinesModal.items.length;
+    } else if (s.numberSource === "mapLocationsLength") {
+      displayNumber = mapLocationsCount;
+    }
 
-    // Force action based on ID if not explicitly set to something else
+    // Use action from data if explicitly set, otherwise default based on ID
+    // An explicit "none" means user disabled interactivity, so respect it
     const effectiveAction =
-      s.action && s.action !== "none" ? s.action : getActionForStatId(s.id);
+      s.action !== undefined && s.action !== null
+        ? s.action  // Respect explicit action (including "none")
+        : getActionForStatId(s.id);  // Only default if action is not set at all
 
     return {
       ...s,
@@ -791,6 +815,7 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
 
   return (
     <SectionContainer
+      ref={sectionRef}
       aria-label={mission?.ariaLabel || "Mission section"}
       $textAlign={textAlign}
       $overlayColor1={mission?.overlayColor1}
@@ -836,17 +861,24 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
           statementTitle={mission?.statementTitle ?? null}
           statementTitleColor={mission?.statementTitleColor ?? null}
           statementTextColor={mission?.statementTextColor ?? null}
+          statementTextGradientColor={mission?.statementTextGradientColor ?? null}
           statementMeta={mission?.statementMeta ?? null}
           statementMetaColor={mission?.statementMetaColor ?? null}
+          statementBoxBorderColor={mission?.statementBoxBorderColor ?? null}
+          statementBoxBgColor={mission?.statementBoxBgColor ?? null}
           serial={mission?.serial ?? null}
           serialColor={mission?.serialColor ?? null}
           ticketStripeGradient={mission?.ticketStripeGradient ?? null}
           ticketBorderColor={mission?.ticketBorderColor ?? null}
           ticketBackdropColor={mission?.ticketBackdropColor ?? null}
-          ticketShowBarcode={
-            // Default to showing the barcode unless explicitly disabled
-            mission?.ticketShowBarcode === false ? false : true
-          }
+          ticketBlotch1Color={mission?.ticketBlotch1Color ?? null}
+          ticketBlotch2Color={mission?.ticketBlotch2Color ?? null}
+          ticketShowBarcode={mission?.ticketShowBarcode !== false}
+          barcodeColor={mission?.barcodeColor ?? null}
+          backgroundLogoEnabled={mission?.backgroundLogoEnabled !== false}
+          backgroundLogoOpacity={mission?.backgroundLogoOpacity ?? null}
+          backgroundLogoRotation={mission?.backgroundLogoRotation ?? null}
+          backgroundLogoScale={mission?.backgroundLogoScale ?? null}
         />
 
         <AtGlanceLabel $color={mission?.statsTitleColor}>
@@ -855,9 +887,8 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
 
         <StatsContainer>
           {computedStats.map((stat: any, idx) => {
-            const action: string =
-              stat?.action ||
-              (stat?.id === "disciplines" ? "openDisciplinesModal" : "none");
+            // Use the computed action from stat (already respects toggle settings)
+            const action: string = stat?.action ?? "none";
 
             const isClickable =
               action === "openModal" ||
@@ -874,15 +905,11 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
                 return;
               }
               if (action === "openStudentMusicModal") {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new Event("openStudentMusicModal"));
-                }
+                setShowStudentMusic(true);
                 return;
               }
               if (action === "openMentorMusicModal") {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new Event("openMentorMusicModal"));
-                }
+                setShowMentorMusic(true);
                 return;
               }
               if (action === "scrollToMap") {
@@ -961,6 +988,8 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
         onClose={() => setShowDisciplines(false)}
         fullWidth
         maxWidth="xl"
+        container={previewMode ? sectionRef.current : undefined}
+        disablePortal={previewMode}
         PaperProps={{
           style: {
             background:
@@ -969,7 +998,10 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
             borderRadius: 16,
             boxShadow:
               "0 40px 120px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 60px rgba(123,127,209,0.06)",
-            width: "min(1200px, 92vw)",
+            width: previewMode ? "90%" : "min(1200px, 92vw)",
+            maxWidth: previewMode ? "90%" : undefined,
+            maxHeight: previewMode ? "85%" : undefined,
+            margin: previewMode ? "auto" : undefined,
             position: "relative",
           },
         }}
@@ -977,10 +1009,23 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
           style: {
             backdropFilter: "blur(10px)",
             backgroundColor: "rgba(0,0,0,0.6)",
+            position: previewMode ? "absolute" : undefined,
+            inset: previewMode ? 0 : undefined,
           },
         }}
+        sx={previewMode ? {
+          position: 'absolute',
+          inset: 0,
+          '& .MuiDialog-container': {
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        } : undefined}
       >
-        <DialogTitle sx={{ m: 0, p: 2, color: "white" }}>
+        <DialogTitle sx={{ m: 0, p: 2, color: "white", fontFamily: "'Century Gothic', 'Arial', sans-serif" }}>
           {disciplinesModal?.title ||
             mission?.modalTitle ||
             "Artistic Disciplines"}
@@ -1009,8 +1054,8 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
               ? disciplinesModal.items
               : fallbackDisciplinesData
             ).map((d: any) => {
-              const modalIcon = getIconByKey(d?.iconKey) ||
-                disciplineNameIcons[d.name] || <MusicNoteIcon />;
+              // Purely data-driven: use iconKey from DB, fallback to music note
+              const modalIcon = getIconByKey(d?.iconKey) || <MusicNoteIcon />;
               return (
                 <ModalCard
                   key={`discipline-card-${d.name.replace(/\s+/g, "-")}`}
@@ -1032,20 +1077,39 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
         onClose={() => setShowMap(false)}
         fullWidth
         maxWidth="lg"
+        container={previewMode ? sectionRef.current : undefined}
+        disablePortal={previewMode}
         PaperProps={{
           style: {
             background: "#121212",
             border: "1px solid rgba(255,255,255,0.1)",
             borderRadius: 16,
             overflow: "hidden",
+            width: previewMode ? "90%" : undefined,
+            maxWidth: previewMode ? "90%" : undefined,
+            maxHeight: previewMode ? "85%" : undefined,
+            margin: previewMode ? "auto" : undefined,
           },
         }}
         BackdropProps={{
           style: {
             backdropFilter: "blur(10px)",
             backgroundColor: "rgba(0,0,0,0.6)",
+            position: previewMode ? "absolute" : undefined,
+            inset: previewMode ? 0 : undefined,
           },
         }}
+        sx={previewMode ? {
+          position: 'absolute',
+          inset: 0,
+          '& .MuiDialog-container': {
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        } : undefined}
       >
         <DialogTitle
           sx={{
@@ -1070,6 +1134,152 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
         </DialogTitle>
         <DialogContent sx={{ p: 0, height: "500px" }}>
           <EnhancedLeafletMap />
+        </DialogContent>
+      </Dialog>
+
+      {/* Student Music Modal */}
+      <Dialog
+        open={showStudentMusic}
+        onClose={() => setShowStudentMusic(false)}
+        fullWidth
+        maxWidth="lg"
+        container={previewMode ? sectionRef.current : undefined}
+        disablePortal={previewMode}
+        PaperProps={{
+          style: {
+            background: "linear-gradient(180deg, rgba(22,22,22,0.98), rgba(10,10,10,0.98))",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 16,
+            width: previewMode ? "90%" : undefined,
+            maxWidth: previewMode ? "90%" : undefined,
+            maxHeight: previewMode ? "85%" : undefined,
+            margin: previewMode ? "auto" : undefined,
+          },
+        }}
+        BackdropProps={{
+          style: {
+            backdropFilter: "blur(10px)",
+            backgroundColor: "rgba(0,0,0,0.6)",
+            position: previewMode ? "absolute" : undefined,
+            inset: previewMode ? 0 : undefined,
+          },
+        }}
+        sx={previewMode ? {
+          position: 'absolute',
+          inset: 0,
+          '& .MuiDialog-container': {
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        } : undefined}
+      >
+        <DialogTitle sx={{ m: 0, p: 2, color: "white", fontFamily: "'Century Gothic', 'Arial', sans-serif", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {hearOurImpact?.allSongsModalTitle || "Student Music"}
+          <IconButton
+            aria-label="close"
+            onClick={() => setShowStudentMusic(false)}
+            sx={{ color: "rgba(255,255,255,0.6)" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ bgcolor: 'transparent' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+            {(hearOurImpact?.allSongsEmbeds || []).map((embed) => (
+              <div key={embed.id} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <iframe
+                  src={embed.url}
+                  width="100%"
+                  height="152"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  style={{ borderRadius: 8 }}
+                />
+              </div>
+            ))}
+            {(!hearOurImpact?.allSongsEmbeds || hearOurImpact.allSongsEmbeds.length === 0) && (
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: "'Century Gothic', 'Arial', sans-serif", gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
+                No student music embeds configured. Add them in the "Hear Our Impact" section.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mentor Music Modal */}
+      <Dialog
+        open={showMentorMusic}
+        onClose={() => setShowMentorMusic(false)}
+        fullWidth
+        maxWidth="lg"
+        container={previewMode ? sectionRef.current : undefined}
+        disablePortal={previewMode}
+        PaperProps={{
+          style: {
+            background: "linear-gradient(180deg, rgba(22,22,22,0.98), rgba(10,10,10,0.98))",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 16,
+            width: previewMode ? "90%" : undefined,
+            maxWidth: previewMode ? "90%" : undefined,
+            maxHeight: previewMode ? "85%" : undefined,
+            margin: previewMode ? "auto" : undefined,
+          },
+        }}
+        BackdropProps={{
+          style: {
+            backdropFilter: "blur(10px)",
+            backgroundColor: "rgba(0,0,0,0.6)",
+            position: previewMode ? "absolute" : undefined,
+            inset: previewMode ? 0 : undefined,
+          },
+        }}
+        sx={previewMode ? {
+          position: 'absolute',
+          inset: 0,
+          '& .MuiDialog-container': {
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        } : undefined}
+      >
+        <DialogTitle sx={{ m: 0, p: 2, color: "white", fontFamily: "'Century Gothic', 'Arial', sans-serif", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {hearOurImpact?.mentorProfilesModalTitle || "Mentor Profiles"}
+          <IconButton
+            aria-label="close"
+            onClick={() => setShowMentorMusic(false)}
+            sx={{ color: "rgba(255,255,255,0.6)" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ bgcolor: 'transparent' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+            {(hearOurImpact?.mentorProfileEmbeds || []).map((embed) => (
+              <div key={embed.id} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <iframe
+                  src={embed.url}
+                  width="100%"
+                  height="152"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  style={{ borderRadius: 8 }}
+                />
+              </div>
+            ))}
+            {(!hearOurImpact?.mentorProfileEmbeds || hearOurImpact.mentorProfileEmbeds.length === 0) && (
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontFamily: "'Century Gothic', 'Arial', sans-serif", gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
+                No mentor profile embeds configured. Add them in the "Hear Our Impact" section.
+              </p>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

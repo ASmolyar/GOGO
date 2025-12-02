@@ -254,8 +254,10 @@ export interface GradientEditorProps {
   onChange: (gradient: string) => void;
   /** Callback to open color picker for a specific color index */
   onPickColor: (anchorEl: HTMLElement, colorIndex: number) => void;
-  /** Default gradient if value is null/undefined */
+  /** Default gradient if value is null/undefined - deprecated, should not use defaults */
   defaultGradient?: string;
+  /** Whether this field is missing a value (for red highlighting) */
+  isMissing?: boolean;
 }
 
 export function GradientEditor({
@@ -263,17 +265,23 @@ export function GradientEditor({
   value,
   onChange,
   onPickColor,
-  defaultGradient = `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_purple})`,
+  defaultGradient = "",
+  isMissing = false,
 }: GradientEditorProps) {
   // Parse the gradient string
-  const parsed = useMemo(() => parseGradientString(value ?? defaultGradient), [value, defaultGradient]);
-  
+  const parsed = useMemo(
+    () => parseGradientString(value ?? defaultGradient),
+    [value, defaultGradient],
+  );
+
   // Local state for editing
   const [gradientType, setGradientType] = useState<GradientType>(parsed.type);
   const [degree, setDegree] = useState(parsed.degree);
   const [colors, setColors] = useState<string[]>(parsed.colors);
   const [opacity, setOpacity] = useState(parsed.opacity);
-  const [hasThreeColors, setHasThreeColors] = useState(parsed.colors.length >= 3);
+  const [hasThreeColors, setHasThreeColors] = useState(
+    parsed.colors.length >= 3,
+  );
 
   // Sync local state when value changes externally
   useEffect(() => {
@@ -321,7 +329,7 @@ export function GradientEditor({
   const handleToggleThreeColors = () => {
     const newHasThree = !hasThreeColors;
     setHasThreeColors(newHasThree);
-    
+
     let newColors: string[];
     if (newHasThree) {
       // Add a third color
@@ -334,28 +342,61 @@ export function GradientEditor({
     emitChange(gradientType, degree, newColors, opacity);
   };
 
-  const previewBackground = composeGradient(gradientType, degree, colors, opacity);
+  const previewBackground = composeGradient(
+    gradientType,
+    degree,
+    colors,
+    opacity,
+  );
+  const isEmpty = !value || value.trim() === "";
+  const showMissingStyle = isMissing || isEmpty;
 
   return (
-    <Box sx={{ mt: 2, mb: 2 }}>
-      <Typography variant="subtitle1" gutterBottom sx={{ color: 'rgba(255,255,255,0.9)' }}>
-        {label}
+    <Box
+      sx={{
+        mt: 2,
+        mb: 2,
+        p: showMissingStyle ? 1.5 : 0,
+        borderRadius: 1,
+        border: showMissingStyle ? "1px solid rgba(244, 67, 54, 0.5)" : "none",
+        bgcolor: showMissingStyle ? "rgba(244, 67, 54, 0.05)" : "transparent",
+      }}
+    >
+      <Typography
+        variant="subtitle1"
+        gutterBottom
+        sx={{
+          color: showMissingStyle
+            ? "rgba(244, 67, 54, 0.9)"
+            : "rgba(255,255,255,0.9)",
+        }}
+      >
+        {label}{" "}
+        {showMissingStyle && (
+          <span style={{ fontSize: "0.8em" }}>(not set)</span>
+        )}
       </Typography>
-      
+
       <Grid container spacing={2} alignItems="flex-start">
         {/* Type selector and degree */}
         <Grid item xs={12} md={4}>
           <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Type</InputLabel>
+            <InputLabel sx={{ color: "rgba(255,255,255,0.7)" }}>
+              Type
+            </InputLabel>
             <Select
               value={gradientType}
               label="Type"
               onChange={(e) => handleTypeChange(e.target.value as GradientType)}
               sx={{
-                color: 'white',
-                '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.3)' },
-                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.5)' },
-                '.MuiSvgIcon-root': { color: 'white' },
+                color: "white",
+                ".MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255,255,255,0.3)",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255,255,255,0.5)",
+                },
+                ".MuiSvgIcon-root": { color: "white" },
               }}
             >
               <MenuItem value="linear">Linear</MenuItem>
@@ -363,21 +404,32 @@ export function GradientEditor({
               <MenuItem value="conic">Conic</MenuItem>
             </Select>
           </FormControl>
-          
-          {(gradientType === 'linear' || gradientType === 'conic') && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+
+          {(gradientType === "linear" || gradientType === "conic") && (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
               <Typography variant="caption" color="rgba(255,255,255,0.7)">
-                {gradientType === 'conic' ? 'Start Angle' : 'Degree'}
+                {gradientType === "conic" ? "Start Angle" : "Degree"}
               </Typography>
               <Typography variant="body2">{degree}°</Typography>
-              <DegreePicker value={degree} onChange={handleDegreeChange} size={120} />
+              <DegreePicker
+                value={degree}
+                onChange={handleDegreeChange}
+                size={120}
+              />
             </Box>
           )}
         </Grid>
 
         {/* Color pickers */}
         <Grid item xs={12} md={4}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             <Box>
               <Typography variant="caption" color="rgba(255,255,255,0.7)">
                 Color 1
@@ -389,21 +441,21 @@ export function GradientEditor({
                   mt: 0.5,
                   minWidth: 48,
                   px: 1,
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.9)',
-                  display: 'flex',
-                  alignItems: 'center',
+                  borderColor: "rgba(255,255,255,0.3)",
+                  color: "rgba(255,255,255,0.9)",
+                  display: "flex",
+                  alignItems: "center",
                   gap: 1,
                 }}
               >
                 <span
                   style={{
-                    display: 'inline-block',
+                    display: "inline-block",
                     width: 18,
                     height: 18,
                     borderRadius: 3,
                     background: colors[0] ?? COLORS.gogo_blue,
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    border: "1px solid rgba(255,255,255,0.2)",
                   }}
                 />
                 Pick
@@ -420,21 +472,21 @@ export function GradientEditor({
                   mt: 0.5,
                   minWidth: 48,
                   px: 1,
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.9)',
-                  display: 'flex',
-                  alignItems: 'center',
+                  borderColor: "rgba(255,255,255,0.3)",
+                  color: "rgba(255,255,255,0.9)",
+                  display: "flex",
+                  alignItems: "center",
                   gap: 1,
                 }}
               >
                 <span
                   style={{
-                    display: 'inline-block',
+                    display: "inline-block",
                     width: 18,
                     height: 18,
                     borderRadius: 3,
                     background: colors[1] ?? COLORS.gogo_purple,
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    border: "1px solid rgba(255,255,255,0.2)",
                   }}
                 />
                 Pick
@@ -452,21 +504,21 @@ export function GradientEditor({
                     mt: 0.5,
                     minWidth: 48,
                     px: 1,
-                    borderColor: 'rgba(255,255,255,0.3)',
-                    color: 'rgba(255,255,255,0.9)',
-                    display: 'flex',
-                    alignItems: 'center',
+                    borderColor: "rgba(255,255,255,0.3)",
+                    color: "rgba(255,255,255,0.9)",
+                    display: "flex",
+                    alignItems: "center",
                     gap: 1,
                   }}
                 >
                   <span
                     style={{
-                      display: 'inline-block',
+                      display: "inline-block",
                       width: 18,
                       height: 18,
                       borderRadius: 3,
                       background: colors[2] ?? COLORS.gogo_purple,
-                      border: '1px solid rgba(255,255,255,0.2)',
+                      border: "1px solid rgba(255,255,255,0.2)",
                     }}
                   />
                   Pick
@@ -477,11 +529,16 @@ export function GradientEditor({
               size="small"
               variant="text"
               onClick={handleToggleThreeColors}
-              sx={{ color: 'rgba(255,255,255,0.7)', textTransform: 'none', justifyContent: 'flex-start', px: 0 }}
+              sx={{
+                color: "rgba(255,255,255,0.7)",
+                textTransform: "none",
+                justifyContent: "flex-start",
+                px: 0,
+              }}
             >
-              {hasThreeColors ? '− Remove 3rd color' : '+ Add 3rd color'}
+              {hasThreeColors ? "− Remove 3rd color" : "+ Add 3rd color"}
             </Button>
-            
+
             {/* Opacity slider */}
             <Box sx={{ mt: 2 }}>
               <Typography variant="caption" color="rgba(255,255,255,0.7)">
@@ -496,17 +553,17 @@ export function GradientEditor({
                 size="small"
                 sx={{
                   color: COLORS.gogo_blue,
-                  '& .MuiSlider-thumb': {
+                  "& .MuiSlider-thumb": {
                     width: 14,
                     height: 14,
-                    backgroundColor: 'white',
+                    backgroundColor: "white",
                     border: `2px solid ${COLORS.gogo_blue}`,
                   },
-                  '& .MuiSlider-track': {
+                  "& .MuiSlider-track": {
                     backgroundColor: COLORS.gogo_blue,
                   },
-                  '& .MuiSlider-rail': {
-                    backgroundColor: 'rgba(255,255,255,0.3)',
+                  "& .MuiSlider-rail": {
+                    backgroundColor: "rgba(255,255,255,0.3)",
                   },
                 }}
               />
@@ -516,7 +573,11 @@ export function GradientEditor({
 
         {/* Preview */}
         <Grid item xs={12} md={4}>
-          <Typography variant="caption" color="rgba(255,255,255,0.7)" sx={{ mb: 0.5, display: 'block' }}>
+          <Typography
+            variant="caption"
+            color="rgba(255,255,255,0.7)"
+            sx={{ mb: 0.5, display: "block" }}
+          >
             Preview
           </Typography>
           <Box
@@ -524,21 +585,21 @@ export function GradientEditor({
               width: 140,
               height: 140,
               borderRadius: 1,
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: "1px solid rgba(255,255,255,0.1)",
               // Checkerboard pattern for transparency
               background: `linear-gradient(45deg, #808080 25%, transparent 25%), 
                            linear-gradient(-45deg, #808080 25%, transparent 25%), 
                            linear-gradient(45deg, transparent 75%, #808080 75%), 
                            linear-gradient(-45deg, transparent 75%, #808080 75%)`,
-              backgroundSize: '16px 16px',
-              backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
-              position: 'relative',
-              overflow: 'hidden',
+              backgroundSize: "16px 16px",
+              backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
             <Box
               sx={{
-                position: 'absolute',
+                position: "absolute",
                 inset: 0,
                 background: previewBackground,
               }}

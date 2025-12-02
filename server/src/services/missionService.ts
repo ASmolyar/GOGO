@@ -62,7 +62,14 @@ export interface MissionContent {
   ticketStripeGradient?: string | null;
   ticketBorderColor?: string | null;
   ticketBackdropColor?: string | null;
+  ticketBlotch1Color?: string | null;
+  ticketBlotch2Color?: string | null;
   ticketShowBarcode?: boolean | null;
+  barcodeColor?: string | null;
+
+  statementBoxBorderColor?: string | null;
+  statementBoxBgColor?: string | null;
+  statementTextGradientColor?: string | null;
 
   backgroundLogo?: {
     enabled: boolean;
@@ -71,6 +78,12 @@ export interface MissionContent {
     rotationDeg?: number;
     scale?: number;
   } | null;
+
+  // Individual background logo properties (alternative to nested object)
+  backgroundLogoEnabled?: boolean | null;
+  backgroundLogoOpacity?: number | null;
+  backgroundLogoRotation?: number | null;
+  backgroundLogoScale?: number | null;
 
   statsTitle?: string | null;
   statsTitleColor?: string | null;

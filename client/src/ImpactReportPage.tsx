@@ -62,7 +62,7 @@ let hasShownIntroInThisTab = false;
 // Styled components for Spotify-like footer
 const SpotifyFooter = styled.footer`
   background: #121212;
-  padding: 5rem 0 2rem;
+  padding: 0;
   position: relative;
   overflow: hidden;
 `;
@@ -196,23 +196,6 @@ const FooterLegal = styled.div`
   a {
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.5);
-    text-decoration: none;
-
-    &:hover {
-      color: white;
-    }
-  }
-`;
-
-const SpotifyCredit = styled.div`
-  width: 100%;
-  text-align: center;
-  margin-top: 2rem;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.3);
-
-  a {
-    color: rgba(255, 255, 255, 0.4);
     text-decoration: none;
 
     &:hover {
@@ -595,7 +578,7 @@ function ImpactReportPage() {
       {!introComplete && <IntroOverlay onFinish={handleIntroFinish} isLoading={loading} />}
       <div className="spotify-gradient-background" />
       <Header />
-      <div className="main-content" style={{ paddingBottom: "120px" }}>
+      <div className="main-content" style={{ paddingBottom: 0 }}>
         {reportData && (
           <>
             {/* Sticky scroll container for hero and following sections */}
@@ -792,10 +775,6 @@ function ImpactReportPage() {
             <a href="/terms">Terms of Use</a>
             <a href="/accessibility">Accessibility</a>
           </FooterLegal>
-          <SpotifyCredit>
-            Design inspired by Spotify. Guitars Over Guns is not affiliated with
-            Spotify.
-          </SpotifyCredit>
         </FooterBottom>
       </SpotifyFooter>
       {/* Music player removed */}

@@ -69,9 +69,9 @@ const Header = styled.div`
 const Title = styled.h2`
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.05em;
   margin-bottom: 1.5rem;
-  font-family: 'Century Gothic', 'Arial', sans-serif;
+  font-family: 'Airwaves', 'Century Gothic', 'Arial', sans-serif;
   background: linear-gradient(
     135deg,
     #ffffff 0%,

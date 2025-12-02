@@ -3,8 +3,7 @@ import { Grid, Box, Typography, Button, Divider } from '@mui/material';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { CustomTextField } from '../styles';
 import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
-import { PopulationContent } from '../../services/impact.api';
-import COLORS from '../../../assets/colors';
+import { PopulationContent } from "../../services/impact.api";
 
 // Gradient keys for population section
 type PopulationGradientKey = 'sectionBadgeGradient' | 'titleGradient' | 'containerBgGradient';
@@ -25,42 +24,72 @@ export function PopulationTabEditor({
   const [populationColorPickerField, setPopulationColorPickerField] = useState<
     keyof PopulationContent | null
   >(null);
-  const [populationDemographicPickerIndex, setPopulationDemographicPickerIndex] = useState<
-    number | null
-  >(null);
-  const [populationCgasStatPickerIndex, setPopulationCgasStatPickerIndex] = useState<
-    number | null
-  >(null);
-  
+  const [
+    populationDemographicPickerIndex,
+    setPopulationDemographicPickerIndex,
+  ] = useState<number | null>(null);
+  const [populationCgasStatPickerIndex, setPopulationCgasStatPickerIndex] =
+    useState<number | null>(null);
+
   // State for gradient color picker
-  const [gradientPickerAnchor, setGradientPickerAnchor] = useState<HTMLElement | null>(null);
-  const [gradientPickerKey, setGradientPickerKey] = useState<PopulationGradientKey | null>(null);
-  const [gradientPickerColorIndex, setGradientPickerColorIndex] = useState<number>(0);
+  const [gradientPickerAnchor, setGradientPickerAnchor] =
+    useState<HTMLElement | null>(null);
+  const [gradientPickerKey, setGradientPickerKey] =
+    useState<PopulationGradientKey | null>(null);
+  const [gradientPickerColorIndex, setGradientPickerColorIndex] =
+    useState<number>(0);
   const gradientPickerOpen = Boolean(gradientPickerAnchor);
 
-  // Get default gradients - use full string if available, otherwise compose from legacy fields
+  // Helper to check if a gradient is missing
+  const isGradientMissing = (value: string | null | undefined): boolean =>
+    !value || value.trim() === "";
+
+  // Helper to check if a color field is missing (null, undefined, or empty string)
+  const isColorMissing = (value: string | null | undefined): boolean =>
+    !value || value.trim() === "";
+
+  // Style for buttons with missing values
+  const missingFieldStyle = {
+    borderColor: "rgba(244, 67, 54, 0.7)",
+    color: "rgba(244, 67, 54, 0.9)",
+    "&:hover": { borderColor: "#f44336" },
+  };
+
+  const normalFieldStyle = {
+    borderColor: "rgba(255,255,255,0.3)",
+    color: "rgba(255,255,255,0.9)",
+  };
+
+  const getColorButtonStyle = (value: string | null | undefined) =>
+    isColorMissing(value) ? missingFieldStyle : normalFieldStyle;
+
+  // Get gradient values - only returns what's in the database (no defaults)
   const getDefaultGradient = (key: PopulationGradientKey): string => {
     switch (key) {
-      case 'sectionBadgeGradient':
-        return population.sectionBadgeGradient || `linear-gradient(${population.sectionBadgeGradientDegree ?? 90}deg, ${population.sectionBadgeGradientStart || COLORS.gogo_blue}, ${population.sectionBadgeGradientEnd || COLORS.gogo_teal})`;
-      case 'titleGradient':
-        return population.titleGradient || `linear-gradient(${population.titleGradientDegree ?? 90}deg, ${population.titleGradientStart || '#ffffff'}, ${population.titleGradientEnd || COLORS.gogo_teal})`;
-      case 'containerBgGradient':
-        return population.containerBgGradient || `linear-gradient(${population.containerBgGradientDegree ?? 180}deg, ${population.containerBgGradientStart || '#171717'}, ${population.containerBgGradientEnd || '#0f0f0f'})`;
+      case "sectionBadgeGradient":
+        return population.sectionBadgeGradient || "";
+      case "titleGradient":
+        return population.titleGradient || "";
+      case "containerBgGradient":
+        return population.containerBgGradient || "";
       default:
-        return `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_purple})`;
+        return "";
     }
   };
 
   // Get current gradient color for the picker
   const getGradientPickerColor = (): string => {
-    if (!gradientPickerKey) return '#000000';
+    if (!gradientPickerKey) return "";
     const gradient = getDefaultGradient(gradientPickerKey);
     const parsed = parseGradientString(gradient);
-    return parsed.colors[gradientPickerColorIndex] || '#000000';
+    return parsed.colors[gradientPickerColorIndex] || "";
   };
 
-  const openGradientPicker = (el: HTMLElement, key: PopulationGradientKey, colorIndex: number) => {
+  const openGradientPicker = (
+    el: HTMLElement,
+    key: PopulationGradientKey,
+    colorIndex: number,
+  ) => {
     setGradientPickerKey(key);
     setGradientPickerColorIndex(colorIndex);
     setGradientPickerAnchor(el);
@@ -86,18 +115,21 @@ export function PopulationTabEditor({
       populationDemographicPickerIndex !== null &&
       population.demographicsData?.[populationDemographicPickerIndex]
     ) {
-      return population.demographicsData[populationDemographicPickerIndex].color;
+      return (
+        population.demographicsData[populationDemographicPickerIndex].color ||
+        ""
+      );
     }
     if (
       populationCgasStatPickerIndex !== null &&
       population.cgasStats?.[populationCgasStatPickerIndex]
     ) {
-      return population.cgasStats[populationCgasStatPickerIndex].color;
+      return population.cgasStats[populationCgasStatPickerIndex].color || "";
     }
-    if (populationColorPickerField && population[populationColorPickerField]) {
-      return population[populationColorPickerField] as string;
+    if (populationColorPickerField) {
+      return (population[populationColorPickerField] as string) || "";
     }
-    return '#000000';
+    return "";
   };
 
   const handlePickerChange = (val: string) => {
@@ -108,7 +140,7 @@ export function PopulationTabEditor({
           ...next[populationDemographicPickerIndex],
           color: val,
         };
-        onPopulationChange('demographicsData', next);
+        onPopulationChange("demographicsData", next);
       }
     } else if (populationCgasStatPickerIndex !== null) {
       const next = [...(population.cgasStats || [])];
@@ -117,7 +149,7 @@ export function PopulationTabEditor({
           ...next[populationCgasStatPickerIndex],
           color: val,
         };
-        onPopulationChange('cgasStats', next);
+        onPopulationChange("cgasStats", next);
       }
     } else if (populationColorPickerField) {
       onPopulationChange(populationColorPickerField, val);
@@ -128,9 +160,9 @@ export function PopulationTabEditor({
     <Box>
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
         }}
       >
@@ -143,40 +175,44 @@ export function PopulationTabEditor({
           Population Section
         </Typography>
       </Box>
-      <Divider sx={{ mb: 3, bgcolor: 'rgba(255,255,255,0.1)' }} />
+      <Divider sx={{ mb: 3, bgcolor: "rgba(255,255,255,0.1)" }} />
 
       <Grid container spacing={{ xs: 2, md: 3 }}>
         {/* Section Header */}
         <Grid item xs={12}>
           <CustomTextField
             label="Badge Label"
-            value={population.sectionBadge || ''}
-            onChange={(e) => onPopulationChange('sectionBadge', e.target.value)}
+            value={population.sectionBadge || ""}
+            onChange={(e) => onPopulationChange("sectionBadge", e.target.value)}
             fullWidth
           />
           <Box sx={{ mt: 3 }}>
             <GradientEditor
               label="Badge Gradient"
-              value={getDefaultGradient('sectionBadgeGradient')}
-              onChange={(gradient) => onPopulationChange('sectionBadgeGradient', gradient)}
-              onPickColor={(el, colorIndex) => openGradientPicker(el, 'sectionBadgeGradient', colorIndex)}
+              value={getDefaultGradient("sectionBadgeGradient")}
+              onChange={(gradient) =>
+                onPopulationChange("sectionBadgeGradient", gradient)
+              }
+              onPickColor={(el, colorIndex) =>
+                openGradientPicker(el, "sectionBadgeGradient", colorIndex)
+              }
             />
           </Box>
         </Grid>
         <Grid item xs={12}>
           <CustomTextField
             label="Section Title"
-            value={population.sectionTitle || ''}
-            onChange={(e) => onPopulationChange('sectionTitle', e.target.value)}
+            value={population.sectionTitle || ""}
+            onChange={(e) => onPopulationChange("sectionTitle", e.target.value)}
             fullWidth
           />
           <Box sx={{ mt: 2 }}>
             <Typography
               variant="caption"
               sx={{
-                color: 'rgba(255,255,255,0.7)',
+                color: "rgba(255,255,255,0.7)",
                 mb: 1,
-                display: 'block',
+                display: "block",
               }}
             >
               Horizontal Line Color
@@ -184,17 +220,16 @@ export function PopulationTabEditor({
             <Button
               variant="outlined"
               onClick={(e) => {
-                setPopulationColorPickerField('sectionTitleUnderlineColor');
+                setPopulationColorPickerField("sectionTitleUnderlineColor");
                 setPopulationColorPickerAnchor(e.currentTarget);
               }}
               sx={{
-                borderColor: 'rgba(255,255,255,0.3)',
-                color: 'rgba(255,255,255,0.9)',
-                display: 'flex',
-                alignItems: 'center',
+                ...getColorButtonStyle(population.sectionTitleUnderlineColor),
+                display: "flex",
+                alignItems: "center",
                 gap: 1,
-                width: '100%',
-                justifyContent: 'flex-start',
+                width: "100%",
+                justifyContent: "flex-start",
               }}
             >
               <span
@@ -202,8 +237,9 @@ export function PopulationTabEditor({
                   width: 20,
                   height: 20,
                   borderRadius: 4,
-                  background: population.sectionTitleUnderlineColor || COLORS.gogo_blue,
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  background:
+                    population.sectionTitleUnderlineColor || "transparent",
+                  border: "1px solid rgba(255,255,255,0.3)",
                   marginRight: 8,
                 }}
               />
@@ -216,26 +252,30 @@ export function PopulationTabEditor({
         <Grid item xs={12}>
           <CustomTextField
             label="Main Title"
-            value={population.title || ''}
-            onChange={(e) => onPopulationChange('title', e.target.value)}
+            value={population.title || ""}
+            onChange={(e) => onPopulationChange("title", e.target.value)}
             fullWidth
             multiline
           />
           <Box sx={{ mt: 3 }}>
             <GradientEditor
               label="Title Gradient"
-              value={getDefaultGradient('titleGradient')}
-              onChange={(gradient) => onPopulationChange('titleGradient', gradient)}
-              onPickColor={(el, colorIndex) => openGradientPicker(el, 'titleGradient', colorIndex)}
+              value={getDefaultGradient("titleGradient")}
+              onChange={(gradient) =>
+                onPopulationChange("titleGradient", gradient)
+              }
+              onPickColor={(el, colorIndex) =>
+                openGradientPicker(el, "titleGradient", colorIndex)
+              }
             />
           </Box>
           <Box sx={{ mt: 3 }}>
             <Typography
               variant="caption"
               sx={{
-                color: 'rgba(255,255,255,0.7)',
+                color: "rgba(255,255,255,0.7)",
                 mb: 1,
-                display: 'block',
+                display: "block",
               }}
             >
               Animated Underline Color
@@ -243,17 +283,16 @@ export function PopulationTabEditor({
             <Button
               variant="outlined"
               onClick={(e) => {
-                setPopulationColorPickerField('titleUnderlineColor');
+                setPopulationColorPickerField("titleUnderlineColor");
                 setPopulationColorPickerAnchor(e.currentTarget);
               }}
               sx={{
-                borderColor: 'rgba(255,255,255,0.3)',
-                color: 'rgba(255,255,255,0.9)',
-                display: 'flex',
-                alignItems: 'center',
+                ...getColorButtonStyle(population.titleUnderlineColor),
+                display: "flex",
+                alignItems: "center",
                 gap: 1,
-                width: '100%',
-                justifyContent: 'flex-start',
+                width: "100%",
+                justifyContent: "flex-start",
               }}
             >
               <span
@@ -261,8 +300,8 @@ export function PopulationTabEditor({
                   width: 20,
                   height: 20,
                   borderRadius: 4,
-                  background: population.titleUnderlineColor || COLORS.gogo_teal,
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  background: population.titleUnderlineColor || "transparent",
+                  border: "1px solid rgba(255,255,255,0.3)",
                   marginRight: 8,
                 }}
               />
@@ -275,8 +314,10 @@ export function PopulationTabEditor({
         <Grid item xs={12}>
           <CustomTextField
             label="Info Card 1 Text"
-            value={population.infoCard1Text || ''}
-            onChange={(e) => onPopulationChange('infoCard1Text', e.target.value)}
+            value={population.infoCard1Text || ""}
+            onChange={(e) =>
+              onPopulationChange("infoCard1Text", e.target.value)
+            }
             fullWidth
             multiline
             minRows={3}
@@ -285,8 +326,10 @@ export function PopulationTabEditor({
         <Grid item xs={12}>
           <CustomTextField
             label="Info Card 2 Text"
-            value={population.infoCard2Text || ''}
-            onChange={(e) => onPopulationChange('infoCard2Text', e.target.value)}
+            value={population.infoCard2Text || ""}
+            onChange={(e) =>
+              onPopulationChange("infoCard2Text", e.target.value)
+            }
             fullWidth
             multiline
             minRows={3}
@@ -295,14 +338,16 @@ export function PopulationTabEditor({
 
         {/* Demographics */}
         <Grid item xs={12}>
-          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
           <Typography variant="h6" sx={{ mb: 2 }}>
             Demographics
           </Typography>
           <CustomTextField
             label="Chart Title"
-            value={population.demographicsTitle || 'Student Demographics'}
-            onChange={(e) => onPopulationChange('demographicsTitle', e.target.value)}
+            value={population.demographicsTitle || ""}
+            onChange={(e) =>
+              onPopulationChange("demographicsTitle", e.target.value)
+            }
             fullWidth
             sx={{ mb: 2 }}
           />
@@ -311,9 +356,9 @@ export function PopulationTabEditor({
               key={idx}
               sx={{
                 mb: 2,
-                display: 'flex',
+                display: "flex",
                 gap: 2,
-                alignItems: 'center',
+                alignItems: "center",
               }}
             >
               <CustomTextField
@@ -326,7 +371,7 @@ export function PopulationTabEditor({
                     label: e.target.value,
                     id: e.target.value,
                   };
-                  onPopulationChange('demographicsData', next);
+                  onPopulationChange("demographicsData", next);
                 }}
                 sx={{ flex: 1 }}
               />
@@ -340,7 +385,7 @@ export function PopulationTabEditor({
                     ...next[idx],
                     value: Number(e.target.value),
                   };
-                  onPopulationChange('demographicsData', next);
+                  onPopulationChange("demographicsData", next);
                 }}
                 sx={{ width: 100 }}
               />
@@ -350,8 +395,8 @@ export function PopulationTabEditor({
                   height: 40,
                   borderRadius: 4,
                   background: demo.color,
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  cursor: 'pointer',
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  cursor: "pointer",
                   flexShrink: 0,
                 }}
                 onClick={(e) => {
@@ -363,15 +408,17 @@ export function PopulationTabEditor({
           ))}
           <CustomTextField
             label="Caption"
-            value={population.demographicsCaption || ''}
-            onChange={(e) => onPopulationChange('demographicsCaption', e.target.value)}
+            value={population.demographicsCaption || ""}
+            onChange={(e) =>
+              onPopulationChange("demographicsCaption", e.target.value)
+            }
             fullWidth
           />
         </Grid>
 
         {/* Stats */}
         <Grid item xs={12}>
-          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
           <Typography variant="h6" sx={{ mb: 2 }}>
             Impact Stats
           </Typography>
@@ -379,22 +426,29 @@ export function PopulationTabEditor({
             <Typography variant="subtitle2" gutterBottom>
               Stat 1
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: "flex", gap: 2 }}>
               <CustomTextField
                 label="Percent"
                 type="number"
                 value={population.stat1Percent || 0}
-                onChange={(e) => onPopulationChange('stat1Percent', Number(e.target.value))}
+                onChange={(e) =>
+                  onPopulationChange("stat1Percent", Number(e.target.value))
+                }
                 sx={{ width: 100 }}
               />
               <CustomTextField
                 label="Text"
-                value={population.stat1Text || ''}
-                onChange={(e) => onPopulationChange('stat1Text', e.target.value)}
+                value={population.stat1Text || ""}
+                onChange={(e) =>
+                  onPopulationChange("stat1Text", e.target.value)
+                }
                 fullWidth
               />
               <Box>
-                <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", mb: 0.5 }}
+                >
                   Color
                 </Typography>
                 <div
@@ -402,12 +456,14 @@ export function PopulationTabEditor({
                     width: 40,
                     height: 40,
                     borderRadius: 4,
-                    background: population.stat1Color || COLORS.gogo_teal,
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    cursor: 'pointer',
+                    background: population.stat1Color || "transparent",
+                    border: isColorMissing(population.stat1Color)
+                      ? "2px solid rgba(244, 67, 54, 0.7)"
+                      : "1px solid rgba(255,255,255,0.3)",
+                    cursor: "pointer",
                   }}
                   onClick={(e) => {
-                    setPopulationColorPickerField('stat1Color');
+                    setPopulationColorPickerField("stat1Color");
                     setPopulationColorPickerAnchor(e.currentTarget);
                   }}
                 />
@@ -418,22 +474,29 @@ export function PopulationTabEditor({
             <Typography variant="subtitle2" gutterBottom>
               Stat 2
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: "flex", gap: 2 }}>
               <CustomTextField
                 label="Percent"
                 type="number"
                 value={population.stat2Percent || 0}
-                onChange={(e) => onPopulationChange('stat2Percent', Number(e.target.value))}
+                onChange={(e) =>
+                  onPopulationChange("stat2Percent", Number(e.target.value))
+                }
                 sx={{ width: 100 }}
               />
               <CustomTextField
                 label="Text"
-                value={population.stat2Text || ''}
-                onChange={(e) => onPopulationChange('stat2Text', e.target.value)}
+                value={population.stat2Text || ""}
+                onChange={(e) =>
+                  onPopulationChange("stat2Text", e.target.value)
+                }
                 fullWidth
               />
               <Box>
-                <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", mb: 0.5 }}
+                >
                   Color
                 </Typography>
                 <div
@@ -441,12 +504,14 @@ export function PopulationTabEditor({
                     width: 40,
                     height: 40,
                     borderRadius: 4,
-                    background: population.stat2Color || COLORS.gogo_pink,
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    cursor: 'pointer',
+                    background: population.stat2Color || "transparent",
+                    border: isColorMissing(population.stat2Color)
+                      ? "2px solid rgba(244, 67, 54, 0.7)"
+                      : "1px solid rgba(255,255,255,0.3)",
+                    cursor: "pointer",
                   }}
                   onClick={(e) => {
-                    setPopulationColorPickerField('stat2Color');
+                    setPopulationColorPickerField("stat2Color");
                     setPopulationColorPickerAnchor(e.currentTarget);
                   }}
                 />
@@ -457,21 +522,21 @@ export function PopulationTabEditor({
 
         {/* C-GAS */}
         <Grid item xs={12}>
-          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
           <Typography variant="h6" sx={{ mb: 2 }}>
             C-GAS
           </Typography>
           <CustomTextField
             label="Section Title"
-            value={population.cgasTitle || ''}
-            onChange={(e) => onPopulationChange('cgasTitle', e.target.value)}
+            value={population.cgasTitle || ""}
+            onChange={(e) => onPopulationChange("cgasTitle", e.target.value)}
             fullWidth
             sx={{ mb: 2 }}
           />
           <CustomTextField
             label="Tooltip Text"
-            value={population.cgasTooltip || ''}
-            onChange={(e) => onPopulationChange('cgasTooltip', e.target.value)}
+            value={population.cgasTooltip || ""}
+            onChange={(e) => onPopulationChange("cgasTooltip", e.target.value)}
             fullWidth
             multiline
             minRows={2}
@@ -483,7 +548,7 @@ export function PopulationTabEditor({
                 <Box
                   sx={{
                     p: 2,
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    border: "1px solid rgba(255,255,255,0.1)",
                     borderRadius: 2,
                   }}
                 >
@@ -496,7 +561,7 @@ export function PopulationTabEditor({
                         ...next[idx],
                         value: e.target.value,
                       };
-                      onPopulationChange('cgasStats', next);
+                      onPopulationChange("cgasStats", next);
                     }}
                     fullWidth
                     sx={{ mb: 1 }}
@@ -510,7 +575,7 @@ export function PopulationTabEditor({
                         ...next[idx],
                         label: e.target.value,
                       };
-                      onPopulationChange('cgasStats', next);
+                      onPopulationChange("cgasStats", next);
                     }}
                     fullWidth
                     multiline
@@ -519,12 +584,12 @@ export function PopulationTabEditor({
                   />
                   <div
                     style={{
-                      width: '100%',
+                      width: "100%",
                       height: 30,
                       borderRadius: 4,
                       background: stat.color,
-                      border: '1px solid rgba(255,255,255,0.3)',
-                      cursor: 'pointer',
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      cursor: "pointer",
                     }}
                     onClick={(e) => {
                       setPopulationCgasStatPickerIndex(idx);
@@ -539,27 +604,27 @@ export function PopulationTabEditor({
 
         {/* Skills */}
         <Grid item xs={12}>
-          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
           <Typography variant="h6" sx={{ mb: 2 }}>
             Skills
           </Typography>
           <CustomTextField
             label="Skills Title"
-            value={population.skillsTitle || ''}
-            onChange={(e) => onPopulationChange('skillsTitle', e.target.value)}
+            value={population.skillsTitle || ""}
+            onChange={(e) => onPopulationChange("skillsTitle", e.target.value)}
             fullWidth
             sx={{ mb: 2 }}
           />
           <CustomTextField
             label="Skills (Comma Separated)"
-            value={(population.skillsList || []).join(', ')}
+            value={(population.skillsList || []).join(", ")}
             onChange={(e) =>
               onPopulationChange(
-                'skillsList',
+                "skillsList",
                 e.target.value
-                  .split(',')
+                  .split(",")
                   .map((s) => s.trim())
-                  .filter(Boolean)
+                  .filter(Boolean),
               )
             }
             fullWidth
@@ -570,7 +635,7 @@ export function PopulationTabEditor({
 
         {/* Background Glows */}
         <Grid item xs={12}>
-          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
           <Typography variant="h6" sx={{ mb: 2 }}>
             Background Glows
           </Typography>
@@ -579,9 +644,9 @@ export function PopulationTabEditor({
               <Typography
                 variant="caption"
                 sx={{
-                  display: 'block',
+                  display: "block",
                   mb: 0.5,
-                  color: 'rgba(255,255,255,0.7)',
+                  color: "rgba(255,255,255,0.7)",
                 }}
               >
                 Blob 1 Inner
@@ -591,18 +656,14 @@ export function PopulationTabEditor({
                 variant="outlined"
                 fullWidth
                 onClick={(e) => {
-                  setPopulationColorPickerField('blob1ColorA');
+                  setPopulationColorPickerField("blob1ColorA");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.23)',
-                  color: 'rgba(255,255,255,0.9)',
-                  justifyContent: 'flex-start',
+                  ...getColorButtonStyle(population.blob1ColorA),
+                  justifyContent: "flex-start",
                   height: 40,
                   px: 1.5,
-                  '&:hover': {
-                    borderColor: 'rgba(255,255,255,0.87)',
-                  },
                 }}
               >
                 <Box
@@ -610,8 +671,8 @@ export function PopulationTabEditor({
                     width: 20,
                     height: 20,
                     borderRadius: 0.5,
-                    bgcolor: population.blob1ColorA || '#000000',
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    bgcolor: population.blob1ColorA || "transparent",
+                    border: "1px solid rgba(255,255,255,0.2)",
                     mr: 1.5,
                   }}
                 />
@@ -622,9 +683,9 @@ export function PopulationTabEditor({
               <Typography
                 variant="caption"
                 sx={{
-                  display: 'block',
+                  display: "block",
                   mb: 0.5,
-                  color: 'rgba(255,255,255,0.7)',
+                  color: "rgba(255,255,255,0.7)",
                 }}
               >
                 Blob 1 Outer
@@ -634,18 +695,14 @@ export function PopulationTabEditor({
                 variant="outlined"
                 fullWidth
                 onClick={(e) => {
-                  setPopulationColorPickerField('blob1ColorB');
+                  setPopulationColorPickerField("blob1ColorB");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.23)',
-                  color: 'rgba(255,255,255,0.9)',
-                  justifyContent: 'flex-start',
+                  ...getColorButtonStyle(population.blob1ColorB),
+                  justifyContent: "flex-start",
                   height: 40,
                   px: 1.5,
-                  '&:hover': {
-                    borderColor: 'rgba(255,255,255,0.87)',
-                  },
                 }}
               >
                 <Box
@@ -653,8 +710,8 @@ export function PopulationTabEditor({
                     width: 20,
                     height: 20,
                     borderRadius: 0.5,
-                    bgcolor: population.blob1ColorB || '#000000',
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    bgcolor: population.blob1ColorB || "transparent",
+                    border: "1px solid rgba(255,255,255,0.2)",
                     mr: 1.5,
                   }}
                 />
@@ -665,9 +722,9 @@ export function PopulationTabEditor({
               <Typography
                 variant="caption"
                 sx={{
-                  display: 'block',
+                  display: "block",
                   mb: 0.5,
-                  color: 'rgba(255,255,255,0.7)',
+                  color: "rgba(255,255,255,0.7)",
                 }}
               >
                 Blob 2 Inner
@@ -677,18 +734,14 @@ export function PopulationTabEditor({
                 variant="outlined"
                 fullWidth
                 onClick={(e) => {
-                  setPopulationColorPickerField('blob2ColorA');
+                  setPopulationColorPickerField("blob2ColorA");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.23)',
-                  color: 'rgba(255,255,255,0.9)',
-                  justifyContent: 'flex-start',
+                  ...getColorButtonStyle(population.blob2ColorA),
+                  justifyContent: "flex-start",
                   height: 40,
                   px: 1.5,
-                  '&:hover': {
-                    borderColor: 'rgba(255,255,255,0.87)',
-                  },
                 }}
               >
                 <Box
@@ -696,8 +749,8 @@ export function PopulationTabEditor({
                     width: 20,
                     height: 20,
                     borderRadius: 0.5,
-                    bgcolor: population.blob2ColorA || '#000000',
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    bgcolor: population.blob2ColorA || "transparent",
+                    border: "1px solid rgba(255,255,255,0.2)",
                     mr: 1.5,
                   }}
                 />
@@ -708,9 +761,9 @@ export function PopulationTabEditor({
               <Typography
                 variant="caption"
                 sx={{
-                  display: 'block',
+                  display: "block",
                   mb: 0.5,
-                  color: 'rgba(255,255,255,0.7)',
+                  color: "rgba(255,255,255,0.7)",
                 }}
               >
                 Blob 2 Outer
@@ -720,18 +773,14 @@ export function PopulationTabEditor({
                 variant="outlined"
                 fullWidth
                 onClick={(e) => {
-                  setPopulationColorPickerField('blob2ColorB');
+                  setPopulationColorPickerField("blob2ColorB");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.23)',
-                  color: 'rgba(255,255,255,0.9)',
-                  justifyContent: 'flex-start',
+                  ...getColorButtonStyle(population.blob2ColorB),
+                  justifyContent: "flex-start",
                   height: 40,
                   px: 1.5,
-                  '&:hover': {
-                    borderColor: 'rgba(255,255,255,0.87)',
-                  },
                 }}
               >
                 <Box
@@ -739,8 +788,8 @@ export function PopulationTabEditor({
                     width: 20,
                     height: 20,
                     borderRadius: 0.5,
-                    bgcolor: population.blob2ColorB || '#000000',
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    bgcolor: population.blob2ColorB || "transparent",
+                    border: "1px solid rgba(255,255,255,0.2)",
                     mr: 1.5,
                   }}
                 />
@@ -752,15 +801,19 @@ export function PopulationTabEditor({
 
         {/* Container Background */}
         <Grid item xs={12}>
-          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
           <Typography variant="h6" sx={{ mb: 2 }}>
             Container Background
           </Typography>
           <GradientEditor
             label="Container Gradient"
-            value={getDefaultGradient('containerBgGradient')}
-            onChange={(gradient) => onPopulationChange('containerBgGradient', gradient)}
-            onPickColor={(el, colorIndex) => openGradientPicker(el, 'containerBgGradient', colorIndex)}
+            value={getDefaultGradient("containerBgGradient")}
+            onChange={(gradient) =>
+              onPopulationChange("containerBgGradient", gradient)
+            }
+            onPickColor={(el, colorIndex) =>
+              openGradientPicker(el, "containerBgGradient", colorIndex)
+            }
           />
         </Grid>
 
@@ -769,25 +822,23 @@ export function PopulationTabEditor({
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Container Overlay Radials
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
             <Button
               variant="outlined"
               onClick={(e) => {
-                setPopulationColorPickerField('containerOverlayColor1');
+                setPopulationColorPickerField("containerOverlayColor1");
                 setPopulationColorPickerAnchor(e.currentTarget);
               }}
-              sx={{
-                borderColor: 'rgba(255,255,255,0.3)',
-                color: 'rgba(255,255,255,0.9)',
-              }}
+              sx={getColorButtonStyle(population.containerOverlayColor1)}
             >
               <span
                 style={{
                   width: 20,
                   height: 20,
                   borderRadius: 4,
-                  background: population.containerOverlayColor1 || `${COLORS.gogo_blue}12`,
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  background:
+                    population.containerOverlayColor1 || "transparent",
+                  border: "1px solid rgba(255,255,255,0.3)",
                   marginRight: 8,
                 }}
               />
@@ -796,21 +847,19 @@ export function PopulationTabEditor({
             <Button
               variant="outlined"
               onClick={(e) => {
-                setPopulationColorPickerField('containerOverlayColor2');
+                setPopulationColorPickerField("containerOverlayColor2");
                 setPopulationColorPickerAnchor(e.currentTarget);
               }}
-              sx={{
-                borderColor: 'rgba(255,255,255,0.3)',
-                color: 'rgba(255,255,255,0.9)',
-              }}
+              sx={getColorButtonStyle(population.containerOverlayColor2)}
             >
               <span
                 style={{
                   width: 20,
                   height: 20,
                   borderRadius: 4,
-                  background: population.containerOverlayColor2 || `${COLORS.gogo_purple}12`,
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  background:
+                    population.containerOverlayColor2 || "transparent",
+                  border: "1px solid rgba(255,255,255,0.3)",
                   marginRight: 8,
                 }}
               />
@@ -821,33 +870,37 @@ export function PopulationTabEditor({
 
         {/* Card Backgrounds */}
         <Grid item xs={12}>
-          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
           <Typography variant="h6" sx={{ mb: 2 }}>
             Card Styling
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
             <Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: 'rgba(255,255,255,0.7)' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
                 Info Card Background
               </Typography>
               <Button
                 variant="outlined"
                 onClick={(e) => {
-                  setPopulationColorPickerField('infoCardBgColor');
+                  setPopulationColorPickerField("infoCardBgColor");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.9)',
-                }}
+                sx={getColorButtonStyle(population.infoCardBgColor)}
               >
                 <span
                   style={{
                     width: 20,
                     height: 20,
                     borderRadius: 4,
-                    background: population.infoCardBgColor || 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    background: population.infoCardBgColor || "transparent",
+                    border: "1px solid rgba(255,255,255,0.3)",
                     marginRight: 8,
                   }}
                 />
@@ -855,27 +908,31 @@ export function PopulationTabEditor({
               </Button>
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: 'rgba(255,255,255,0.7)' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
                 Bento Card Background
               </Typography>
               <Button
                 variant="outlined"
                 onClick={(e) => {
-                  setPopulationColorPickerField('bentoCardBgColor');
+                  setPopulationColorPickerField("bentoCardBgColor");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.9)',
-                }}
+                sx={getColorButtonStyle(population.bentoCardBgColor)}
               >
                 <span
                   style={{
                     width: 20,
                     height: 20,
                     borderRadius: 4,
-                    background: population.bentoCardBgColor || 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    background: population.bentoCardBgColor || "transparent",
+                    border: "1px solid rgba(255,255,255,0.3)",
                     marginRight: 8,
                   }}
                 />
@@ -883,27 +940,32 @@ export function PopulationTabEditor({
               </Button>
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: 'rgba(255,255,255,0.7)' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
                 Percent Circle Inner
               </Typography>
               <Button
                 variant="outlined"
                 onClick={(e) => {
-                  setPopulationColorPickerField('percentCircleInnerBgColor');
+                  setPopulationColorPickerField("percentCircleInnerBgColor");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.9)',
-                }}
+                sx={getColorButtonStyle(population.percentCircleInnerBgColor)}
               >
                 <span
                   style={{
                     width: 20,
                     height: 20,
                     borderRadius: 4,
-                    background: population.percentCircleInnerBgColor || 'rgba(6, 6, 6, 0.96)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    background:
+                      population.percentCircleInnerBgColor || "transparent",
+                    border: "1px solid rgba(255,255,255,0.3)",
                     marginRight: 8,
                   }}
                 />
@@ -915,33 +977,37 @@ export function PopulationTabEditor({
 
         {/* Skill Chip Styling */}
         <Grid item xs={12}>
-          <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
           <Typography variant="h6" sx={{ mb: 2 }}>
             Skill Chip Styling
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
             <Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: 'rgba(255,255,255,0.7)' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
                 Chip Text Color
               </Typography>
               <Button
                 variant="outlined"
                 onClick={(e) => {
-                  setPopulationColorPickerField('skillChipTextColor');
+                  setPopulationColorPickerField("skillChipTextColor");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.9)',
-                }}
+                sx={getColorButtonStyle(population.skillChipTextColor)}
               >
                 <span
                   style={{
                     width: 20,
                     height: 20,
                     borderRadius: 4,
-                    background: population.skillChipTextColor || 'rgba(255, 255, 255, 0.9)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    background: population.skillChipTextColor || "transparent",
+                    border: "1px solid rgba(255,255,255,0.3)",
                     marginRight: 8,
                   }}
                 />
@@ -949,27 +1015,31 @@ export function PopulationTabEditor({
               </Button>
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: 'rgba(255,255,255,0.7)' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
                 Chip Background
               </Typography>
               <Button
                 variant="outlined"
                 onClick={(e) => {
-                  setPopulationColorPickerField('skillChipBgColor');
+                  setPopulationColorPickerField("skillChipBgColor");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.9)',
-                }}
+                sx={getColorButtonStyle(population.skillChipBgColor)}
               >
                 <span
                   style={{
                     width: 20,
                     height: 20,
                     borderRadius: 4,
-                    background: population.skillChipBgColor || 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    background: population.skillChipBgColor || "transparent",
+                    border: "1px solid rgba(255,255,255,0.3)",
                     marginRight: 8,
                   }}
                 />
@@ -977,27 +1047,32 @@ export function PopulationTabEditor({
               </Button>
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: 'rgba(255,255,255,0.7)' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  color: "rgba(255,255,255,0.7)",
+                }}
+              >
                 Chip Border
               </Typography>
               <Button
                 variant="outlined"
                 onClick={(e) => {
-                  setPopulationColorPickerField('skillChipBorderColor');
+                  setPopulationColorPickerField("skillChipBorderColor");
                   setPopulationColorPickerAnchor(e.currentTarget);
                 }}
-                sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.9)',
-                }}
+                sx={getColorButtonStyle(population.skillChipBorderColor)}
               >
                 <span
                   style={{
                     width: 20,
                     height: 20,
                     borderRadius: 4,
-                    background: population.skillChipBorderColor || 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    background:
+                      population.skillChipBorderColor || "transparent",
+                    border: "1px solid rgba(255,255,255,0.3)",
                     marginRight: 8,
                   }}
                 />

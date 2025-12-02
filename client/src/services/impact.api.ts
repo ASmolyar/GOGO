@@ -65,7 +65,7 @@ export interface MissionStat {
   iconKey?: string | null;
   action?: 'none' | 'openModal';
   modalId?: string | null;
-  numberSource?: 'explicit' | 'modalItemsLength';
+  numberSource?: 'explicit' | 'modalItemsLength' | 'mapLocationsLength';
   visible?: boolean;
 }
 
@@ -106,7 +106,24 @@ export interface MissionContent {
   ticketBorderColor?: string | null;
   ticketBackdropColor?: string | null;
   ticketShowBarcode?: boolean | null;
+  ticketBlotch1Color?: string | null;
+  ticketBlotch2Color?: string | null;
 
+  // Statement box styling
+  statementBoxBorderColor?: string | null;
+  statementBoxBgColor?: string | null;
+  statementTextGradientColor?: string | null;
+
+  // Barcode styling
+  barcodeColor?: string | null;
+
+  // Background logo
+  backgroundLogoEnabled?: boolean | null;
+  backgroundLogoOpacity?: number | null;
+  backgroundLogoRotation?: number | null;
+  backgroundLogoScale?: number | null;
+
+  // Legacy backgroundLogo object (kept for backward compatibility)
   backgroundLogo?: {
     enabled: boolean;
     svgKey?: string;

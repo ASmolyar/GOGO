@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import '../../assets/fonts/fonts.css';
 import { animate, stagger } from 'animejs';
@@ -7,6 +7,44 @@ import {
   GOGO_LOGO_BK_PATHS,
   GOGO_LOGO_BK_VIEWBOX,
 } from "../../assets/logos/gogoLogoBK";
+
+/**
+ * Calculate relative luminance of a color to determine if it's light or dark.
+ * Returns true if the color is light (luminance > 0.5), false otherwise.
+ */
+function isLightColor(color: string | null | undefined): boolean {
+  if (!color) return false; // Default to dark background assumption
+  
+  // Try to parse the color
+  let r = 0, g = 0, b = 0;
+  
+  // Handle hex colors
+  if (color.startsWith('#')) {
+    const hex = color.slice(1);
+    if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+    } else if (hex.length >= 6) {
+      r = parseInt(hex.slice(0, 2), 16);
+      g = parseInt(hex.slice(2, 4), 16);
+      b = parseInt(hex.slice(4, 6), 16);
+    }
+  }
+  // Handle rgb/rgba colors
+  else if (color.startsWith('rgb')) {
+    const match = color.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (match) {
+      r = parseInt(match[1], 10);
+      g = parseInt(match[2], 10);
+      b = parseInt(match[3], 10);
+    }
+  }
+  
+  // Calculate relative luminance using sRGB formula
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5;
+}
 
 
 const float = keyframes`
@@ -118,12 +156,12 @@ const Ticket = styled.div`
     pointer-events: none;
     background: radial-gradient(
         1200px 400px at 80% 20%,
-        ${COLORS.gogo_blue}22,
+        var(--ticket-blotch1-color, ${COLORS.gogo_blue}22),
         transparent 60%
       ),
       radial-gradient(
         800px 300px at 20% 80%,
-        ${COLORS.gogo_purple}22,
+        var(--ticket-blotch2-color, ${COLORS.gogo_purple}22),
         transparent 60%
       );
   }
@@ -135,6 +173,8 @@ const Ticket = styled.div`
 `;
 
 const TicketInner = styled.div`
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 0;
@@ -176,21 +216,7 @@ const TicketRight = styled.div`
 const BadgeRow = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-`;
-
-const Badge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.62rem;
-  letter-spacing: 0.22em;
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  justify-content: flex-end;
 `;
 
 const Serial = styled.span`
@@ -211,11 +237,13 @@ const Title = styled.h3`
 `;
 
 const Statement = styled.div`
+  position: relative;
+  z-index: 2;
   display: inline-block;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--statement-box-border-color, rgba(255, 255, 255, 0.1));
+  background: var(--statement-box-bg-color, rgba(255, 255, 255, 0.04));
   max-width: 760px;
 `;
 
@@ -225,7 +253,7 @@ const StatementText = styled.p`
   font-weight: 800;
   font-size: clamp(0.9rem, 1.8vw, 1rem);
   line-height: 1.22;
-  background: linear-gradient(90deg, #ffffff, ${COLORS.gogo_teal});
+  background: var(--statement-text-gradient, linear-gradient(90deg, #ffffff, ${COLORS.gogo_teal}));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -247,7 +275,7 @@ const Barcode = styled.div`
   height: 168px;
   background: repeating-linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.85) 0 1.5px,
+    var(--barcode-color, rgba(255, 255, 255, 0.85)) 0 1.5px,
     transparent 1.5px 3px
   );
   border-radius: 6px;
@@ -272,19 +300,24 @@ interface MissionStatementProps {
   statementTitle?: string | null;
   statementTitleColor?: string | null;
   statementTextColor?: string | null;
+  statementTextGradientColor?: string | null;
   statementMeta?: string | null;
   statementMetaColor?: string | null;
+  statementBoxBorderColor?: string | null;
+  statementBoxBgColor?: string | null;
   serial?: string | null;
   serialColor?: string | null;
   ticketStripeGradient?: string | null;
   ticketBorderColor?: string | null;
   ticketBackdropColor?: string | null;
+  ticketBlotch1Color?: string | null;
+  ticketBlotch2Color?: string | null;
   ticketShowBarcode?: boolean | null;
-  backgroundLogoCfg?: {
-    opacity?: number | null;
-    rotationDeg?: number | null;
-    scale?: number | null;
-  } | null;
+  barcodeColor?: string | null;
+  backgroundLogoEnabled?: boolean | null;
+  backgroundLogoOpacity?: number | null;
+  backgroundLogoRotation?: number | null;
+  backgroundLogoScale?: number | null;
 }
 
 function MissionStatement({
@@ -292,17 +325,34 @@ function MissionStatement({
   statementTitle,
   statementTitleColor,
   statementTextColor,
+  statementTextGradientColor,
   statementMeta,
   statementMetaColor,
+  statementBoxBorderColor,
+  statementBoxBgColor,
   serial,
   serialColor,
   ticketStripeGradient,
   ticketBorderColor,
   ticketBackdropColor,
+  ticketBlotch1Color,
+  ticketBlotch2Color,
   ticketShowBarcode = true,
-  backgroundLogoCfg,
+  barcodeColor,
+  backgroundLogoEnabled = true,
+  backgroundLogoOpacity,
+  backgroundLogoRotation,
+  backgroundLogoScale,
 }: MissionStatementProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Calculate logo fill color based on backdrop luminance
+  // Light backgrounds get dark logo, dark backgrounds get light logo
+  const logoFillColor = useMemo(() => {
+    const isLight = isLightColor(ticketBackdropColor);
+    // Use semi-transparent black for light backgrounds, semi-transparent white for dark
+    return isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.15)';
+  }, [ticketBackdropColor]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -346,42 +396,40 @@ function MissionStatement({
             ...(ticketBorderColor ? { borderColor: ticketBorderColor } : {}),
             ...(ticketBackdropColor ? { background: ticketBackdropColor } : {}),
             ...(ticketStripeGradient
-              ? ({
-                  ["--ticket-stripe-gradient" as any]: ticketStripeGradient,
-                } as React.CSSProperties)
+              ? { ["--ticket-stripe-gradient" as any]: ticketStripeGradient }
               : {}),
-          }}
+            ...(ticketBlotch1Color
+              ? { ["--ticket-blotch1-color" as any]: ticketBlotch1Color }
+              : {}),
+            ...(ticketBlotch2Color
+              ? { ["--ticket-blotch2-color" as any]: ticketBlotch2Color }
+              : {}),
+          } as React.CSSProperties}
         >
-          <BgLogoWrap aria-hidden="true">
-            <BgLogoSvg
-              viewBox={GOGO_LOGO_BK_VIEWBOX}
-              role="img"
-              style={{
-                ...(backgroundLogoCfg?.opacity != null
-                  ? { opacity: backgroundLogoCfg.opacity }
-                  : {}),
-                ...(backgroundLogoCfg?.rotationDeg != null ||
-                backgroundLogoCfg?.scale != null
-                  ? {
-                      transform: `translate(-50%, -50%) rotate(${backgroundLogoCfg?.rotationDeg ?? 90}deg) scale(${backgroundLogoCfg?.scale ?? 0.82})`,
-                    }
-                  : {}),
-              }}
-            >
-              {GOGO_LOGO_BK_PATHS.map(({ d, transform }) => (
-                <path
-                  key={`${d}-${transform ?? ""}`}
-                  d={d}
-                  transform={transform}
-                  fill="rgba(255, 255, 255, 0.06)"
-                />
-              ))}
-            </BgLogoSvg>
-          </BgLogoWrap>
+          {backgroundLogoEnabled !== false && (
+            <BgLogoWrap aria-hidden="true">
+              <BgLogoSvg
+                viewBox={GOGO_LOGO_BK_VIEWBOX}
+                role="img"
+                style={{
+                  opacity: backgroundLogoOpacity ?? 0.08,
+                  transform: `translate(-50%, -50%) rotate(${backgroundLogoRotation ?? 90}deg) scale(${backgroundLogoScale ?? 0.82})`,
+                }}
+              >
+                {GOGO_LOGO_BK_PATHS.map(({ d, transform }) => (
+                  <path
+                    key={`${d}-${transform ?? ""}`}
+                    d={d}
+                    transform={transform}
+                    fill={logoFillColor}
+                  />
+                ))}
+              </BgLogoSvg>
+            </BgLogoWrap>
+          )}
           <TicketInner>
             <TicketLeft>
               <BadgeRow>
-                <Badge>TICKET</Badge>
                 <Serial
                   style={serialColor ? { color: serialColor } : undefined}
                 >
@@ -397,7 +445,16 @@ function MissionStatement({
               >
                 {statementTitle ?? "MISSION STATEMENT — ADMIT ALL"}
               </Title>
-              <Statement>
+              <Statement
+                style={{
+                  ...(statementBoxBorderColor
+                    ? { ["--statement-box-border-color" as any]: statementBoxBorderColor }
+                    : {}),
+                  ...(statementBoxBgColor
+                    ? { ["--statement-box-bg-color" as any]: statementBoxBgColor }
+                    : {}),
+                } as React.CSSProperties}
+              >
                 <StatementText
                   style={
                     statementTextColor
@@ -406,7 +463,9 @@ function MissionStatement({
                           color: statementTextColor,
                           background: "none",
                         }
-                      : undefined
+                      : statementTextGradientColor
+                        ? { ["--statement-text-gradient" as any]: `linear-gradient(90deg, #ffffff, ${statementTextGradientColor})` } as React.CSSProperties
+                        : undefined
                   }
                 >
                   {statement}
@@ -420,7 +479,17 @@ function MissionStatement({
                 {statementMeta ?? "ISSUED 2025 • CHOOSE YOUR SOUND"}
               </Meta>
             </TicketLeft>
-            <TicketRight>{ticketShowBarcode ? <Barcode /> : null}</TicketRight>
+            <TicketRight>
+              {ticketShowBarcode ? (
+                <Barcode
+                  style={
+                    barcodeColor
+                      ? { ["--barcode-color" as any]: barcodeColor } as React.CSSProperties
+                      : undefined
+                  }
+                />
+              ) : null}
+            </TicketRight>
           </TicketInner>
         </Ticket>
       </TicketContainer>

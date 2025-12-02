@@ -156,6 +156,7 @@ function SpotifyEmbedsSection({
   const [showMentorProfiles, setShowMentorProfiles] = useState(false);
   const [showAllSongs, setShowAllSongs] = useState(false);
   const modalGridRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
 
   // Fetch data if not provided externally
   useEffect(() => {
@@ -225,7 +226,7 @@ function SpotifyEmbedsSection({
   }, [setShowMentorProfiles, setShowAllSongs]);
 
   return (
-    <Section $bgGradient={sectionBgGradient}>
+    <Section ref={sectionRef} $bgGradient={sectionBgGradient}>
       <Container>
         <Header>
           <Title $gradient={titleGradient}>{title}</Title>
@@ -273,6 +274,8 @@ function SpotifyEmbedsSection({
         onClose={() => setShowMentorProfiles(false)}
         fullWidth
         maxWidth="xl"
+        container={previewMode ? sectionRef.current : undefined}
+        disablePortal={previewMode}
         PaperProps={{
           style: {
             background: modalBgGradient,
@@ -280,7 +283,8 @@ function SpotifyEmbedsSection({
             borderRadius: 16,
             boxShadow:
               '0 40px 120px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 60px rgba(123,127,209,0.06)',
-            width: 'min(1200px, 92vw)',
+            width: previewMode ? '95%' : 'min(1200px, 92vw)',
+            maxHeight: previewMode ? '90%' : undefined,
             position: 'relative',
           },
         }}
@@ -288,8 +292,15 @@ function SpotifyEmbedsSection({
           style: {
             backdropFilter: 'blur(10px)',
             backgroundColor: 'rgba(0,0,0,0.6)',
+            position: previewMode ? 'absolute' : undefined,
           },
         }}
+        sx={previewMode ? {
+          position: 'absolute',
+          '& .MuiDialog-container': {
+            position: 'absolute',
+          },
+        } : undefined}
       >
         <DialogTitle sx={{ m: 0, p: 2, color: modalTitleColor }}>
           {mentorProfilesModalTitle}
@@ -347,6 +358,8 @@ function SpotifyEmbedsSection({
         onClose={() => setShowAllSongs(false)}
         fullWidth
         maxWidth="xl"
+        container={previewMode ? sectionRef.current : undefined}
+        disablePortal={previewMode}
         PaperProps={{
           style: {
             background: modalBgGradient,
@@ -354,7 +367,8 @@ function SpotifyEmbedsSection({
             borderRadius: 16,
             boxShadow:
               '0 40px 120px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 60px rgba(123,127,209,0.06)',
-            width: 'min(1200px, 92vw)',
+            width: previewMode ? '95%' : 'min(1200px, 92vw)',
+            maxHeight: previewMode ? '90%' : undefined,
             position: 'relative',
           },
         }}
@@ -362,8 +376,15 @@ function SpotifyEmbedsSection({
           style: {
             backdropFilter: 'blur(10px)',
             backgroundColor: 'rgba(0,0,0,0.6)',
+            position: previewMode ? 'absolute' : undefined,
           },
         }}
+        sx={previewMode ? {
+          position: 'absolute',
+          '& .MuiDialog-container': {
+            position: 'absolute',
+          },
+        } : undefined}
       >
         <DialogTitle sx={{ m: 0, p: 2, color: modalTitleColor }}>
           {allSongsModalTitle}

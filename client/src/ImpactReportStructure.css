@@ -61,7 +61,6 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
   overflow-x: clip; /* Use clip instead of hidden to preserve sticky behavior */
   position: relative;
   min-height: 100vh;
-  padding-bottom: 90px; /* Ensure content doesn't go behind the now playing bar */
 }
 
 section {
@@ -1171,8 +1170,8 @@ section:hover h2::after {
 /* Spotify-like footer */
 .spotify-footer {
   background-color: var(--spotify-black);
-  padding: 60px max(5vw, 20px) 30px;
-  margin-top: 80px;
+  padding: 40px max(5vw, 20px) 30px;
+  margin-top: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -1850,7 +1849,7 @@ body.has-spotify-header {
 
 .main-content {
   padding-top: 80px; /* Match exactly the header height */
-  padding-bottom: 90px; /* Match the now-playing bar height */
+  padding-bottom: 0;
   min-height: calc(
     100vh - 170px
   ); /* 100vh - (header height + now-playing bar height) */

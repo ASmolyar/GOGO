@@ -10,7 +10,7 @@ export type MissionStatAction =
   | 'openMentorMusicModal'
   | 'scrollToMap'
   | 'openMapModal';
-export type MissionStatNumberSource = 'explicit' | 'modalItemsLength';
+export type MissionStatNumberSource = 'explicit' | 'modalItemsLength' | 'mapLocationsLength';
 
 export interface MissionBadgeIcon {
   type: 'glyph' | 'iconKey';
@@ -161,6 +161,21 @@ export interface MissionSectionForm {
   ticketBorderColor?: string | null;
   ticketBackdropColor?: string | null;
   ticketShowBarcode?: boolean;
+  // NEW: Ticket color blotches (radial gradients on ticket)
+  ticketBlotch1Color?: string | null;
+  ticketBlotch2Color?: string | null;
+  // NEW: Statement box styling
+  statementBoxBorderColor?: string | null;
+  statementBoxBgColor?: string | null;
+  // NEW: Statement text gradient end color (gradient goes from white to this color)
+  statementTextGradientColor?: string | null;
+  // NEW: Barcode color
+  barcodeColor?: string | null;
+  // NEW: Background logo controls
+  backgroundLogoEnabled?: boolean;
+  backgroundLogoOpacity?: number | null;
+  backgroundLogoRotation?: number | null;
+  backgroundLogoScale?: number | null;
   // NEW: Stat card styling
   statCardBgColor?: string | null;
   statCardBorderWidth?: number | null;
@@ -224,19 +239,19 @@ export interface TestimonialSectionForm {
 export type { PopulationContent, FinancialContent, MethodContent, CurriculumContent, ImpactSectionContent } from '../services/impact.api';
 
 export interface ImpactReportForm {
-  hero: HeroSectionForm;
+  hero: HeroSectionForm | null;
   mission: MissionSectionForm | null;
-  population: import('../services/impact.api').PopulationContent;
-  financial: import('../services/impact.api').FinancialContent;
-  method: import('../services/impact.api').MethodContent;
-  curriculum: import('../services/impact.api').CurriculumContent;
-  impactSection: import('../services/impact.api').ImpactSectionContent;
-  hearOurImpact: import('../services/impact.api').HearOurImpactContent;
-  testimonials: import('../services/impact.api').TestimonialsContent;
-  nationalImpact: import('../services/impact.api').NationalImpactContent;
-  impact: ImpactSectionForm;
-  programs: ProgramsSectionForm;
-  locations: LocationsSectionForm;
+  population: import('../services/impact.api').PopulationContent | null;
+  financial: import('../services/impact.api').FinancialContent | null;
+  method: import('../services/impact.api').MethodContent | null;
+  curriculum: import('../services/impact.api').CurriculumContent | null;
+  impactSection: import('../services/impact.api').ImpactSectionContent | null;
+  hearOurImpact: import('../services/impact.api').HearOurImpactContent | null;
+  testimonials: import('../services/impact.api').TestimonialsContent | null;
+  nationalImpact: import('../services/impact.api').NationalImpactContent | null;
+  impact: ImpactSectionForm | null;
+  programs: ProgramsSectionForm | null;
+  locations: LocationsSectionForm | null;
 }
 
 // Tab configuration

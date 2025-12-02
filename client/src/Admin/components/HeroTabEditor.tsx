@@ -51,25 +51,32 @@ export function HeroTabEditor({
   onClearBackground,
 }: HeroTabEditorProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
-  const [colorPickerField, setColorPickerField] = useState<HeroColorPickerField | null>(null);
+  const [colorPickerAnchor, setColorPickerAnchor] =
+    useState<HTMLElement | null>(null);
+  const [colorPickerField, setColorPickerField] =
+    useState<HeroColorPickerField | null>(null);
   const openColorPicker = Boolean(colorPickerAnchor);
 
   // State for gradient color picker
-  const [gradientPickerAnchor, setGradientPickerAnchor] = useState<HTMLElement | null>(null);
-  const [gradientPickerColorIndex, setGradientPickerColorIndex] = useState<number>(0);
+  const [gradientPickerAnchor, setGradientPickerAnchor] =
+    useState<HTMLElement | null>(null);
+  const [gradientPickerColorIndex, setGradientPickerColorIndex] =
+    useState<number>(0);
   const gradientPickerOpen = Boolean(gradientPickerAnchor);
 
   // Get the current background gradient - use full string if available, otherwise compose from legacy fields
   const getBackgroundGradient = (): string => {
-    return hero.backgroundGradient || `linear-gradient(${hero.degree}deg, ${hero.color1}, ${hero.color2})`;
+    return (
+      hero.backgroundGradient ||
+      `linear-gradient(${hero.degree}deg, ${hero.color1}, ${hero.color2})`
+    );
   };
 
   // Get current gradient color for the picker
   const getGradientPickerColor = (): string => {
     const gradient = getBackgroundGradient();
     const parsed = parseGradientString(gradient);
-    return parsed.colors[gradientPickerColorIndex] || '#000000';
+    return parsed.colors[gradientPickerColorIndex] || "#000000";
   };
 
   const openGradientPicker = (el: HTMLElement, colorIndex: number) => {
@@ -91,39 +98,58 @@ export function HeroTabEditor({
     onHeroChange("backgroundGradient", newGradient);
   };
 
+  // Helper to check if a color field is missing
+  const isColorMissing = (value: string | null | undefined): boolean =>
+    !value || value.trim() === "";
+
+  // Style for buttons with missing values
+  const missingFieldStyle = {
+    borderColor: "rgba(244, 67, 54, 0.7)",
+    color: "rgba(244, 67, 54, 0.9)",
+    "&:hover": { borderColor: "#f44336" },
+  };
+
+  const normalFieldStyle = {
+    borderColor: "rgba(255,255,255,0.3)",
+    color: "rgba(255,255,255,0.9)",
+  };
+
+  const getColorButtonStyle = (value: string | null | undefined) =>
+    isColorMissing(value) ? missingFieldStyle : normalFieldStyle;
+
   const getPickerColor = (): string => {
-    if (!colorPickerField) return "#000000";
+    if (!colorPickerField) return "";
     switch (colorPickerField) {
       case "titleColor":
-        return hero.titleColor || "#ffffff";
+        return hero.titleColor || "";
       case "subtitleColor":
-        return hero.subtitleColor || "#77ddab";
+        return hero.subtitleColor || "";
       case "yearColor":
-        return hero.yearColor || "#e9bb4d";
+        return hero.yearColor || "";
       case "taglineColor":
-        return hero.taglineColor || COLORS.gogo_green;
+        return hero.taglineColor || "";
       case "primaryCtaColor":
-        return hero.primaryCtaColor || "#ffffff";
+        return hero.primaryCtaColor || "";
       case "secondaryCtaColor":
-        return hero.secondaryCtaColor || "#ffffff";
+        return hero.secondaryCtaColor || "";
       case "primaryCtaBgColor":
-        return hero.primaryCtaBgColor || "#1946f5";
+        return hero.primaryCtaBgColor || "";
       case "primaryCtaHoverBgColor":
-        return hero.primaryCtaHoverBgColor || "#68369a";
+        return hero.primaryCtaHoverBgColor || "";
       case "secondaryCtaBgColor":
-        return hero.secondaryCtaBgColor || "rgba(255, 255, 255, 0.1)";
+        return hero.secondaryCtaBgColor || "";
       case "secondaryCtaHoverBgColor":
-        return hero.secondaryCtaHoverBgColor || "rgba(255, 255, 255, 0.2)";
+        return hero.secondaryCtaHoverBgColor || "";
       case "titleUnderlineColor":
-        return hero.titleUnderlineColor || "rgba(119, 221, 171, 0.8)";
+        return hero.titleUnderlineColor || "";
       case "bubbleTextColor":
-        return hero.bubbleTextColor || "#ffffff";
+        return hero.bubbleTextColor || "";
       case "bubbleBgColor":
-        return hero.bubbleBgColor || "rgba(255, 255, 255, 0.08)";
+        return hero.bubbleBgColor || "";
       case "bubbleBorderColor":
-        return hero.bubbleBorderColor || "rgba(255, 255, 255, 0.2)";
+        return hero.bubbleBorderColor || "";
       default:
-        return "#000000";
+        return "";
     }
   };
 
@@ -167,10 +193,7 @@ export function HeroTabEditor({
               size="small"
               variant="outlined"
               onClick={(e) => openPicker("titleColor", e.currentTarget)}
-              sx={{
-                borderColor: "rgba(255,255,255,0.3)",
-                color: "rgba(255,255,255,0.9)",
-              }}
+              sx={getColorButtonStyle(hero.titleColor)}
             >
               <span
                 style={{
@@ -178,7 +201,7 @@ export function HeroTabEditor({
                   width: 16,
                   height: 16,
                   borderRadius: 3,
-                  background: hero.titleColor || "#ffffff",
+                  background: hero.titleColor || "transparent",
                   border: "1px solid rgba(255,255,255,0.2)",
                 }}
               />
@@ -190,10 +213,7 @@ export function HeroTabEditor({
               onClick={(e) =>
                 openPicker("titleUnderlineColor", e.currentTarget)
               }
-              sx={{
-                borderColor: "rgba(255,255,255,0.3)",
-                color: "rgba(255,255,255,0.9)",
-              }}
+              sx={getColorButtonStyle(hero.titleUnderlineColor)}
             >
               <span
                 style={{
@@ -201,8 +221,7 @@ export function HeroTabEditor({
                   width: 16,
                   height: 16,
                   borderRadius: 3,
-                  background:
-                    hero.titleUnderlineColor || "rgba(119, 221, 171, 0.8)",
+                  background: hero.titleUnderlineColor || "transparent",
                   border: "1px solid rgba(255,255,255,0.2)",
                 }}
               />
@@ -221,11 +240,7 @@ export function HeroTabEditor({
             size="small"
             variant="outlined"
             onClick={(e) => openPicker("subtitleColor", e.currentTarget)}
-            sx={{
-              mt: 1,
-              borderColor: "rgba(255,255,255,0.3)",
-              color: "rgba(255,255,255,0.9)",
-            }}
+            sx={{ mt: 1, ...getColorButtonStyle(hero.subtitleColor) }}
           >
             <span
               style={{
@@ -233,7 +248,7 @@ export function HeroTabEditor({
                 width: 16,
                 height: 16,
                 borderRadius: 3,
-                background: hero.subtitleColor || "#77ddab",
+                background: hero.subtitleColor || "transparent",
                 border: "1px solid rgba(255,255,255,0.2)",
               }}
             />

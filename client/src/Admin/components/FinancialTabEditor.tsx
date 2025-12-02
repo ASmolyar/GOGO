@@ -998,9 +998,21 @@ export function FinancialTabEditor({
 }
 
 // Export validation helper for use in the main customization page
-export function validateFinancialPieCharts(financial: FinancialContent): boolean {
+export function validateFinancialPieCharts(financial: FinancialContent | null | undefined): boolean {
+  // If financial data hasn't been loaded yet, skip validation
+  if (!financial) {
+    return true;
+  }
+  
   const comesFromData = financial.comesFromData ?? [];
   const goesToData = financial.goesToData ?? [];
+  
+  // If no pie chart data exists yet (empty arrays), skip validation
+  // This prevents blocking saves on other tabs when financial section hasn't been visited
+  if (comesFromData.length === 0 && goesToData.length === 0) {
+    return true;
+  }
+  
   const comesFromTotal = comesFromData.reduce((sum, item) => sum + item.value, 0);
   const goesToTotal = goesToData.reduce((sum, item) => sum + item.value, 0);
   return comesFromTotal === 100 && goesToTotal === 100;
