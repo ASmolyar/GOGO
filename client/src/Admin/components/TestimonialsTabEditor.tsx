@@ -170,7 +170,7 @@ export function TestimonialsTabEditor({
           label="Section Background Gradient"
           value={getGradientValue('sectionBgGradient')}
           onChange={(gradient) => onTestimonialsChange('sectionBgGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'sectionBgGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'sectionBgGradient', idx)}
         />
       </Grid>
 
@@ -254,7 +254,7 @@ export function TestimonialsTabEditor({
           label="Name Gradient"
           value={getGradientValue('nameGradient')}
           onChange={(gradient) => onTestimonialsChange('nameGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'nameGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'nameGradient', idx)}
         />
       </Grid>
 
@@ -273,7 +273,7 @@ export function TestimonialsTabEditor({
           label="Bar Gradient"
           value={getGradientValue('eqBarGradient')}
           onChange={(gradient) => onTestimonialsChange('eqBarGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'eqBarGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'eqBarGradient', idx)}
         />
       </Grid>
 
@@ -282,7 +282,7 @@ export function TestimonialsTabEditor({
           label="EQ Background Gradient"
           value={getGradientValue('eqBgGradient')}
           onChange={(gradient) => onTestimonialsChange('eqBgGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'eqBgGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'eqBgGradient', idx)}
         />
       </Grid>
 
@@ -433,7 +433,7 @@ export function TestimonialsTabEditor({
           label="Quote Card Background Gradient"
           value={getGradientValue('quoteCardBgGradient')}
           onChange={(gradient) => onTestimonialsChange('quoteCardBgGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'quoteCardBgGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'quoteCardBgGradient', idx)}
         />
       </Grid>
 

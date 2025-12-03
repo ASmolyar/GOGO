@@ -78,12 +78,14 @@ export interface ImpactSectionContent {
   bottomCarouselImages?: string[] | null;
 
   // Measurement section header
+  measureSectionBgGradient?: string | null;
   measureTitle?: string | null;
   measureTitleHighlight?: string | null;
   measureTitleColor?: string | null;
   measureTitleHighlightColor?: string | null;
   measureSubtitle?: string | null;
   measureSubtitleColor?: string | null;
+  measureAudioBarColor?: string | null;
 
   // "Our Method Provides" card (left column)
   methodCardTitle?: string | null;

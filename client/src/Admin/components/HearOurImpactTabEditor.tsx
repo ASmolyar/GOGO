@@ -302,7 +302,7 @@ export function HearOurImpactTabEditor({
           label="Section Background Gradient"
           value={getGradientValue('sectionBgGradient')}
           onChange={(gradient) => onHearOurImpactChange('sectionBgGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'sectionBgGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'sectionBgGradient', idx)}
         />
       </Grid>
 
@@ -331,7 +331,7 @@ export function HearOurImpactTabEditor({
           label="Title Gradient"
           value={getGradientValue('titleGradient')}
           onChange={(gradient) => onHearOurImpactChange('titleGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'titleGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'titleGradient', idx)}
         />
       </Grid>
 
@@ -442,7 +442,7 @@ export function HearOurImpactTabEditor({
           label="Button Background Gradient"
           value={getGradientValue('buttonBgGradient')}
           onChange={(gradient) => onHearOurImpactChange('buttonBgGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'buttonBgGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'buttonBgGradient', idx)}
         />
       </Grid>
 
@@ -517,7 +517,7 @@ export function HearOurImpactTabEditor({
           label="Modal Background Gradient"
           value={getGradientValue('modalBgGradient')}
           onChange={(gradient) => onHearOurImpactChange('modalBgGradient', gradient)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'modalBgGradient', idx)}
+          onPickColor={(el, idx) => openGradientPicker(el, 'modalBgGradient', idx)}
         />
       </Grid>
 

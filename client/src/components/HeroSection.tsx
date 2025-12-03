@@ -171,7 +171,10 @@ const mixHslColors = (base: string, accent: string, ratio: number): string => {
 const midiToFrequency = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
 
 // Main container with Spotify-like gradient background - now sticky full-page slide
-const HeroContainer = styled.section<{ $background?: string }>`
+const HeroContainer = styled.section<{
+  $background?: string;
+  $underlineColor?: string;
+}>`
   width: 100%;
   height: 100vh;
   display: flex;
@@ -179,14 +182,16 @@ const HeroContainer = styled.section<{ $background?: string }>`
   align-items: center;
   position: sticky;
   top: 0;
-  /* Pull up to compensate for .main-content padding-top (64px) */
-  margin-top: -64px;
+  /* Pull up to be flush with the top of the viewport (overlapping the header is ok) */
+  margin-top: -80px;
   background: ${(props) => props.$background ?? "transparent"};
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
   padding: 0;
+  --section-underline: ${(props) =>
+    props.$underlineColor || "var(--spotify-green)"};
   /* Ensure this container receives all mouse events */
   cursor: default;
   z-index: 1;
@@ -210,7 +215,7 @@ const WaveBackground = styled.div`
   background: transparent;
 `;
 
-// Backdrop image behind everything
+// Backdrop image behind everything - always fills the container
 const BackdropImage = styled.div<{ $image?: string; $grayscale?: boolean }>`
   position: absolute;
   inset: 0;
@@ -222,6 +227,8 @@ const BackdropImage = styled.div<{ $image?: string; $grayscale?: boolean }>`
   z-index: 0;
   pointer-events: none;
   filter: ${(props) => (props.$grayscale ? "grayscale(1)" : "none")};
+  /* Ensure the image always fills and never fits */
+  object-fit: cover;
 `;
 
 // Gradient overlay sits above image, below waves/content
@@ -283,20 +290,60 @@ const HeroTextBlock = styled.div`
   margin: 0 auto;
 `;
 
-// Main title - "IMPACT REPORT"
-const MainTitle = styled.h1`
+// Helper to check if a color value is a gradient
+const isGradientColor = (value?: string): boolean => {
+  if (!value) return false;
+  return /(?:linear|radial|conic)-gradient\(/i.test(value);
+};
+
+// Convert radial/conic gradients to linear horizontal for underlines
+const toLinearGradient = (value?: string): string | undefined => {
+  if (!value) return undefined;
+  // If it's already linear, return as-is
+  if (/^linear-gradient\(/i.test(value)) return value;
+  // If it's radial or conic, extract colors and make linear
+  if (/^(?:radial|conic)-gradient\(/i.test(value)) {
+    // Extract the color stops (everything after the first comma or the shape definition)
+    const match = value.match(/(?:radial|conic)-gradient\([^,]*,(.+)\)$/i);
+    if (match) {
+      return `linear-gradient(to right,${match[1]})`;
+    }
+    // Fallback: just replace the gradient type
+    return value.replace(
+      /^(?:radial|conic)-gradient\(/i,
+      "linear-gradient(to right, ",
+    );
+  }
+  return value;
+};
+
+// Main title - "IMPACT REPORT" (supports gradient colors)
+const MainTitle = styled.h1<{ $gradient?: string }>`
   font-family: "Airwaves", sans-serif;
   font-size: clamp(4rem, 8vw, 7rem);
   font-weight: 800;
-  color: white;
   margin: 0;
   text-align: center;
   line-height: 0.9;
-  letter-spacing: -0.02em;
-  opacity: 0; /* Start hidden for animation */
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  pointer-events: none; /* Let events pass through */
   letter-spacing: 0.05em;
+  opacity: 0;
+  pointer-events: none;
+
+  ${(p) => {
+    if (p.$gradient && isGradientColor(p.$gradient)) {
+      return `
+        background: ${p.$gradient};
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        color: transparent;
+      `;
+    }
+    return `
+      color: white;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    `;
+  }}
 `;
 
 // Subtitle - "GUITARS OVER GUNS"
@@ -322,16 +369,24 @@ const SubtitleText = styled.h2`
   }
 `;
 
-// Green underline
+// Green underline - supports same gradient as title (converts radial to linear)
 const TitleUnderline = styled.div<{ $color?: string }>`
   width: 100px;
   height: 4px;
-  background-color: ${(p) => p.$color || "rgba(119, 221, 171, 0.8)"};
+  ${(p) => {
+    const color = p.$color || "rgba(119, 221, 171, 0.8)";
+    if (isGradientColor(color)) {
+      // Convert radial/conic gradients to linear horizontal for the underline
+      const linearColor = toLinearGradient(color);
+      return `background: ${linearColor};`;
+    }
+    return `background-color: ${color};`;
+  }}
   margin: 1.5rem 0;
   transform: scaleX(0);
   transform-origin: left;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  pointer-events: none; /* Let events pass through */
+  pointer-events: none;
 `;
 
 // Report year text
@@ -1984,6 +2039,7 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
   return (
     <HeroContainer
       $background={composedBackground}
+      $underlineColor={titleUnderlineColor}
       aria-label={
         ariaLabel && ariaLabel.trim().length > 0 ? ariaLabel : undefined
       }
@@ -2024,16 +2080,22 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
             {title && title.trim() && (
               <MainTitle
                 ref={titleRef}
+                $gradient={isGradientColor(titleColor) ? titleColor : undefined}
                 style={{
                   opacity: disableEntranceAnimations ? 1 : undefined,
                   transform: disableEntranceAnimations ? "none" : undefined,
-                  ...(titleColor ? { color: titleColor } : {}),
+                  ...(!isGradientColor(titleColor) && titleColor
+                    ? { color: titleColor }
+                    : {}),
                 }}
               >
                 {title}
               </MainTitle>
             )}
-            <TitleUnderline ref={underlineRef} $color={titleUnderlineColor} />
+            <TitleUnderline
+              ref={underlineRef}
+              $color={titleUnderlineColor || titleColor}
+            />
             {subtitle && (
               <SubtitleText
                 ref={subtitleRef}

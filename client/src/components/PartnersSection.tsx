@@ -17,6 +17,7 @@ const PartnersSectionWrapper = styled.section`
     ),
     linear-gradient(180deg, #121212 0%, #0f0f10 100%);
   overflow: hidden;
+  --section-underline: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
 
   &:before {
     content: '';

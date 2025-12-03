@@ -7,6 +7,7 @@ const Wrapper = styled.section`
   padding: 8rem 0;
   background: #141414; /* Slightly lighter/different shade than FlexA */
   color: #e0e0e0;
+  --section-underline: ${COLORS.gogo_purple};
 `;
 
 const Container = styled.div`

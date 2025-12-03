@@ -86,7 +86,8 @@ section h2::after {
   bottom: -10px;
   width: 40px;
   height: 4px;
-  background-color: var(--spotify-green);
+  /* Use section-specific underline color/gradient, fallback to spotify-green */
+  background: var(--section-underline, var(--spotify-green));
   transition: var(--transition-standard);
 }
 
@@ -2264,7 +2265,7 @@ body.has-spotify-header {
 
 /* Makes main content areas work with the new fixed elements */
 .main-content {
-  padding-top: 64px;
+  padding-top: 80px;
 }
 
 .hero-section {

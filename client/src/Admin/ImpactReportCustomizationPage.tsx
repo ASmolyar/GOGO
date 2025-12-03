@@ -110,6 +110,38 @@ const MemoMethodSection = React.memo(OurMethodSection);
 const MemoCurriculumSection = React.memo(CurriculumSection);
 const MemoImpactSection = React.memo(ImpactSection);
 
+// Reusable component for showing section load error state
+function SectionLoadError({ sectionName }: { sectionName: string }) {
+  return (
+    <Box sx={{ p: 4, textAlign: "center" }}>
+      <Typography variant="h6" color="error" gutterBottom>
+        Failed to load {sectionName} section data
+      </Typography>
+      <Typography color="text.secondary" sx={{ mb: 2 }}>
+        Could not load data from the database. Please refresh the page
+        to try again.
+      </Typography>
+      <Button
+        variant="contained"
+        onClick={() => window.location.reload()}
+      >
+        Refresh Page
+      </Button>
+    </Box>
+  );
+}
+
+// Reusable component for showing section loading state
+function SectionLoading({ sectionName }: { sectionName: string }) {
+  return (
+    <Box sx={{ p: 4, textAlign: "center" }}>
+      <Typography variant="h6" color="text.secondary">
+        Loading {sectionName} section...
+      </Typography>
+    </Box>
+  );
+}
+
 // Viewport configurations
 const VIEWPORTS = [
   { label: 'Desktop 1920×1080', width: 1920, height: 1080 },
@@ -208,7 +240,15 @@ function ImpactReportCustomizationPage() {
 
   // Error states
   const [errors, setErrors] = useState<{ general: string }>({ general: "" });
-  const [missionLoadError, setMissionLoadError] = useState(false);
+  const [sectionLoadErrors, setSectionLoadErrors] = useState<Set<AdminTabRouteKey>>(new Set());
+  
+  // Helper to mark a section as having a load error
+  const setSectionLoadError = (section: AdminTabRouteKey) => {
+    setSectionLoadErrors(prev => new Set([...prev, section]));
+  };
+  
+  // Legacy alias for backward compatibility
+  const missionLoadError = sectionLoadErrors.has("mission");
 
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -308,8 +348,9 @@ function ImpactReportCustomizationPage() {
         case "hero": {
           const hero = await fetchHeroContent();
           if (!hero) {
+            setSectionLoadError("hero");
             enqueueSnackbar("Failed to load hero section data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -385,7 +426,7 @@ function ImpactReportCustomizationPage() {
         case "mission": {
           const mission = await fetchMissionContent();
           if (!mission) {
-            setMissionLoadError(true);
+            setSectionLoadError("mission");
             enqueueSnackbar("Failed to load mission section data.", {
               variant: "error",
             });
@@ -586,8 +627,9 @@ function ImpactReportCustomizationPage() {
         case "population": {
           const population = await fetchPopulationContent();
           if (!population) {
+            setSectionLoadError("population");
             enqueueSnackbar("Failed to load population section data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -609,8 +651,9 @@ function ImpactReportCustomizationPage() {
         case "financial": {
           const financial = await fetchFinancialContent();
           if (!financial) {
+            setSectionLoadError("financial");
             enqueueSnackbar("Failed to load financial section data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -632,8 +675,9 @@ function ImpactReportCustomizationPage() {
         case "method": {
           const method = await fetchMethodContent();
           if (!method) {
+            setSectionLoadError("method");
             enqueueSnackbar("Failed to load method section data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -650,8 +694,9 @@ function ImpactReportCustomizationPage() {
         case "curriculum": {
           const curriculum = await fetchCurriculumContent();
           if (!curriculum) {
+            setSectionLoadError("curriculum");
             enqueueSnackbar("Failed to load curriculum section data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -673,8 +718,9 @@ function ImpactReportCustomizationPage() {
         case "impactSection": {
           const impactSection = await fetchImpactSectionContent();
           if (!impactSection) {
+            setSectionLoadError("impactSection");
             enqueueSnackbar("Failed to load impact section data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -696,8 +742,9 @@ function ImpactReportCustomizationPage() {
         case "hearOurImpact": {
           const hearOurImpact = await fetchHearOurImpactContent();
           if (!hearOurImpact) {
+            setSectionLoadError("hearOurImpact");
             enqueueSnackbar("Failed to load Hear Our Impact data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -719,8 +766,9 @@ function ImpactReportCustomizationPage() {
         case "testimonials": {
           const testimonials = await fetchTestimonialsContent();
           if (!testimonials) {
+            setSectionLoadError("testimonials");
             enqueueSnackbar("Failed to load Testimonials data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -742,8 +790,9 @@ function ImpactReportCustomizationPage() {
         case "nationalImpact": {
           const nationalImpact = await fetchNationalImpactContent();
           if (!nationalImpact) {
+            setSectionLoadError("nationalImpact");
             enqueueSnackbar("Failed to load National Impact data.", {
-              variant: "warning",
+              variant: "error",
             });
             break;
           }
@@ -1546,23 +1595,31 @@ function ImpactReportCustomizationPage() {
   }, []);
 
   // Render preview based on current tab
+  // Helper to show preview error state
+  const PreviewError = ({ sectionName }: { sectionName: string }) => (
+    <Box sx={{ p: 4, textAlign: "center", color: "white" }}>
+      <Typography variant="h6" color="error">
+        {sectionName} data not loaded
+      </Typography>
+    </Box>
+  );
+
   const renderPreview = () => {
     switch (currentTab) {
       case 0:
         return <DefaultsPreview defaultSwatch={defaultSwatch} />;
       case 1:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("hero") && (sectionLoadErrors.has("hero") || !impactReportForm.hero)) {
+          return <PreviewError sectionName="Hero" />;
+        }
         return (
           <MemoHeroSection previewMode heroOverride={debouncedHeroOverride} />
         );
       case 2:
-        if (missionLoadError || !impactReportForm.mission) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center", color: "white" }}>
-              <Typography variant="h6" color="error">
-                Mission data not loaded
-              </Typography>
-            </Box>
-          );
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("mission") && (sectionLoadErrors.has("mission") || !impactReportForm.mission)) {
+          return <PreviewError sectionName="Mission" />;
         }
         return (
           <MemoMissionSection
@@ -1571,6 +1628,10 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 3:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("population") && (sectionLoadErrors.has("population") || !impactReportForm.population)) {
+          return <PreviewError sectionName="Population" />;
+        }
         return (
           <MemoPopulationComponent
             inline
@@ -1579,6 +1640,10 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 4:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("financial") && (sectionLoadErrors.has("financial") || !impactReportForm.financial)) {
+          return <PreviewError sectionName="Financial" />;
+        }
         return (
           <MemoFinancialSection
             previewMode
@@ -1586,6 +1651,10 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 5:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("method") && (sectionLoadErrors.has("method") || !impactReportForm.method)) {
+          return <PreviewError sectionName="Method" />;
+        }
         return (
           <MemoMethodSection
             previewMode
@@ -1593,6 +1662,10 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 6:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("curriculum") && (sectionLoadErrors.has("curriculum") || !impactReportForm.curriculum)) {
+          return <PreviewError sectionName="Curriculum" />;
+        }
         return (
           <MemoCurriculumSection
             previewMode
@@ -1600,6 +1673,10 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 7:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("impactSection") && (sectionLoadErrors.has("impactSection") || !impactReportForm.impactSection)) {
+          return <PreviewError sectionName="Impact Section" />;
+        }
         return (
           <MemoImpactSection
             previewMode
@@ -1607,6 +1684,10 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 8:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("hearOurImpact") && (sectionLoadErrors.has("hearOurImpact") || !impactReportForm.hearOurImpact)) {
+          return <PreviewError sectionName="Hear Our Impact" />;
+        }
         return (
           <MemoSpotifyEmbedsSection
             previewMode
@@ -1614,6 +1695,10 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 9:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("testimonials") && (sectionLoadErrors.has("testimonials") || !impactReportForm.testimonials)) {
+          return <PreviewError sectionName="Testimonials" />;
+        }
         return (
           <MemoSingleQuoteSection
             previewMode
@@ -1621,6 +1706,10 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 10:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("nationalImpact") && (sectionLoadErrors.has("nationalImpact") || !impactReportForm.nationalImpact)) {
+          return <PreviewError sectionName="National Impact" />;
+        }
         return (
           <MemoLocationsSection
             previewMode
@@ -1659,14 +1748,11 @@ function ImpactReportCustomizationPage() {
         );
       case 1:
         // Show loading if hero hasn't been loaded yet
-        if (!loadedSections.has("hero") || !impactReportForm.hero) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Hero section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("hero")) {
+          return <SectionLoading sectionName="Hero" />;
+        }
+        if (sectionLoadErrors.has("hero") || !impactReportForm.hero) {
+          return <SectionLoadError sectionName="Hero" />;
         }
         return (
           <HeroTabEditor
@@ -1682,32 +1768,10 @@ function ImpactReportCustomizationPage() {
         );
       case 2:
         if (!loadedSections.has("mission")) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Mission section...
-              </Typography>
-            </Box>
-          );
+          return <SectionLoading sectionName="Mission" />;
         }
-        if (missionLoadError || !impactReportForm.mission) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="error" gutterBottom>
-                Failed to load Mission section data
-              </Typography>
-              <Typography color="text.secondary" sx={{ mb: 2 }}>
-                Could not load data from the database. Please refresh the page
-                to try again.
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => window.location.reload()}
-              >
-                Refresh Page
-              </Button>
-            </Box>
-          );
+        if (sectionLoadErrors.has("mission") || !impactReportForm.mission) {
+          return <SectionLoadError sectionName="Mission" />;
         }
         return (
           <MissionTabEditor
@@ -1719,14 +1783,11 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 3:
-        if (!loadedSections.has("population") || !impactReportForm.population) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Population section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("population")) {
+          return <SectionLoading sectionName="Population" />;
+        }
+        if (sectionLoadErrors.has("population") || !impactReportForm.population) {
+          return <SectionLoadError sectionName="Population" />;
         }
         return (
           <PopulationTabEditor
@@ -1738,14 +1799,11 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 4:
-        if (!loadedSections.has("financial") || !impactReportForm.financial) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Financial section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("financial")) {
+          return <SectionLoading sectionName="Financial" />;
+        }
+        if (sectionLoadErrors.has("financial") || !impactReportForm.financial) {
+          return <SectionLoadError sectionName="Financial" />;
         }
         return (
           <FinancialTabEditor
@@ -1757,14 +1815,11 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 5:
-        if (!loadedSections.has("method") || !impactReportForm.method) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Method section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("method")) {
+          return <SectionLoading sectionName="Method" />;
+        }
+        if (sectionLoadErrors.has("method") || !impactReportForm.method) {
+          return <SectionLoadError sectionName="Method" />;
         }
         return (
           <MethodTabEditor
@@ -1776,14 +1831,11 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 6:
-        if (!loadedSections.has("curriculum") || !impactReportForm.curriculum) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Curriculum section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("curriculum")) {
+          return <SectionLoading sectionName="Curriculum" />;
+        }
+        if (sectionLoadErrors.has("curriculum") || !impactReportForm.curriculum) {
+          return <SectionLoadError sectionName="Curriculum" />;
         }
         return (
           <CurriculumTabEditor
@@ -1795,17 +1847,11 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 7:
-        if (
-          !loadedSections.has("impactSection") ||
-          !impactReportForm.impactSection
-        ) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Impact section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("impactSection")) {
+          return <SectionLoading sectionName="Impact" />;
+        }
+        if (sectionLoadErrors.has("impactSection") || !impactReportForm.impactSection) {
+          return <SectionLoadError sectionName="Impact" />;
         }
         return (
           <ImpactSectionTabEditor
@@ -1817,17 +1863,11 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 8:
-        if (
-          !loadedSections.has("hearOurImpact") ||
-          !impactReportForm.hearOurImpact
-        ) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Hear Our Impact section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("hearOurImpact")) {
+          return <SectionLoading sectionName="Hear Our Impact" />;
+        }
+        if (sectionLoadErrors.has("hearOurImpact") || !impactReportForm.hearOurImpact) {
+          return <SectionLoadError sectionName="Hear Our Impact" />;
         }
         return (
           <HearOurImpactTabEditor
@@ -1839,17 +1879,11 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 9:
-        if (
-          !loadedSections.has("testimonials") ||
-          !impactReportForm.testimonials
-        ) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading Testimonials section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("testimonials")) {
+          return <SectionLoading sectionName="Testimonials" />;
+        }
+        if (sectionLoadErrors.has("testimonials") || !impactReportForm.testimonials) {
+          return <SectionLoadError sectionName="Testimonials" />;
         }
         return (
           <TestimonialsTabEditor
@@ -1861,17 +1895,11 @@ function ImpactReportCustomizationPage() {
           />
         );
       case 10:
-        if (
-          !loadedSections.has("nationalImpact") ||
-          !impactReportForm.nationalImpact
-        ) {
-          return (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Typography variant="h6" color="text.secondary">
-                Loading National Impact section...
-              </Typography>
-            </Box>
-          );
+        if (!loadedSections.has("nationalImpact")) {
+          return <SectionLoading sectionName="National Impact" />;
+        }
+        if (sectionLoadErrors.has("nationalImpact") || !impactReportForm.nationalImpact) {
+          return <SectionLoadError sectionName="National Impact" />;
         }
         return (
           <NationalImpactTabEditor

@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
-import { Grid, Box, Typography, Button, Divider } from '@mui/material';
-import ColorPickerPopover from '../../components/ColorPickerPopover';
-import { CustomTextField } from '../styles';
-import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
-import { PopulationContent } from "../../services/impact.api";
+import React, { useState, useMemo } from "react";
+import {
+  Grid,
+  Box,
+  Typography,
+  Button,
+  Divider,
+  IconButton,
+  Alert,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import ColorPickerPopover from "../../components/ColorPickerPopover";
+import { CustomTextField } from "../styles";
+import {
+  GradientEditor,
+  parseGradientString,
+  composeGradient,
+} from "./GradientEditor";
+import { PopulationContent, DemographicItem } from "../../services/impact.api";
 
 // Gradient keys for population section
-type PopulationGradientKey = 'sectionBadgeGradient' | 'titleGradient' | 'containerBgGradient';
+type PopulationGradientKey =
+  | "sectionBadgeGradient"
+  | "titleGradient"
+  | "containerBgGradient";
 
 export interface PopulationTabEditorProps {
   population: PopulationContent;
@@ -39,6 +57,74 @@ export function PopulationTabEditor({
   const [gradientPickerColorIndex, setGradientPickerColorIndex] =
     useState<number>(0);
   const gradientPickerOpen = Boolean(gradientPickerAnchor);
+
+  // Drag state for demographics reordering
+  const [draggedDemoIndex, setDraggedDemoIndex] = useState<number | null>(null);
+  const [dragOverDemoIndex, setDragOverDemoIndex] = useState<number | null>(
+    null,
+  );
+
+  // Calculate demographics total for validation
+  const demographicsData = population.demographicsData || [];
+  const demographicsTotal = useMemo(
+    () => demographicsData.reduce((sum, item) => sum + (item.value || 0), 0),
+    [demographicsData],
+  );
+  const demographicsValid = demographicsTotal === 100;
+
+  // Drag handlers for demographics
+  const handleDemoDragStart = (index: number) => {
+    setDraggedDemoIndex(index);
+  };
+
+  const handleDemoDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedDemoIndex !== null && draggedDemoIndex !== index) {
+      setDragOverDemoIndex(index);
+    }
+  };
+
+  const handleDemoDragEnd = () => {
+    if (
+      draggedDemoIndex !== null &&
+      dragOverDemoIndex !== null &&
+      draggedDemoIndex !== dragOverDemoIndex
+    ) {
+      const next = [...demographicsData];
+      const [removed] = next.splice(draggedDemoIndex, 1);
+      next.splice(dragOverDemoIndex, 0, removed);
+      onPopulationChange("demographicsData", next);
+    }
+    setDraggedDemoIndex(null);
+    setDragOverDemoIndex(null);
+  };
+
+  // Helper functions for demographics pie items
+  const addDemographicItem = () => {
+    const newItem: DemographicItem = {
+      id: `item-${Date.now()}`,
+      label: "",
+      value: 0,
+      color: "",
+    };
+    onPopulationChange("demographicsData", [...demographicsData, newItem]);
+  };
+
+  const removeDemographicItem = (index: number) => {
+    const next = demographicsData.filter((_, i) => i !== index);
+    onPopulationChange("demographicsData", next);
+  };
+
+  const updateDemographicItem = (
+    index: number,
+    field: keyof DemographicItem,
+    value: string | number,
+  ) => {
+    const next = [...demographicsData];
+    next[index] = { ...next[index], [field]: value };
+    // Don't update id when label changes - id should remain stable for React keys
+    onPopulationChange("demographicsData", next);
+  };
 
   // Helper to check if a color field is missing (null, undefined, or empty string)
   const isColorMissing = (value: string | null | undefined): boolean =>
@@ -142,12 +228,9 @@ export function PopulationTabEditor({
   const getPickerValue = (): string => {
     if (
       populationDemographicPickerIndex !== null &&
-      population.demographicsData?.[populationDemographicPickerIndex]
+      demographicsData[populationDemographicPickerIndex]
     ) {
-      return (
-        population.demographicsData[populationDemographicPickerIndex].color ||
-        ""
-      );
+      return demographicsData[populationDemographicPickerIndex].color || "";
     }
     if (
       populationCgasStatPickerIndex !== null &&
@@ -163,7 +246,8 @@ export function PopulationTabEditor({
 
   const handlePickerChange = (val: string) => {
     if (populationDemographicPickerIndex !== null) {
-      const next = [...(population.demographicsData || [])];
+      // Use demographicsData (derived) to ensure consistency
+      const next = [...demographicsData];
       if (next[populationDemographicPickerIndex]) {
         next[populationDemographicPickerIndex] = {
           ...next[populationDemographicPickerIndex],
@@ -341,36 +425,104 @@ export function PopulationTabEditor({
 
         {/* Info Cards */}
         <Grid item xs={12}>
-          <CustomTextField
-            label="Info Card 1 Text"
-            value={population.infoCard1Text || ""}
-            onChange={(e) =>
-              onPopulationChange("infoCard1Text", e.target.value)
-            }
-            fullWidth
-            multiline
-            minRows={3}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <CustomTextField
-            label="Info Card 2 Text"
-            value={population.infoCard2Text || ""}
-            onChange={(e) =>
-              onPopulationChange("infoCard2Text", e.target.value)
-            }
-            fullWidth
-            multiline
-            minRows={3}
-          />
+          <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
+          <Typography
+            variant="h6"
+            sx={{ mb: 2, color: "rgba(255,255,255,0.9)" }}
+          >
+            Info Cards
+          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+              gap: 2,
+              alignItems: "stretch",
+            }}
+          >
+            <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <CustomTextField
+                label="Info Card 1 Text"
+                value={population.infoCard1Text || ""}
+                onChange={(e) =>
+                  onPopulationChange("infoCard1Text", e.target.value)
+                }
+                fullWidth
+                multiline
+                minRows={4}
+                sx={{
+                  flex: 1,
+                  "& .MuiInputBase-root": {
+                    height: "100%",
+                    alignItems: "flex-start",
+                    overflow: "hidden",
+                  },
+                  "& .MuiInputBase-input": {
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-all",
+                    overflowWrap: "anywhere",
+                  },
+                }}
+              />
+            </Box>
+            <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <CustomTextField
+                label="Info Card 2 Text"
+                value={population.infoCard2Text || ""}
+                onChange={(e) =>
+                  onPopulationChange("infoCard2Text", e.target.value)
+                }
+                fullWidth
+                multiline
+                minRows={4}
+                sx={{
+                  flex: 1,
+                  "& .MuiInputBase-root": {
+                    height: "100%",
+                    alignItems: "flex-start",
+                    overflow: "hidden",
+                  },
+                  "& .MuiInputBase-input": {
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-all",
+                    overflowWrap: "anywhere",
+                  },
+                }}
+              />
+            </Box>
+          </Box>
         </Grid>
 
         {/* Demographics */}
         <Grid item xs={12}>
           <Divider sx={{ my: 2, bgcolor: "rgba(255,255,255,0.1)" }} />
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Demographics
-          </Typography>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ color: "rgba(255,255,255,0.9)" }}>
+              Student Demographics
+            </Typography>
+            {demographicsData.length > 0 && (
+              <Typography
+                variant="caption"
+                sx={{
+                  color: demographicsValid
+                    ? "rgba(255,255,255,0.5)"
+                    : "#FF8A80",
+                }}
+              >
+                Total: {demographicsTotal}%{" "}
+                {!demographicsValid && "(must equal 100%)"}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Validation Warning - only show when there are items */}
+          {demographicsData.length > 0 && !demographicsValid && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Demographics pie chart must add up to 100% to display correctly.
+              Current total: {demographicsTotal}%
+            </Alert>
+          )}
+
           <CustomTextField
             label="Chart Title"
             value={population.demographicsTitle || ""}
@@ -380,61 +532,128 @@ export function PopulationTabEditor({
             fullWidth
             sx={{ mb: 2 }}
           />
-          {population.demographicsData?.map((demo, idx) => (
+
+          {/* No data message */}
+          {demographicsData.length === 0 && (
             <Box
-              key={idx}
               sx={{
+                p: 3,
                 mb: 2,
-                display: "flex",
-                gap: 2,
-                alignItems: "center",
+                bgcolor: "rgba(255,255,255,0.03)",
+                borderRadius: 2,
+                border: "1px dashed rgba(255,255,255,0.2)",
+                textAlign: "center",
               }}
             >
-              <CustomTextField
-                label="Label"
-                value={demo.label}
-                onChange={(e) => {
-                  const next = [...(population.demographicsData || [])];
-                  next[idx] = {
-                    ...next[idx],
-                    label: e.target.value,
-                    id: e.target.value,
-                  };
-                  onPopulationChange("demographicsData", next);
-                }}
-                sx={{ flex: 1 }}
-              />
-              <CustomTextField
-                label="Value %"
-                type="number"
-                value={demo.value}
-                onChange={(e) => {
-                  const next = [...(population.demographicsData || [])];
-                  next[idx] = {
-                    ...next[idx],
-                    value: Number(e.target.value),
-                  };
-                  onPopulationChange("demographicsData", next);
-                }}
-                sx={{ width: 100 }}
-              />
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 4,
-                  background: demo.color,
-                  border: "1px solid rgba(255,255,255,0.3)",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-                onClick={(e) => {
-                  setPopulationDemographicPickerIndex(idx);
-                  setPopulationColorPickerAnchor(e.currentTarget);
-                }}
-              />
+              <Typography
+                variant="body2"
+                sx={{ color: "rgba(255,255,255,0.5)", mb: 1 }}
+              >
+                No demographics data configured
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: "rgba(255,255,255,0.3)" }}
+              >
+                Click "Add Category" below to add demographic categories
+              </Typography>
             </Box>
-          ))}
+          )}
+
+          {demographicsData.map((demo, idx) => {
+            const isDragging = draggedDemoIndex === idx;
+            const isDragOver = dragOverDemoIndex === idx;
+
+            return (
+              <Box
+                key={demo.id || idx}
+                draggable
+                onDragStart={() => handleDemoDragStart(idx)}
+                onDragOver={(e) => handleDemoDragOver(e, idx)}
+                onDragEnd={handleDemoDragEnd}
+                sx={{
+                  mb: 2,
+                  display: "flex",
+                  gap: 2,
+                  alignItems: "center",
+                  p: 2,
+                  bgcolor: "rgba(255,255,255,0.03)",
+                  borderRadius: 2,
+                  border: isDragOver
+                    ? "2px dashed rgba(30, 215, 96, 0.8)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                  opacity: isDragging ? 0.5 : 1,
+                  cursor: "grab",
+                  transition: "border 0.15s ease",
+                }}
+              >
+                <DragIndicatorIcon
+                  sx={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }}
+                />
+                <CustomTextField
+                  label="Label"
+                  value={demo.label}
+                  onChange={(e) =>
+                    updateDemographicItem(idx, "label", e.target.value)
+                  }
+                  sx={{ flex: 2 }}
+                />
+                <CustomTextField
+                  label="Value (%)"
+                  type="number"
+                  value={demo.value}
+                  onChange={(e) =>
+                    updateDemographicItem(idx, "value", Number(e.target.value))
+                  }
+                  sx={{ width: 100 }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={(e) => {
+                    setPopulationDemographicPickerIndex(idx);
+                    setPopulationColorPickerAnchor(e.currentTarget);
+                  }}
+                  sx={{
+                    borderColor: isColorMissing(demo.color)
+                      ? "rgba(244, 67, 54, 0.7)"
+                      : "rgba(255,255,255,0.3)",
+                    color: "white",
+                    textTransform: "none",
+                    minWidth: 50,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 1,
+                      bgcolor: demo.color || "transparent",
+                      border: isColorMissing(demo.color)
+                        ? "1px solid rgba(244, 67, 54, 0.5)"
+                        : "1px solid rgba(255,255,255,0.3)",
+                    }}
+                  />
+                </Button>
+                <IconButton
+                  onClick={() => removeDemographicItem(idx)}
+                  sx={{ color: "rgba(255,255,255,0.5)" }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            );
+          })}
+
+          {/* Add Category button */}
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={addDemographicItem}
+            sx={{ borderColor: "rgba(255,255,255,0.3)", color: "white", mb: 2 }}
+          >
+            Add Category
+          </Button>
+
           <CustomTextField
             label="Caption"
             value={population.demographicsCaption || ""}
@@ -648,6 +867,14 @@ export function PopulationTabEditor({
             label="Skills (Comma Separated)"
             value={(population.skillsList || []).join(", ")}
             onChange={(e) =>
+              // Split and trim, but don't filter during editing - allows typing commas
+              onPopulationChange(
+                "skillsList",
+                e.target.value.split(",").map((s) => s.trim()),
+              )
+            }
+            onBlur={(e) =>
+              // Filter out empty values on blur (when user is done typing)
               onPopulationChange(
                 "skillsList",
                 e.target.value
@@ -1144,4 +1371,3 @@ export function PopulationTabEditor({
 }
 
 export default PopulationTabEditor;
-

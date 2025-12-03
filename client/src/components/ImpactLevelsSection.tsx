@@ -17,6 +17,12 @@ const Section = styled.section`
   background: #0a0a0a;
   position: relative;
   overflow: hidden;
+  --section-underline: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #e0e0e0 50%,
+    ${COLORS.gogo_blue} 100%
+  );
 
   /* Ambient background lighting */
   &::before {

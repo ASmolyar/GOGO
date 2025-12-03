@@ -25,6 +25,7 @@ const Container = styled.section<{
   $bgGradient?: string;
   $overlayColor1?: string;
   $overlayColor2?: string;
+  $underlineGradient?: string;
 }>`
   width: min(1200px, 92vw);
   margin: 4rem auto;
@@ -35,6 +36,7 @@ const Container = styled.section<{
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
+  --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
 
   &::before {
     content: "";
@@ -101,6 +103,11 @@ const SectionName = styled.h2`
   font-weight: 900;
   color: #fff;
   letter-spacing: 0.02em;
+
+  /* Override global section h2::after underline */
+  &::after {
+    display: none;
+  }
 `;
 
 const SectionDivider = styled.div<{ $color?: string }>`
@@ -412,7 +419,8 @@ const PieChartWrapper = styled.div`
 
 const PieContainer = styled.div`
   width: 100%;
-  height: 240px;
+  height: 320px;
+  min-height: 280px;
 `;
 
 const LegendRow = styled.div`
@@ -741,6 +749,7 @@ function PopulationComponent({
       $bgGradient={containerBgGradient}
       $overlayColor1={containerOverlayColor1}
       $overlayColor2={containerOverlayColor2}
+      $underlineGradient={titleGradient || titleUnderlineColor}
     >
       <GlowBlob
         $size={240}

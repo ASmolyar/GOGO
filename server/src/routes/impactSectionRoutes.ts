@@ -68,12 +68,14 @@ router.put("/impact/impact-section", requireAuth, async (req, res, next) => {
       // Bottom carousel
       "bottomCarouselImages",
       // Measurement section header
+      "measureSectionBgGradient",
       "measureTitle",
       "measureTitleHighlight",
       "measureTitleColor",
       "measureTitleHighlightColor",
       "measureSubtitle",
       "measureSubtitleColor",
+      "measureAudioBarColor",
       // "Our Method Provides" card (left column)
       "methodCardTitle",
       "methodCardTitleColor",

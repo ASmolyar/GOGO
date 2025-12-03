@@ -7,6 +7,7 @@ const Wrapper = styled.section`
   padding: 8rem 0;
   background: #0f0f0f;
   color: #e0e0e0;
+  --section-underline: ${COLORS.gogo_yellow};
 `;
 
 const Container = styled.div`

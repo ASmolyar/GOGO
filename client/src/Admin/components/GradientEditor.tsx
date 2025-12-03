@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Grid, Box, Typography, Button, MenuItem, Select, FormControl, InputLabel, Slider } from '@mui/material';
 import COLORS from '../../../assets/colors';
+import ColorPickerPopover from "../../components/ColorPickerPopover";
 
 // Gradient types
-export type GradientType = 'linear' | 'radial' | 'conic';
+export type GradientType = "linear" | "radial" | "conic";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GRADIENT PARSING AND COMPOSITION UTILITIES
@@ -12,13 +13,15 @@ export type GradientType = 'linear' | 'radial' | 'conic';
 export interface ParsedGradient {
   type: GradientType;
   degree: number;
-  colors: string[];  // Base colors (hex format for the picker UI)
-  opacity: number;   // Opacity to apply to all colors (0-1)
+  colors: string[]; // Base colors (hex format for the picker UI)
+  opacity: number; // Opacity to apply to all colors (0-1)
 }
 
 // Helper: Extract opacity from an rgba color string
 function extractOpacityFromRgba(color: string): number | null {
-  const match = color.match(/rgba\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/i);
+  const match = color.match(
+    /rgba\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/i,
+  );
   return match ? parseFloat(match[1]) : null;
 }
 
@@ -29,14 +32,18 @@ function colorToHex(color: string): string {
     const r = parseInt(rgbaMatch[1], 10);
     const g = parseInt(rgbaMatch[2], 10);
     const b = parseInt(rgbaMatch[3], 10);
-    const toHex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0');
+    const toHex = (n: number) =>
+      Math.max(0, Math.min(255, n)).toString(16).padStart(2, "0");
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   }
   // Already hex
-  if (color.startsWith('#')) {
+  if (color.startsWith("#")) {
     const raw = color.slice(1);
     if (raw.length === 3) {
-      return `#${raw.split('').map(c => c + c).join('')}`;
+      return `#${raw
+        .split("")
+        .map((c) => c + c)
+        .join("")}`;
     }
     return color;
   }
@@ -45,10 +52,14 @@ function colorToHex(color: string): string {
 
 // Helper: Apply opacity to a hex color, returning rgba string
 function applyOpacityToHex(hex: string, opacity: number): string {
-  const clean = hex.startsWith('#') ? hex.slice(1) : hex;
-  const expanded = clean.length === 3 
-    ? clean.split('').map(c => c + c).join('') 
-    : clean;
+  const clean = hex.startsWith("#") ? hex.slice(1) : hex;
+  const expanded =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean;
   const r = parseInt(expanded.slice(0, 2), 16);
   const g = parseInt(expanded.slice(2, 4), 16);
   const b = parseInt(expanded.slice(4, 6), 16);
@@ -56,10 +67,12 @@ function applyOpacityToHex(hex: string, opacity: number): string {
 }
 
 // Parse a CSS gradient string into its components
-export function parseGradientString(gradient: string | null | undefined): ParsedGradient {
+export function parseGradientString(
+  gradient: string | null | undefined,
+): ParsedGradient {
   // Default values
   const defaultResult: ParsedGradient = {
-    type: 'linear',
+    type: "linear",
     degree: 90,
     colors: [COLORS.gogo_blue, COLORS.gogo_purple],
     opacity: 1,
@@ -67,26 +80,33 @@ export function parseGradientString(gradient: string | null | undefined): Parsed
 
   if (!gradient) return defaultResult;
 
-  let type: GradientType = 'linear';
+  let type: GradientType = "linear";
   let degree = 90;
   let opacity = 1;
 
   // Detect gradient type
-  if (gradient.startsWith('radial-gradient')) {
-    type = 'radial';
-  } else if (gradient.startsWith('conic-gradient')) {
-    type = 'conic';
+  if (gradient.startsWith("radial-gradient")) {
+    type = "radial";
+  } else if (gradient.startsWith("conic-gradient")) {
+    type = "conic";
     const conicMatch = gradient.match(/from\s+(\d+)deg/);
     if (conicMatch) degree = parseInt(conicMatch[1], 10);
-  } else if (gradient.startsWith('linear-gradient')) {
-    type = 'linear';
+  } else if (gradient.startsWith("linear-gradient")) {
+    type = "linear";
     // Match degree or direction
     const degMatch = gradient.match(/linear-gradient\s*\(\s*(\d+)deg/);
-    const dirMatch = gradient.match(/linear-gradient\s*\(\s*to\s+(right|left|top|bottom)/);
+    const dirMatch = gradient.match(
+      /linear-gradient\s*\(\s*to\s+(right|left|top|bottom)/,
+    );
     if (degMatch) {
       degree = parseInt(degMatch[1], 10);
     } else if (dirMatch) {
-      const dirMap: Record<string, number> = { right: 90, left: 270, top: 0, bottom: 180 };
+      const dirMap: Record<string, number> = {
+        right: 90,
+        left: 270,
+        top: 0,
+        bottom: 180,
+      };
       degree = dirMap[dirMatch[1]] ?? 90;
     }
   }
@@ -94,7 +114,8 @@ export function parseGradientString(gradient: string | null | undefined): Parsed
   // Extract colors - match hex, rgb, rgba patterns
   const colorPattern = /(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/g;
   const matches = gradient.match(colorPattern);
-  let rawColors = matches && matches.length >= 2 ? matches.slice(0, 3) : defaultResult.colors;
+  let rawColors =
+    matches && matches.length >= 2 ? matches.slice(0, 3) : defaultResult.colors;
 
   // Try to extract opacity from the first rgba color
   if (rawColors.length > 0) {
@@ -118,21 +139,21 @@ export function composeGradient(
   opacity: number = 1,
 ): string {
   // Apply opacity to each color
-  const colorsWithOpacity = colors.filter(Boolean).map(color => {
+  const colorsWithOpacity = colors.filter(Boolean).map((color) => {
     // If it's already rgba, just use it; otherwise convert hex to rgba with opacity
-    if (color.startsWith('rgba(')) {
+    if (color.startsWith("rgba(")) {
       return color;
     }
     return applyOpacityToHex(colorToHex(color), opacity);
   });
-  
-  const colorStops = colorsWithOpacity.join(', ');
+
+  const colorStops = colorsWithOpacity.join(", ");
   switch (type) {
-    case 'radial':
+    case "radial":
       return `radial-gradient(circle, ${colorStops})`;
-    case 'conic':
+    case "conic":
       return `conic-gradient(from ${degree}deg, ${colorStops})`;
-    case 'linear':
+    case "linear":
     default:
       return `linear-gradient(${degree}deg, ${colorStops})`;
   }
@@ -198,11 +219,11 @@ function DegreePicker({
       style={{
         width: size,
         height: size,
-        position: 'relative',
-        cursor: 'pointer',
+        position: "relative",
+        cursor: "pointer",
       }}
     >
-      <svg width={size} height={size} style={{ display: 'block' }}>
+      <svg width={size} height={size} style={{ display: "block" }}>
         <circle
           cx={radius}
           cy={radius}
@@ -252,8 +273,6 @@ export interface GradientEditorProps {
   value: string | null | undefined;
   /** Callback when the gradient changes - receives the full CSS gradient string */
   onChange: (gradient: string) => void;
-  /** Callback to open color picker for a specific color index */
-  onPickColor: (anchorEl: HTMLElement, colorIndex: number) => void;
   /** Default gradient if value is null/undefined - deprecated, should not use defaults */
   defaultGradient?: string;
   /** Whether this field is missing a value (for red highlighting) */
@@ -264,7 +283,6 @@ export function GradientEditor({
   label,
   value,
   onChange,
-  onPickColor,
   defaultGradient = "",
   isMissing = false,
 }: GradientEditorProps) {
@@ -282,6 +300,10 @@ export function GradientEditor({
   const [hasThreeColors, setHasThreeColors] = useState(
     parsed.colors.length >= 3,
   );
+
+  // Internal color picker state (each GradientEditor has its own)
+  const [pickerAnchor, setPickerAnchor] = useState<HTMLElement | null>(null);
+  const [pickerColorIndex, setPickerColorIndex] = useState<number>(0);
 
   // Sync local state when value changes externally
   useEffect(() => {
@@ -340,6 +362,20 @@ export function GradientEditor({
     }
     setColors(newColors);
     emitChange(gradientType, degree, newColors, opacity);
+  };
+
+  // Internal picker handlers
+  const handleOpenPicker = (el: HTMLElement, colorIndex: number) => {
+    setPickerColorIndex(colorIndex);
+    setPickerAnchor(el);
+  };
+
+  const handleClosePicker = () => {
+    setPickerAnchor(null);
+  };
+
+  const handlePickerColorChange = (newColor: string) => {
+    handleColorChange(pickerColorIndex, newColor);
   };
 
   const previewBackground = composeGradient(
@@ -436,7 +472,7 @@ export function GradientEditor({
               </Typography>
               <Button
                 variant="outlined"
-                onClick={(e) => onPickColor(e.currentTarget, 0)}
+                onClick={(e) => handleOpenPicker(e.currentTarget, 0)}
                 sx={{
                   mt: 0.5,
                   minWidth: 48,
@@ -467,7 +503,7 @@ export function GradientEditor({
               </Typography>
               <Button
                 variant="outlined"
-                onClick={(e) => onPickColor(e.currentTarget, 1)}
+                onClick={(e) => handleOpenPicker(e.currentTarget, 1)}
                 sx={{
                   mt: 0.5,
                   minWidth: 48,
@@ -499,7 +535,7 @@ export function GradientEditor({
                 </Typography>
                 <Button
                   variant="outlined"
-                  onClick={(e) => onPickColor(e.currentTarget, 2)}
+                  onClick={(e) => handleOpenPicker(e.currentTarget, 2)}
                   sx={{
                     mt: 0.5,
                     minWidth: 48,
@@ -607,6 +643,24 @@ export function GradientEditor({
           </Box>
         </Grid>
       </Grid>
+
+      {/* Internal Color Picker - each GradientEditor has its own */}
+      <ColorPickerPopover
+        open={Boolean(pickerAnchor)}
+        anchorEl={pickerAnchor}
+        onClose={handleClosePicker}
+        value={colors[pickerColorIndex] ?? "#000000"}
+        onChange={handlePickerColorChange}
+        presets={[
+          COLORS.gogo_blue,
+          COLORS.gogo_purple,
+          COLORS.gogo_teal,
+          COLORS.gogo_yellow,
+          COLORS.gogo_pink,
+          COLORS.gogo_green,
+        ]}
+        showOpacity={false}
+      />
     </Box>
   );
 }

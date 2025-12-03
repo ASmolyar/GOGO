@@ -74,6 +74,7 @@ const SectionContainer = styled.section<{
   $overlayColor1?: string | null;
   $overlayColor2?: string | null;
   $overlayOpacity?: number | null;
+  $underlineGradient?: string | null;
 }>`
   position: relative;
   padding: 4rem 0; /* inner content controls side spacing */
@@ -85,6 +86,7 @@ const SectionContainer = styled.section<{
   width: 100%;
   max-width: 100%;
   text-align: ${(p) => p.$textAlign ?? 'center'};
+  --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
 
   &::before {
     content: '';
@@ -585,27 +587,6 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
     });
   }, []);
 
-  // Fallback disciplines dataset for modal (used if none provided)
-  const fallbackDisciplinesData = [
-    { name: "Music Production", students: 78, projects: 120 },
-    { name: "Guitar", students: 95, projects: 150 },
-    { name: "Drums", students: 65, projects: 85 },
-    { name: "Piano", students: 70, projects: 110 },
-    { name: "Vocals", students: 85, projects: 130 },
-    { name: "Bass", students: 55, projects: 75 },
-    { name: "DJing", students: 60, projects: 95 },
-    { name: "Songwriting", students: 72, projects: 140 },
-    { name: "Dance", students: 68, projects: 90 },
-    { name: "Visual Art", students: 63, projects: 105 },
-    { name: "Digital Art", students: 58, projects: 80 },
-    { name: "Spoken Word", students: 50, projects: 85 },
-    { name: "Theater", students: 45, projects: 60 },
-    { name: "Sound Engineering", students: 40, projects: 65 },
-    { name: "Brass Instruments", students: 35, projects: 50 },
-    { name: "Woodwind Instruments", students: 30, projects: 45 },
-    { name: "Strings", students: 25, projects: 40 },
-  ];
-
   // Animate modal cards in rows when dialog opens
   useEffect(() => {
     if (!showDisciplines) return;
@@ -702,6 +683,10 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
   const disciplinesModal =
     (mission?.modals ?? undefined)?.find((m) => m?.id === "disciplines") ??
     null;
+  
+  // Disciplines data comes from database only - no fallbacks
+  const disciplinesData = disciplinesModal?.items || [];
+  
   const statsSource =
     mission?.stats && mission.stats.length > 0
       ? mission.stats.filter((s) => s.visible !== false)
@@ -821,6 +806,7 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
       $overlayColor1={mission?.overlayColor1}
       $overlayColor2={mission?.overlayColor2}
       $overlayOpacity={mission?.overlayOpacity}
+      $underlineGradient={mission?.titleUnderlineGradient || mission?.titleGradient}
       data-variant={layoutVariant}
       className={`mission-section${
         animationsEnabled && inView ? " fade-in" : ""
@@ -1050,10 +1036,7 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
             </ModalSubtitle>
           </ModalHeader>
           <ModalGrid ref={modalGridRef}>
-            {(disciplinesModal?.items?.length
-              ? disciplinesModal.items
-              : fallbackDisciplinesData
-            ).map((d: any) => {
+            {disciplinesData.map((d: any) => {
               // Purely data-driven: use iconKey from DB, fallback to music note
               const modalIcon = getIconByKey(d?.iconKey) || <MusicNoteIcon />;
               return (

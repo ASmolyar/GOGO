@@ -9,6 +9,7 @@ const Wrapper = styled.section`
   color: #e0e0e0;
   position: relative;
   overflow: hidden;
+  --section-underline: ${COLORS.gogo_teal};
 `;
 
 const Container = styled.div`

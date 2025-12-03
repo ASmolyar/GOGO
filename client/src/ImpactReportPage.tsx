@@ -287,17 +287,39 @@ function ImpactReportPage() {
   // Only show the intro once per tab: initialize from the module-level flag.
   const [introComplete, setIntroComplete] = useState(hasShownIntroInThisTab);
 
-  // Centralized data fetching - load all section data at once
+  // Timeout duration for loading data (30 seconds)
+  const LOAD_TIMEOUT_MS = 30000;
+
+  // Centralized data fetching - load all section data at once with timeout
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let isMounted = true;
+
     const loadAllData = async () => {
+      // Create a timeout promise that rejects after LOAD_TIMEOUT_MS
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error('Loading timed out'));
+        }, LOAD_TIMEOUT_MS);
+      });
+
       try {
-        const [hero, mission, population, financial, method] = await Promise.all([
-          fetchHeroContent(),
-          fetchMissionContent(),
-          fetchPopulationContent(),
-          fetchFinancialContent(),
-          fetchMethodContent(),
-        ]);
+        // Race between data loading and timeout
+        const [hero, mission, population, financial, method] = await Promise.race([
+          Promise.all([
+            fetchHeroContent(),
+            fetchMissionContent(),
+            fetchPopulationContent(),
+            fetchFinancialContent(),
+            fetchMethodContent(),
+          ]),
+          timeoutPromise,
+        ]) as [HeroContent | null, MissionContent | null, PopulationContent | null, FinancialContent | null, MethodContent | null];
+
+        // Clear timeout on success
+        clearTimeout(timeoutId);
+
+        if (!isMounted) return;
 
         // Check if any required section failed to load
         if (!hero || !mission || !population || !financial || !method) {
@@ -314,14 +336,23 @@ function ImpactReportPage() {
 
         setReportData({ hero, mission, population, financial, method });
       } catch (error) {
+        clearTimeout(timeoutId);
+        if (!isMounted) return;
         console.error('[ImpactReportPage] Failed to load report data:', error);
         setLoadError(true);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadAllData();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleIntroFinish = () => {
@@ -544,16 +575,19 @@ function ImpactReportPage() {
               background: 'linear-gradient(180deg, #1a1a1a, #121212)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: 16,
-              padding: '1rem',
+              padding: '1.5rem',
             },
           }}
         >
-          <DialogTitle sx={{ color: 'white', textAlign: 'center' }}>
+          <DialogTitle sx={{ color: 'white', textAlign: 'center', fontWeight: 700 }}>
             Failed to Load Impact Report
           </DialogTitle>
           <DialogContent>
-            <p style={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center' }}>
-              Unable to load the impact report data. Please check your connection and try again.
+            <p style={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', margin: 0 }}>
+              Unable to load the impact report data. This may be due to a connection issue or the request timed out.
+            </p>
+            <p style={{ color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>
+              Please try reloading the page or come back later.
             </p>
           </DialogContent>
           <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
@@ -563,6 +597,7 @@ function ImpactReportPage() {
               sx={{
                 background: COLORS.gogo_blue,
                 '&:hover': { background: COLORS.gogo_purple },
+                fontWeight: 600,
               }}
             >
               Reload Page

@@ -12,10 +12,12 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { IconSelector } from '../../components/IconSelector';
 import { CustomTextField } from '../styles';
 import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
+import { ImageCropper } from './ImageCropper';
 import {
   ImpactSectionContent,
   ImpactTurntableStat,
@@ -24,7 +26,7 @@ import {
   ImpactMethodItem,
   ImpactToolItem,
 } from '../../services/impact.api';
-import { uploadFile } from '../../services/upload.api';
+import { uploadFile, uploadToSignedUrl, signUpload } from '../../services/upload.api';
 
 export interface ImpactSectionTabEditorProps {
   impactSection: ImpactSectionContent;
@@ -48,6 +50,7 @@ type ImpactColorPickerField =
   | 'measureTitleColor'
   | 'measureTitleHighlightColor'
   | 'measureSubtitleColor'
+  | 'measureAudioBarColor'
   // Method card colors
   | 'methodCardTitleColor'
   | 'methodCardBgColor'
@@ -250,39 +253,119 @@ export function ImpactSectionTabEditor({
   const [uploadingTop, setUploadingTop] = useState<number | null>(null);
   const [uploadingBottom, setUploadingBottom] = useState<number | null>(null);
 
-  // Drag state for reordering
+  // Image cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperImageSrc, setCropperImageSrc] = useState<string>('');
+  const [cropperCarousel, setCropperCarousel] = useState<'topCarouselImages' | 'bottomCarouselImages' | null>(null);
+  const [cropperIndex, setCropperIndex] = useState<number | null>(null);
+
+  // Drag state for image carousel reordering
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [dragCarousel, setDragCarousel] = useState<'topCarouselImages' | 'bottomCarouselImages' | null>(null);
+
+  // Drag state for turntable stats
+  const [draggedTurntableIndex, setDraggedTurntableIndex] = useState<number | null>(null);
+  const [dragOverTurntableIndex, setDragOverTurntableIndex] = useState<number | null>(null);
+
+  // Drag state for highlight chips
+  const [draggedChipIndex, setDraggedChipIndex] = useState<number | null>(null);
+  const [dragOverChipIndex, setDragOverChipIndex] = useState<number | null>(null);
+
+  // Drag state for highlight cards
+  const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
+  const [dragOverCardIndex, setDragOverCardIndex] = useState<number | null>(null);
+
+  // Drag state for method items
+  const [draggedMethodIndex, setDraggedMethodIndex] = useState<number | null>(null);
+  const [dragOverMethodIndex, setDragOverMethodIndex] = useState<number | null>(null);
+
+  // Drag state for tool items
+  const [draggedToolIndex, setDraggedToolIndex] = useState<number | null>(null);
+  const [dragOverToolIndex, setDragOverToolIndex] = useState<number | null>(null);
 
   // File input refs - one per carousel for adding new images
   const addTopFileInputRef = useRef<HTMLInputElement | null>(null);
   const addBottomFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Handle uploading to an existing slot (clicking on a card)
-  const handleImageUpload = async (
+  // Open cropper when file is selected
+  const handleFileSelect = (
     carousel: 'topCarouselImages' | 'bottomCarouselImages',
     index: number,
     file: File
   ) => {
+    // Create object URL for the cropper
+    const imageUrl = URL.createObjectURL(file);
+    setCropperImageSrc(imageUrl);
+    setCropperCarousel(carousel);
+    setCropperIndex(index);
+    setCropperOpen(true);
+  };
+
+  // Handle the cropped image upload
+  const handleCroppedImageUpload = async (croppedBlob: Blob) => {
+    if (cropperCarousel === null || cropperIndex === null) return;
+
+    const carousel = cropperCarousel;
+    const index = cropperIndex;
     const setUploading = carousel === 'topCarouselImages' ? setUploadingTop : setUploadingBottom;
+    
+    // Close cropper first
+    setCropperOpen(false);
+    // Clean up the object URL
+    if (cropperImageSrc) {
+      URL.revokeObjectURL(cropperImageSrc);
+    }
+    setCropperImageSrc('');
+    setCropperCarousel(null);
+    setCropperIndex(null);
+
+    // Now upload
     setUploading(index);
 
     try {
       const folder = carousel === 'topCarouselImages' ? 'impact-section/top-carousel' : 'impact-section/bottom-carousel';
-      const result = await uploadFile(file, { folder });
+      
+      // Sign the upload
+      const signed = await signUpload({
+        contentType: 'image/jpeg',
+        extension: 'jpg',
+        folder,
+      });
+
+      // Upload the cropped blob
+      const putRes = await uploadToSignedUrl({
+        uploadUrl: signed.uploadUrl,
+        file: croppedBlob,
+        contentType: 'image/jpeg',
+      });
+
+      if (!putRes.ok) {
+        throw new Error('Failed to upload cropped image');
+      }
 
       // Get fresh copy of current images and update at index
       const currentImages = carousel === 'topCarouselImages' 
         ? [...(impactSection.topCarouselImages ?? [])]
         : [...(impactSection.bottomCarouselImages ?? [])];
-      currentImages[index] = result.publicUrl;
+      currentImages[index] = signed.publicUrl;
       onImpactSectionChange(carousel, currentImages);
     } catch (error) {
-      console.error('Failed to upload image:', error);
+      console.error('Failed to upload cropped image:', error);
     } finally {
       setUploading(null);
     }
+  };
+
+  // Handle closing the cropper
+  const handleCropperClose = () => {
+    setCropperOpen(false);
+    if (cropperImageSrc) {
+      URL.revokeObjectURL(cropperImageSrc);
+    }
+    setCropperImageSrc('');
+    setCropperCarousel(null);
+    setCropperIndex(null);
   };
 
   // Handle adding a new empty slot
@@ -333,6 +416,141 @@ export function ImpactSectionTabEditor({
 
   const handleDragLeave = () => {
     setDragOverIndex(null);
+  };
+
+  // Drag handlers for turntable stats
+  const handleTurntableDragStart = (index: number) => {
+    setDraggedTurntableIndex(index);
+  };
+
+  const handleTurntableDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedTurntableIndex !== null && draggedTurntableIndex !== index) {
+      setDragOverTurntableIndex(index);
+    }
+  };
+
+  const handleTurntableDragEnd = () => {
+    if (
+      draggedTurntableIndex !== null &&
+      dragOverTurntableIndex !== null &&
+      draggedTurntableIndex !== dragOverTurntableIndex
+    ) {
+      const stats = [...turntableStats];
+      const [removed] = stats.splice(draggedTurntableIndex, 1);
+      stats.splice(dragOverTurntableIndex, 0, removed);
+      onImpactSectionChange('turntableStats', stats);
+    }
+    setDraggedTurntableIndex(null);
+    setDragOverTurntableIndex(null);
+  };
+
+  // Drag handlers for highlight chips
+  const handleChipDragStart = (index: number) => {
+    setDraggedChipIndex(index);
+  };
+
+  const handleChipDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedChipIndex !== null && draggedChipIndex !== index) {
+      setDragOverChipIndex(index);
+    }
+  };
+
+  const handleChipDragEnd = () => {
+    if (
+      draggedChipIndex !== null &&
+      dragOverChipIndex !== null &&
+      draggedChipIndex !== dragOverChipIndex
+    ) {
+      const chips = [...highlightChips];
+      const [removed] = chips.splice(draggedChipIndex, 1);
+      chips.splice(dragOverChipIndex, 0, removed);
+      onImpactSectionChange('highlightChips', chips);
+    }
+    setDraggedChipIndex(null);
+    setDragOverChipIndex(null);
+  };
+
+  // Drag handlers for highlight cards
+  const handleCardDragStart = (index: number) => {
+    setDraggedCardIndex(index);
+  };
+
+  const handleCardDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedCardIndex !== null && draggedCardIndex !== index) {
+      setDragOverCardIndex(index);
+    }
+  };
+
+  const handleCardDragEnd = () => {
+    if (
+      draggedCardIndex !== null &&
+      dragOverCardIndex !== null &&
+      draggedCardIndex !== dragOverCardIndex
+    ) {
+      const cards = [...highlightCards];
+      const [removed] = cards.splice(draggedCardIndex, 1);
+      cards.splice(dragOverCardIndex, 0, removed);
+      onImpactSectionChange('highlightCards', cards);
+    }
+    setDraggedCardIndex(null);
+    setDragOverCardIndex(null);
+  };
+
+  // Drag handlers for method items
+  const handleMethodItemDragStart = (index: number) => {
+    setDraggedMethodIndex(index);
+  };
+
+  const handleMethodItemDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedMethodIndex !== null && draggedMethodIndex !== index) {
+      setDragOverMethodIndex(index);
+    }
+  };
+
+  const handleMethodItemDragEnd = () => {
+    if (
+      draggedMethodIndex !== null &&
+      dragOverMethodIndex !== null &&
+      draggedMethodIndex !== dragOverMethodIndex
+    ) {
+      const items = [...methodItems];
+      const [removed] = items.splice(draggedMethodIndex, 1);
+      items.splice(dragOverMethodIndex, 0, removed);
+      onImpactSectionChange('methodItems', items);
+    }
+    setDraggedMethodIndex(null);
+    setDragOverMethodIndex(null);
+  };
+
+  // Drag handlers for tool items
+  const handleToolDragStart = (index: number) => {
+    setDraggedToolIndex(index);
+  };
+
+  const handleToolDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedToolIndex !== null && draggedToolIndex !== index) {
+      setDragOverToolIndex(index);
+    }
+  };
+
+  const handleToolDragEnd = () => {
+    if (
+      draggedToolIndex !== null &&
+      dragOverToolIndex !== null &&
+      draggedToolIndex !== dragOverToolIndex
+    ) {
+      const items = [...toolItems];
+      const [removed] = items.splice(draggedToolIndex, 1);
+      items.splice(dragOverToolIndex, 0, removed);
+      onImpactSectionChange('toolItems', items);
+    }
+    setDraggedToolIndex(null);
+    setDragOverToolIndex(null);
   };
 
   // Method items helpers (left column of measurement section)
@@ -410,6 +628,18 @@ export function ImpactSectionTabEditor({
         swatches={defaultSwatch ?? undefined}
       />
 
+      {/* Image Cropper Dialog */}
+      <ImageCropper
+        open={cropperOpen}
+        imageSrc={cropperImageSrc}
+        onClose={handleCropperClose}
+        onCropComplete={handleCroppedImageUpload}
+        aspectRatio={10 / 7}
+        outputWidth={400}
+        outputHeight={280}
+        title="Crop Image for Carousel"
+      />
+
       {/* ─────────────────────────────────────────────────────────────────────── */}
       {/* SECTION BACKGROUND */}
       {/* ─────────────────────────────────────────────────────────────────────── */}
@@ -424,8 +654,7 @@ export function ImpactSectionTabEditor({
           label="Section Background Gradient"
           value={getGradientValue('sectionBgGradient')}
           onChange={(gradient) => onImpactSectionChange('sectionBgGradient', gradient)}
-          showTypeSelector
-          showThreeColorToggle
+          onPickColor={(el, colorIndex) => openGradientPicker(el, 'sectionBgGradient', colorIndex)}
         />
       </Grid>
 
@@ -434,8 +663,7 @@ export function ImpactSectionTabEditor({
           label="Top Border Accent Gradient"
           value={getGradientValue('topBorderGradient')}
           onChange={(gradient) => onImpactSectionChange('topBorderGradient', gradient)}
-          showTypeSelector
-          showThreeColorToggle
+          onPickColor={(el, colorIndex) => openGradientPicker(el, 'topBorderGradient', colorIndex)}
         />
       </Grid>
 
@@ -490,7 +718,7 @@ export function ImpactSectionTabEditor({
                 id={`top-file-input-${idx}`}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImageUpload('topCarouselImages', idx, file);
+                  if (file) handleFileSelect('topCarouselImages', idx, file);
                   e.target.value = '';
                 }}
               />
@@ -636,7 +864,7 @@ export function ImpactSectionTabEditor({
           label="Turntable Card Background"
           value={getGradientValue('turntableCardBgGradient')}
           onChange={(gradient) => onImpactSectionChange('turntableCardBgGradient', gradient)}
-          showTypeSelector
+          onPickColor={(el, colorIndex) => openGradientPicker(el, 'turntableCardBgGradient', colorIndex)}
         />
       </Grid>
 
@@ -647,64 +875,79 @@ export function ImpactSectionTabEditor({
         </Typography>
       </Grid>
 
-      {turntableStats.map((stat, idx) => (
-        <Grid item xs={12} key={stat.id}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              bgcolor: 'rgba(255,255,255,0.03)',
-              borderRadius: 2,
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <CustomTextField
-                label="Percentage"
-                type="number"
-                value={stat.number}
-                onChange={(e) => updateTurntableStat(idx, 'number', Number(e.target.value))}
-                sx={{ width: 120 }}
-              />
-              <CustomTextField
-                label="Label"
-                value={stat.label}
-                onChange={(e) => updateTurntableStat(idx, 'label', e.target.value)}
-                sx={{ flex: 1 }}
-                placeholder="e.g., made or maintained academic gains"
-              />
-              <IconButton
-                onClick={() => removeTurntableStat(idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-              >
-                <DeleteIcon />
-              </IconButton>
+      {turntableStats.map((stat, idx) => {
+        const isDragging = draggedTurntableIndex === idx;
+        const isDragOver = dragOverTurntableIndex === idx;
+
+        return (
+          <Grid item xs={12} key={stat.id}>
+            <Box
+              draggable
+              onDragStart={() => handleTurntableDragStart(idx)}
+              onDragOver={(e) => handleTurntableDragOver(e, idx)}
+              onDragEnd={handleTurntableDragEnd}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                p: 2,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+                border: isDragOver
+                  ? '2px dashed rgba(30, 215, 96, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                opacity: isDragging ? 0.5 : 1,
+                cursor: 'grab',
+                transition: 'border 0.15s ease',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <CustomTextField
+                  label="Percentage"
+                  type="number"
+                  value={stat.number}
+                  onChange={(e) => updateTurntableStat(idx, 'number', Number(e.target.value))}
+                  sx={{ width: 120 }}
+                />
+                <CustomTextField
+                  label="Label"
+                  value={stat.label}
+                  onChange={(e) => updateTurntableStat(idx, 'label', e.target.value)}
+                  sx={{ flex: 1 }}
+                  placeholder="e.g., made or maintained academic gains"
+                />
+                <IconButton
+                  onClick={() => removeTurntableStat(idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={(e) => openTurntableColorPicker(e.currentTarget, idx, 'colorA')}
+                  sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+                >
+                  <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: stat.colorA || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
+                  &nbsp;Label Color A
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={(e) => openTurntableColorPicker(e.currentTarget, idx, 'colorB')}
+                  sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+                >
+                  <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: stat.colorB || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
+                  &nbsp;Label Color B
+                </Button>
+              </Box>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={(e) => openTurntableColorPicker(e.currentTarget, idx, 'colorA')}
-                sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
-              >
-                <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: stat.colorA || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
-                &nbsp;Label Color A
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={(e) => openTurntableColorPicker(e.currentTarget, idx, 'colorB')}
-                sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
-              >
-                <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: stat.colorB || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
-                &nbsp;Label Color B
-              </Button>
-            </Box>
-          </Box>
-        </Grid>
-      ))}
+          </Grid>
+        );
+      })}
 
       <Grid item xs={12}>
         <Button
@@ -799,32 +1042,57 @@ export function ImpactSectionTabEditor({
         </Box>
       </Grid>
 
-      {highlightChips.map((chip, idx) => (
-        <Grid item xs={12} key={chip.id}>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Box sx={{ width: 180 }}>
-              <IconSelector
-                label="Icon"
-                value={chip.iconKey || ''}
-                onChange={(key) => updateHighlightChip(idx, 'iconKey', key)}
-              />
-            </Box>
-            <CustomTextField
-              label="Text"
-              value={chip.text}
-              onChange={(e) => updateHighlightChip(idx, 'text', e.target.value)}
-              sx={{ flex: 1 }}
-              placeholder="e.g., Academic Self-Efficacy"
-            />
-            <IconButton
-              onClick={() => removeHighlightChip(idx)}
-              sx={{ color: 'rgba(255,255,255,0.5)' }}
+      {highlightChips.map((chip, idx) => {
+        const isDragging = draggedChipIndex === idx;
+        const isDragOver = dragOverChipIndex === idx;
+
+        return (
+          <Grid item xs={12} key={chip.id}>
+            <Box
+              draggable
+              onDragStart={() => handleChipDragStart(idx)}
+              onDragOver={(e) => handleChipDragOver(e, idx)}
+              onDragEnd={handleChipDragEnd}
+              sx={{
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+                p: 2,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+                border: isDragOver
+                  ? '2px dashed rgba(30, 215, 96, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                opacity: isDragging ? 0.5 : 1,
+                cursor: 'grab',
+                transition: 'border 0.15s ease',
+              }}
             >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        </Grid>
-      ))}
+              <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+              <Box sx={{ width: 180 }}>
+                <IconSelector
+                  label="Icon"
+                  value={chip.iconKey || ''}
+                  onChange={(key) => updateHighlightChip(idx, 'iconKey', key)}
+                />
+              </Box>
+              <CustomTextField
+                label="Text"
+                value={chip.text}
+                onChange={(e) => updateHighlightChip(idx, 'text', e.target.value)}
+                sx={{ flex: 1 }}
+                placeholder="e.g., Academic Self-Efficacy"
+              />
+              <IconButton
+                onClick={() => removeHighlightChip(idx)}
+                sx={{ color: 'rgba(255,255,255,0.5)' }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          </Grid>
+        );
+      })}
 
       <Grid item xs={12}>
         <Button
@@ -873,46 +1141,61 @@ export function ImpactSectionTabEditor({
         </Box>
       </Grid>
 
-      {highlightCards.map((card, idx) => (
-        <Grid item xs={12} key={card.id}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              bgcolor: 'rgba(255,255,255,0.03)',
-              borderRadius: 2,
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {highlightCards.map((card, idx) => {
+        const isDragging = draggedCardIndex === idx;
+        const isDragOver = dragOverCardIndex === idx;
+
+        return (
+          <Grid item xs={12} key={card.id}>
+            <Box
+              draggable
+              onDragStart={() => handleCardDragStart(idx)}
+              onDragOver={(e) => handleCardDragOver(e, idx)}
+              onDragEnd={handleCardDragEnd}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                p: 2,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+                border: isDragOver
+                  ? '2px dashed rgba(30, 215, 96, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                opacity: isDragging ? 0.5 : 1,
+                cursor: 'grab',
+                transition: 'border 0.15s ease',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <CustomTextField
+                  label="Card Title"
+                  value={card.title}
+                  onChange={(e) => updateHighlightCard(idx, 'title', e.target.value)}
+                  sx={{ flex: 1 }}
+                  placeholder="e.g., Trusting Relationships"
+                />
+                <IconButton
+                  onClick={() => removeHighlightCard(idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
               <CustomTextField
-                label="Card Title"
-                value={card.title}
-                onChange={(e) => updateHighlightCard(idx, 'title', e.target.value)}
-                sx={{ flex: 1 }}
-                placeholder="e.g., Trusting Relationships"
+                label="Card Text"
+                value={card.text}
+                onChange={(e) => updateHighlightCard(idx, 'text', e.target.value)}
+                fullWidth
+                multiline
+                rows={2}
+                placeholder="Enter description..."
               />
-              <IconButton
-                onClick={() => removeHighlightCard(idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-              >
-                <DeleteIcon />
-              </IconButton>
             </Box>
-            <CustomTextField
-              label="Card Text"
-              value={card.text}
-              onChange={(e) => updateHighlightCard(idx, 'text', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              placeholder="Enter description..."
-            />
-          </Box>
-        </Grid>
-      ))}
+          </Grid>
+        );
+      })}
 
       <Grid item xs={12}>
         <Button
@@ -976,7 +1259,7 @@ export function ImpactSectionTabEditor({
                 id={`bottom-file-input-${idx}`}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleImageUpload('bottomCarouselImages', idx, file);
+                  if (file) handleFileSelect('bottomCarouselImages', idx, file);
                   e.target.value = '';
                 }}
               />
@@ -1084,6 +1367,14 @@ export function ImpactSectionTabEditor({
         </Typography>
       </Grid>
 
+      <Grid item xs={12}>
+        <GradientEditor
+          label="Section Background Gradient"
+          value={impactSection.measureSectionBgGradient || ''}
+          onChange={(gradient) => onImpactSectionChange('measureSectionBgGradient', gradient)}
+        />
+      </Grid>
+
       <Grid item xs={12} md={6}>
         <CustomTextField
           label="Title (regular part)"
@@ -1145,6 +1436,15 @@ export function ImpactSectionTabEditor({
             <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: impactSection.measureSubtitleColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
             &nbsp;Subtitle color
           </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={(e) => openColorPicker(e.currentTarget, 'measureAudioBarColor')}
+            sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+          >
+            <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: impactSection.measureAudioBarColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
+            &nbsp;Audio wave color
+          </Button>
         </Box>
       </Grid>
 
@@ -1158,7 +1458,7 @@ export function ImpactSectionTabEditor({
         </Typography>
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <CustomTextField
           label="Card Title"
           value={impactSection.methodCardTitle || ''}
@@ -1168,12 +1468,11 @@ export function ImpactSectionTabEditor({
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <GradientEditor
           label="Title Underline Gradient"
           value={impactSection.methodCardAccentGradient || ''}
           onChange={(val) => onImpactSectionChange('methodCardAccentGradient', val)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'methodCardAccentGradient', idx)}
         />
       </Grid>
 
@@ -1254,50 +1553,65 @@ export function ImpactSectionTabEditor({
         </Box>
       </Grid>
 
-      {methodItems.map((item, idx) => (
-        <Grid item xs={12} key={item.id}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              bgcolor: 'rgba(255,255,255,0.03)',
-              borderRadius: 2,
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconSelector
-                value={item.iconKey || ''}
-                onChange={(val) => updateMethodItem(idx, 'iconKey', val)}
-              />
+      {methodItems.map((item, idx) => {
+        const isDragging = draggedMethodIndex === idx;
+        const isDragOver = dragOverMethodIndex === idx;
+
+        return (
+          <Grid item xs={12} key={item.id}>
+            <Box
+              draggable
+              onDragStart={() => handleMethodItemDragStart(idx)}
+              onDragOver={(e) => handleMethodItemDragOver(e, idx)}
+              onDragEnd={handleMethodItemDragEnd}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                p: 2,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+                border: isDragOver
+                  ? '2px dashed rgba(30, 215, 96, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                opacity: isDragging ? 0.5 : 1,
+                cursor: 'grab',
+                transition: 'border 0.15s ease',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <IconSelector
+                  value={item.iconKey || ''}
+                  onChange={(val) => updateMethodItem(idx, 'iconKey', val)}
+                />
+                <CustomTextField
+                  label="Title"
+                  value={item.title}
+                  onChange={(e) => updateMethodItem(idx, 'title', e.target.value)}
+                  sx={{ flex: 1 }}
+                  placeholder="e.g., Trusting relationships with caring adults"
+                />
+                <IconButton
+                  onClick={() => removeMethodItem(idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
               <CustomTextField
-                label="Title"
-                value={item.title}
-                onChange={(e) => updateMethodItem(idx, 'title', e.target.value)}
-                sx={{ flex: 1 }}
-                placeholder="e.g., Trusting relationships with caring adults"
+                label="Description"
+                value={item.text}
+                onChange={(e) => updateMethodItem(idx, 'text', e.target.value)}
+                fullWidth
+                multiline
+                rows={2}
+                placeholder="Enter description..."
               />
-              <IconButton
-                onClick={() => removeMethodItem(idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-              >
-                <DeleteIcon />
-              </IconButton>
             </Box>
-            <CustomTextField
-              label="Description"
-              value={item.text}
-              onChange={(e) => updateMethodItem(idx, 'text', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              placeholder="Enter description..."
-            />
-          </Box>
-        </Grid>
-      ))}
+          </Grid>
+        );
+      })}
 
       <Grid item xs={12}>
         <Button
@@ -1345,7 +1659,7 @@ export function ImpactSectionTabEditor({
         </Typography>
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <CustomTextField
           label="Card Title"
           value={impactSection.toolsCardTitle || ''}
@@ -1355,12 +1669,11 @@ export function ImpactSectionTabEditor({
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <GradientEditor
           label="Tool Icon Background"
           value={impactSection.toolIconBgGradient || ''}
           onChange={(val) => onImpactSectionChange('toolIconBgGradient', val)}
-          onColorClick={(el, idx) => openGradientPicker(el, 'toolIconBgGradient', idx)}
         />
       </Grid>
 
@@ -1424,44 +1737,59 @@ export function ImpactSectionTabEditor({
         </Alert>
       </Grid>
 
-      {toolItems.map((item, idx) => (
-        <Grid item xs={12} key={item.id}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              bgcolor: 'rgba(255,255,255,0.03)',
-              borderRadius: 2,
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {toolItems.map((item, idx) => {
+        const isDragging = draggedToolIndex === idx;
+        const isDragOver = dragOverToolIndex === idx;
+
+        return (
+          <Grid item xs={12} key={item.id}>
+            <Box
+              draggable
+              onDragStart={() => handleToolDragStart(idx)}
+              onDragOver={(e) => handleToolDragOver(e, idx)}
+              onDragEnd={handleToolDragEnd}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                p: 2,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+                border: isDragOver
+                  ? '2px dashed rgba(30, 215, 96, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                opacity: isDragging ? 0.5 : 1,
+                cursor: 'grab',
+                transition: 'border 0.15s ease',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <CustomTextField
+                  label="Tool Name"
+                  value={item.title}
+                  onChange={(e) => updateToolItem(idx, 'title', e.target.value)}
+                  sx={{ flex: 1 }}
+                  placeholder="e.g., Hello Insight SEL & PYD Evaluation Platform"
+                />
+                <IconButton
+                  onClick={() => removeToolItem(idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
               <CustomTextField
-                label="Tool Name"
-                value={item.title}
-                onChange={(e) => updateToolItem(idx, 'title', e.target.value)}
-                sx={{ flex: 1 }}
-                placeholder="e.g., Hello Insight SEL & PYD Evaluation Platform"
+                label="Description"
+                value={item.description}
+                onChange={(e) => updateToolItem(idx, 'description', e.target.value)}
+                fullWidth
+                placeholder="e.g., Primary assessment tool for all students"
               />
-              <IconButton
-                onClick={() => removeToolItem(idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-              >
-                <DeleteIcon />
-              </IconButton>
             </Box>
-            <CustomTextField
-              label="Description"
-              value={item.description}
-              onChange={(e) => updateToolItem(idx, 'description', e.target.value)}
-              fullWidth
-              placeholder="e.g., Primary assessment tool for all students"
-            />
-          </Box>
-        </Grid>
-      ))}
+          </Grid>
+        );
+      })}
 
       <Grid item xs={12}>
         <Button

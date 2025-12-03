@@ -11,11 +11,16 @@ const float = keyframes`
   100% { transform: translateY(0px); }
 `;
 
-const SectionWrapper = styled.section`
+interface SectionWrapperProps {
+  $underlineGradient?: string;
+}
+
+const SectionWrapper = styled.section<SectionWrapperProps>`
   padding: 7rem 0;
   background: linear-gradient(135deg, #121212 0%, #1e1e1e 50%, #121212 100%);
   position: relative;
   overflow: hidden;
+  --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
 `;
 
 const BackgroundDecoration = styled.div`
@@ -225,14 +230,15 @@ const PieRow = styled.div`
 `;
 
 const PieCard = styled(ChartCard)`
-  height: 420px;
+  height: 480px;
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: auto 1fr;
 `;
 
 const PieContainer = styled.div`
-  height: 320px;
+  height: 380px;
+  min-height: 320px;
 `;
 
 const Tooltip = styled.div`
@@ -281,42 +287,6 @@ const Note = styled.div`
   font-size: 0.95rem;
 `;
 
-// Default data (used when no API data is available)
-const DEFAULT_YEARS = [
-  '2015',
-  '2016',
-  '2017-18',
-  '2018-19',
-  '2019-20',
-  '2020-21',
-  '2021-22',
-  '2022-23',
-];
-
-const DEFAULT_REVENUE = [
-  200000, 300000, 800000, 1400000, 2300000, 2500000, 3200000, 3400000,
-];
-const DEFAULT_EXPENSES = [
-  150000, 280000, 500000, 1100000, 1500000, 2400000, 2950000, 3100000,
-];
-
-const DEFAULT_MAX_Y = 4000000; // $4,000,000 top tick from screenshot
-
-const DEFAULT_COMES_FROM: FinancialPieItem[] = [
-  { id: 'foundations', label: "Foundations & The Children's Trust", value: 41, color: COLORS.gogo_blue },
-  { id: 'individuals', label: 'Individuals', value: 19, color: COLORS.gogo_yellow },
-  { id: 'government', label: 'Government Grants', value: 18, color: COLORS.gogo_purple },
-  { id: 'program-services', label: 'Program Services & Earned Revenue', value: 15, color: COLORS.gogo_teal },
-  { id: 'special-events', label: 'Special Events', value: 5, color: COLORS.gogo_pink },
-  { id: 'corporate', label: 'Corporate Contributions', value: 2, color: '#bdbdbd' },
-];
-
-const DEFAULT_GOES_TO: FinancialPieItem[] = [
-  { id: 'program-services', label: 'Program Services', value: 75, color: COLORS.gogo_blue },
-  { id: 'admin', label: 'Administrative & General', value: 12, color: COLORS.gogo_purple },
-  { id: 'fundraising', label: 'Fundraising', value: 13, color: COLORS.gogo_yellow },
-];
-
 interface FinancialAnalysisSectionProps {
   /** Data passed directly from parent - used for production */
   financialData?: FinancialContent;
@@ -334,7 +304,7 @@ function buildPolyline(
   padR = 20,
   padT = 20,
   padB = 40,
-  maxY = DEFAULT_MAX_Y,
+  maxY: number,
 ) {
   const innerW = width - padL - padR;
   const innerH = height - padT - padB;
@@ -417,7 +387,7 @@ function FinancialAnalysisSection({
   financialData: externalData,
   previewMode = false,
   financialOverride,
-}: FinancialAnalysisSectionProps): JSX.Element {
+}: FinancialAnalysisSectionProps): JSX.Element | null {
   const [internalData, setInternalData] = useState<FinancialContent | null>(externalData || null);
 
   // Fetch data from API when not in preview mode and no external data
@@ -435,9 +405,10 @@ function FinancialAnalysisSection({
   }, [externalData, previewMode]);
 
   // Use override in preview mode, externalData, or fetched data
-  const effectiveData = useMemo(() => {
+  // No defaults - data must come from database
+  const effectiveData = useMemo<FinancialContent | null>(() => {
     if (previewMode && financialOverride) return financialOverride;
-    return externalData ?? internalData ?? {};
+    return externalData ?? internalData ?? null;
   }, [previewMode, financialOverride, externalData, internalData]);
 
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -450,46 +421,51 @@ function FinancialAnalysisSection({
   const [cursorX, setCursorX] = useState<number | null>(null);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Extract values from effectiveData with defaults
-  const years = effectiveData.years ?? DEFAULT_YEARS;
-  const revenue = effectiveData.revenueData ?? DEFAULT_REVENUE;
-  const expenses = effectiveData.expenseData ?? DEFAULT_EXPENSES;
-  const MAX_Y = effectiveData.maxYAxis ?? DEFAULT_MAX_Y;
+  // If no data available, don't render anything
+  if (!effectiveData) {
+    return null;
+  }
 
-  const title = effectiveData.title ?? 'Financial Overview';
-  const titleGradient = effectiveData.titleGradient ?? `linear-gradient(to right, ${COLORS.gogo_green}, ${COLORS.gogo_blue}, ${COLORS.gogo_purple})`;
-  const subtitle = effectiveData.subtitle ?? 'Annual budget growth since 2015 and how resources are raised and allocated';
-  const subtitleColor = effectiveData.subtitleColor ?? 'rgba(255, 255, 255, 0.75)';
+  // Extract values from effectiveData (no defaults - data must come from DB)
+  const years = effectiveData.years || [];
+  const revenue = effectiveData.revenueData || [];
+  const expenses = effectiveData.expenseData || [];
+  const MAX_Y = effectiveData.maxYAxis || 4000000;
 
-  const sectionBgGradient = effectiveData.sectionBgGradient ?? 'linear-gradient(135deg, #121212 0%, #1e1e1e 50%, #121212 100%)';
-  const decorationColor1 = effectiveData.decorationColor1 ?? 'rgba(25, 70, 245, 0.08)';
-  const decorationColor2 = effectiveData.decorationColor2 ?? 'rgba(190, 43, 147, 0.08)';
+  const title = effectiveData.title || '';
+  const titleGradient = effectiveData.titleGradient || '';
+  const subtitle = effectiveData.subtitle || '';
+  const subtitleColor = effectiveData.subtitleColor || '';
 
-  const kpiValueColor = effectiveData.kpiValueColor ?? '#ffffff';
-  const kpiLabelColor = effectiveData.kpiLabelColor ?? 'rgba(255, 255, 255, 0.7)';
-  const kpiNetPositiveColor = effectiveData.kpiNetPositiveColor ?? '#9BE15D';
-  const kpiNetNegativeColor = effectiveData.kpiNetNegativeColor ?? '#FF8A80';
-  const kpiRevenueLabel = effectiveData.kpiRevenueLabel ?? 'Latest Revenue';
-  const kpiExpensesLabel = effectiveData.kpiExpensesLabel ?? 'Latest Expenses';
-  const kpiNetLabel = effectiveData.kpiNetLabel ?? 'Net';
-  const kpiYoyLabel = effectiveData.kpiYoyLabel ?? 'YoY Growth (Rev / Exp)';
+  const sectionBgGradient = effectiveData.sectionBgGradient || '';
+  const decorationColor1 = effectiveData.decorationColor1 || 'rgba(25, 70, 245, 0.08)';
+  const decorationColor2 = effectiveData.decorationColor2 || 'rgba(190, 43, 147, 0.08)';
 
-  const lineChartTitle = effectiveData.lineChartTitle ?? 'Annual Budget Growth (Since 2015)';
-  const revenueLineColor = effectiveData.revenueLineColor ?? COLORS.gogo_blue;
-  const expenseLineColor = effectiveData.expenseLineColor ?? COLORS.gogo_pink;
-  const axisLineColor = effectiveData.axisLineColor ?? '#666666';
-  const axisLabelColor = effectiveData.axisLabelColor ?? '#aaaaaa';
-  const legendRevenueLabel = effectiveData.legendRevenueLabel ?? 'Revenue';
-  const legendExpensesLabel = effectiveData.legendExpensesLabel ?? 'Expenses';
+  const kpiValueColor = effectiveData.kpiValueColor || '#ffffff';
+  const kpiLabelColor = effectiveData.kpiLabelColor || 'rgba(255, 255, 255, 0.7)';
+  const kpiNetPositiveColor = effectiveData.kpiNetPositiveColor || '#9BE15D';
+  const kpiNetNegativeColor = effectiveData.kpiNetNegativeColor || '#FF8A80';
+  const kpiRevenueLabel = effectiveData.kpiRevenueLabel || 'Latest Revenue';
+  const kpiExpensesLabel = effectiveData.kpiExpensesLabel || 'Latest Expenses';
+  const kpiNetLabel = effectiveData.kpiNetLabel || 'Net';
+  const kpiYoyLabel = effectiveData.kpiYoyLabel || 'YoY Growth (Rev / Exp)';
 
-  const comesFromTitle = effectiveData.comesFromTitle ?? 'Where the Money Comes From';
-  const goesToTitle = effectiveData.goesToTitle ?? 'Where the Money Goes';
-  const breakdownTitle = effectiveData.breakdownTitle ?? 'Breakdown';
-  const breakdownTextColor = effectiveData.breakdownTextColor ?? 'rgba(255, 255, 255, 0.9)';
+  const lineChartTitle = effectiveData.lineChartTitle || '';
+  const revenueLineColor = effectiveData.revenueLineColor || COLORS.gogo_blue;
+  const expenseLineColor = effectiveData.expenseLineColor || COLORS.gogo_pink;
+  const axisLineColor = effectiveData.axisLineColor || '#666666';
+  const axisLabelColor = effectiveData.axisLabelColor || '#aaaaaa';
+  const legendRevenueLabel = effectiveData.legendRevenueLabel || 'Revenue';
+  const legendExpensesLabel = effectiveData.legendExpensesLabel || 'Expenses';
+
+  const comesFromTitle = effectiveData.comesFromTitle || '';
+  const goesToTitle = effectiveData.goesToTitle || '';
+  const breakdownTitle = effectiveData.breakdownTitle || '';
+  const breakdownTextColor = effectiveData.breakdownTextColor || 'rgba(255, 255, 255, 0.9)';
   const pieChartInnerRadius = effectiveData.pieChartInnerRadius ?? 0.6;
 
-  const comesFrom = effectiveData.comesFromData ?? DEFAULT_COMES_FROM;
-  const goesTo = effectiveData.goesToData ?? DEFAULT_GOES_TO;
+  const comesFrom = effectiveData.comesFromData || [];
+  const goesTo = effectiveData.goesToData || [];
 
   const width = 800;
   const height = 360;
@@ -572,7 +548,7 @@ function FinancialAnalysisSection({
   };
 
   return (
-    <SectionWrapper ref={sectionRef} style={{ background: sectionBgGradient }}>
+    <SectionWrapper ref={sectionRef} style={{ background: sectionBgGradient }} $underlineGradient={titleGradient}>
       <BackgroundDecoration style={{
         background: `radial-gradient(circle at 20% 20%, ${decorationColor1} 0%, transparent 50%), radial-gradient(circle at 80% 80%, ${decorationColor2} 0%, transparent 50%)`
       }} />
@@ -830,6 +806,21 @@ function FinancialAnalysisSection({
                 />
               </PieContainer>
             </PieCard>
+
+            <ChartCard className="animate-child" data-anim-id="breakdown-goes-to">
+              <CardTitle style={{ marginBottom: '0.75rem' }}>
+                Allocation Breakdown
+              </CardTitle>
+              <Bullets>
+                {goesTo.map((c) => (
+                  <BulletItem key={c.id} style={{ color: breakdownTextColor }}>
+                    <BulletDot $color={c.color} />
+                    <span style={{ fontWeight: 700 }}>{c.value}%</span>
+                    <span>{c.label}</span>
+                  </BulletItem>
+                ))}
+              </Bullets>
+            </ChartCard>
 
           </div>
         </Grid>

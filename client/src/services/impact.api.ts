@@ -501,12 +501,14 @@ export interface ImpactSectionContent {
   bottomCarouselImages?: string[] | null;  // Array of image URLs (recommend 7+)
 
   // Measurement section header
+  measureSectionBgGradient?: string | null;  // Background gradient for the section
   measureTitle?: string | null;
   measureTitleHighlight?: string | null;  // The highlighted word
   measureTitleColor?: string | null;
   measureTitleHighlightColor?: string | null;
   measureSubtitle?: string | null;
   measureSubtitleColor?: string | null;
+  measureAudioBarColor?: string | null;  // Audio wave bar color
 
   // "Our Method Provides" card (left column)
   methodCardTitle?: string | null;

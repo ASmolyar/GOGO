@@ -83,6 +83,7 @@ const beltScroll = keyframes`
 interface SectionProps {
   $bgGradient?: string;
   $topBorderGradient?: string;
+  $underlineGradient?: string;
 }
 
 const ImpactContainer = styled.section<SectionProps>`
@@ -90,6 +91,7 @@ const ImpactContainer = styled.section<SectionProps>`
   background: ${(p) => p.$bgGradient || 'linear-gradient(180deg, #171717 0%, #121212 100%)'};
   position: relative;
   overflow: hidden;
+  --section-underline: ${(p) => p.$underlineGradient || p.$topBorderGradient || 'var(--spotify-green)'};
 
   &:before {
     content: '';
@@ -471,11 +473,17 @@ const HighlightCardText = styled.p<HighlightCardTextProps>`
 `;
 
 // Measurement section
-const MeasurementContainer = styled.section`
+interface MeasurementContainerProps {
+  $bgGradient?: string;
+  $underlineColor?: string;
+}
+
+const MeasurementContainer = styled.section<MeasurementContainerProps>`
   padding: 6rem 0;
-  background: linear-gradient(135deg, #1e1e1e 0%, #121212 100%);
+  background: ${(p) => p.$bgGradient || 'linear-gradient(135deg, #1e1e1e 0%, #121212 100%)'};
   position: relative;
   overflow: hidden;
+  --section-underline: ${(p) => p.$underlineColor || COLORS.gogo_teal};
 `;
 
 const MeasurementWrapper = styled.div`
@@ -531,10 +539,15 @@ const AudioWaveContainer = styled.div`
   margin-top: 1.5rem;
 `;
 
-const AudioBar = styled.div<{ $index: number }>`
+interface AudioBarProps {
+  $index: number;
+  $color?: string;
+}
+
+const AudioBar = styled.div<AudioBarProps>`
   width: 4px;
   height: 5px;
-  background: ${COLORS.gogo_teal};
+  background: ${(p) => p.$color || COLORS.gogo_teal};
   border-radius: 2px;
   animation: ${audioWave} 1.2s ease-in-out infinite;
   animation-delay: ${(p) => p.$index * 0.1}s;
@@ -608,6 +621,7 @@ const MethodName = styled.h4<MethodNameProps>`
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
   font-weight: 700;
+  font-family: 'Century Gothic', 'CenturyGothic', sans-serif;
   display: flex;
   align-items: center;
   letter-spacing: 0.02em;
@@ -627,6 +641,7 @@ const MethodDescription = styled.p<MethodDescriptionProps>`
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
+  font-family: 'Century Gothic', 'CenturyGothic', sans-serif;
 `;
 
 interface ToolsSectionProps {
@@ -725,101 +740,6 @@ const MethodCard = styled.div<MethodCardProps>`
   padding: 2rem;
   border: 1px solid ${(p) => p.$borderColor || 'rgba(255, 255, 255, 0.08)'};
 `;
-
-// Icon components for methods
-function InsightIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M12 16.5V8.5M12 8.5L15 11.5M12 8.5L9 11.5M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ArtisticIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M2 12H4.5M4.5 12C5.88071 12 7 10.8807 7 9.5C7 8.11929 5.88071 7 4.5 7C3.11929 7 2 8.11929 2 9.5C2 10.8807 3.11929 12 4.5 12ZM19.5 12H22M19.5 12C18.1193 12 17 10.8807 17 9.5C17 8.11929 18.1193 7 19.5 7C20.8807 7 22 8.11929 22 9.5C22 10.8807 20.8807 12 19.5 12ZM12 19.5V22M12 19.5C10.6193 19.5 9.5 18.3807 9.5 17C9.5 15.6193 10.6193 14.5 12 14.5C13.3807 14.5 14.5 15.6193 14.5 17C14.5 18.3807 13.3807 19.5 12 19.5ZM12 4.5V2M12 4.5C13.3807 4.5 14.5 5.61929 14.5 7C14.5 8.38071 13.3807 9.5 12 9.5C10.6193 9.5 9.5 8.38071 9.5 7C9.5 5.61929 10.6193 4.5 12 4.5Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function AcademicIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M12 14L3 8.5L12 3L21 8.5L12 14Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3 13.5L12 19L21 13.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3 18.5L12 24L21 18.5"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function TrackingIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M9 17L4 12L9 7M15 7L20 12L15 17"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 // TurntableStat component
 interface TurntableStatProps {
@@ -991,12 +911,14 @@ function ImpactSection({
   const bottomCarouselImages = effectiveData.bottomCarouselImages || [];
 
   // Measurement section header
+  const measureSectionBgGradient = effectiveData.measureSectionBgGradient || '';
   const measureTitle = effectiveData.measureTitle || '';
   const measureTitleHighlight = effectiveData.measureTitleHighlight || '';
   const measureTitleColor = effectiveData.measureTitleColor || '';
   const measureTitleHighlightColor = effectiveData.measureTitleHighlightColor || '';
   const measureSubtitle = effectiveData.measureSubtitle || '';
   const measureSubtitleColor = effectiveData.measureSubtitleColor || '';
+  const measureAudioBarColor = effectiveData.measureAudioBarColor || '';
 
   // "Our Method Provides" card (left column)
   const methodCardTitle = effectiveData.methodCardTitle || '';
@@ -1083,7 +1005,7 @@ function ImpactSection({
 
   return (
     <>
-      <ImpactContainer ref={sectionRef} $bgGradient={sectionBgGradient} $topBorderGradient={topBorderGradient}>
+      <ImpactContainer ref={sectionRef} $bgGradient={sectionBgGradient} $topBorderGradient={topBorderGradient} $underlineGradient={topBorderGradient}>
         <SectionContainer>
           {topImagesForBelt.length > 0 && (
             <BeltContainer style={{ marginBottom: '1.5rem' }}>
@@ -1182,28 +1104,23 @@ function ImpactSection({
         </SectionContainer>
       </ImpactContainer>
 
-      {/* Measurement Section - data-driven */}
-      <MeasurementContainer ref={measureRef}>
+      {/* Measurement Section - fully data-driven from MongoDB */}
+      <MeasurementContainer ref={measureRef} $bgGradient={measureSectionBgGradient} $underlineColor={measureTitleHighlightColor}>
         <MeasurementWrapper>
           <MeasurementHeader>
             <MeasureTitle $color={measureTitleColor} $highlightColor={measureTitleHighlightColor}>
               {measureTitle && <span className="regular">{measureTitle} </span>}
               {measureTitleHighlight && <span className="highlight">{measureTitleHighlight}</span>}
-              {!measureTitle && !measureTitleHighlight && (
-                <>
-                  <span className="regular">How do we </span>
-                  <span className="highlight">measure impact</span>
-                  <span className="regular">?</span>
-                </>
-              )}
             </MeasureTitle>
-            <SpotifySubtitle $color={measureSubtitleColor} style={{ marginTop: '0.1rem' }}>
-              {measureSubtitle || `We use Hello Insight, a nationally recognized evaluation tool, to track students' self-reported growth across 6 Positive Youth Development (PYD) pillars. Guitars Over Guns mentors use healing-centered, culturally affirming PYD practices in program sessions.`}
-            </SpotifySubtitle>
+            {measureSubtitle && (
+              <SpotifySubtitle $color={measureSubtitleColor} style={{ marginTop: '0.1rem' }}>
+                {measureSubtitle}
+              </SpotifySubtitle>
+            )}
 
             <AudioWaveContainer>
               {[...Array(18)].map((_, i) => (
-                <AudioBar key={`audio-bar-${i}`} $index={i} />
+                <AudioBar key={`audio-bar-${i}`} $index={i} $color={measureAudioBarColor} />
               ))}
             </AudioWaveContainer>
           </MeasurementHeader>
@@ -1211,29 +1128,33 @@ function ImpactSection({
           <SpotifyGrid>
             <div>
               <MethodCard $bgColor={methodCardBgColor} $borderColor={methodCardBorderColor}>
-                <h4
-                  style={{
-                    color: methodCardTitleColor || 'white',
-                    fontWeight: 700,
-                    fontSize: '1.5rem',
-                    margin: '0 0 0.4rem 0',
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  {methodCardTitle || 'Our Method Provides'}
-                </h4>
-                <div
-                  style={{
-                    width: '80px',
-                    height: '2.5px',
-                    background: methodCardAccentGradient || 'linear-gradient(90deg, #1ed760, rgb(20, 105, 50))',
-                    borderRadius: '2px',
-                    marginBottom: '1.3rem',
-                  }}
-                />
-                <SpotifyMethodsList>
-                  {methodItems.length > 0 ? (
-                    methodItems.map((item) => {
+                {methodCardTitle && (
+                  <h4
+                    style={{
+                      color: methodCardTitleColor || 'white',
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                      margin: '0 0 0.4rem 0',
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    {methodCardTitle}
+                  </h4>
+                )}
+                {methodCardAccentGradient && (
+                  <div
+                    style={{
+                      width: '80px',
+                      height: '2.5px',
+                      background: methodCardAccentGradient,
+                      borderRadius: '2px',
+                      marginBottom: '1.3rem',
+                    }}
+                  />
+                )}
+                {methodItems.length > 0 && (
+                  <SpotifyMethodsList>
+                    {methodItems.map((item) => {
                       const iconEntry = item.iconKey ? getImpactIconByKey(item.iconKey) : null;
                       const IconComponent = iconEntry?.Icon;
                       return (
@@ -1251,67 +1172,22 @@ function ImpactSection({
                           </MethodDescription>
                         </SpotifyMethod>
                       );
-                    })
-                  ) : (
-                    <>
-                      <SpotifyMethod $bgColor={methodItemBgColor} $borderColor={methodItemBorderColor}>
-                        <MethodName $color={methodItemTitleColor}>
-                          <InsightIcon /> Trusting relationships with caring adults
-                        </MethodName>
-                        <MethodDescription $color={methodItemTextColor}>
-                          Our model pairs youth with a caring adult mentor. Mentees
-                          self-report the number of supportive adults in their lives
-                          who support their growth and expand their interests
-                        </MethodDescription>
-                      </SpotifyMethod>
+                    })}
+                  </SpotifyMethodsList>
+                )}
 
-                      <SpotifyMethod $bgColor={methodItemBgColor} $borderColor={methodItemBorderColor}>
-                        <MethodName $color={methodItemTitleColor}>
-                          <ArtisticIcon /> High-quality, no-cost arts education
-                          during typically unsupervised hours
-                        </MethodName>
-                        <MethodDescription $color={methodItemTextColor}>
-                          Custom assessment tools that track students&apos; artistic
-                          growth across multiple dimensions including technical
-                          skills, creativity, and performance abilities.
-                        </MethodDescription>
-                      </SpotifyMethod>
-
-                      <SpotifyMethod $bgColor={methodItemBgColor} $borderColor={methodItemBorderColor}>
-                        <MethodName $color={methodItemTitleColor}>
-                          <AcademicIcon /> Skill Development
-                        </MethodName>
-                        <MethodDescription $color={methodItemTextColor}>
-                          Tracking academic performance metrics in collaboration
-                          with schools to measure the program&apos;s impact on
-                          educational outcomes.
-                        </MethodDescription>
-                      </SpotifyMethod>
-
-                      <SpotifyMethod $bgColor={methodItemBgColor} $borderColor={methodItemBorderColor}>
-                        <MethodName $color={methodItemTitleColor}>
-                          <TrackingIcon /> Trauma-informed mental health support
-                        </MethodName>
-                        <MethodDescription $color={methodItemTextColor}>
-                          Following students&apos; progress over multiple years to
-                          assess long-term program impact and personal development
-                          trajectories.
-                        </MethodDescription>
-                      </SpotifyMethod>
-                    </>
-                  )}
-                </SpotifyMethodsList>
-
-                <SpotifySubtitle
-                  $color={methodCardFooterTextColor}
-                  style={{
-                    fontSize: '1rem',
-                    marginTop: '2rem',
-                    maxWidth: '100%',
-                  }}
-                >
-                  {methodCardFooterText || `By investing in the mental health and creative capacities of our young people, we create space for each student to work hard and own their path in life.`}
-                </SpotifySubtitle>
+                {methodCardFooterText && (
+                  <SpotifySubtitle
+                    $color={methodCardFooterTextColor}
+                    style={{
+                      fontSize: '1rem',
+                      marginTop: '2rem',
+                      maxWidth: '100%',
+                    }}
+                  >
+                    {methodCardFooterText}
+                  </SpotifySubtitle>
+                )}
               </MethodCard>
             </div>
 
@@ -1321,125 +1197,58 @@ function ImpactSection({
                 $borderColor={toolsCardBorderColor}
                 $titleColor={toolsCardTitleColor}
               >
-                <h3>{toolsCardTitle || 'Measurement & Evaluation Tools'}</h3>
+                {toolsCardTitle && <h3>{toolsCardTitle}</h3>}
 
-                {toolItems.length > 0 ? (
-                  toolItems.map((tool) => (
-                    <ToolItem key={tool.id}>
-                      <ToolIcon $bgGradient={toolIconBgGradient}>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M8.5 11L11.5 14L16 9"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </ToolIcon>
-                      <ToolInfo>
-                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
-                          {tool.title}
-                        </ToolNameStyled>
-                        <ToolDescriptionStyled $color={toolDescriptionColor}>
-                          {tool.description}
-                        </ToolDescriptionStyled>
-                      </ToolInfo>
-                    </ToolItem>
-                  ))
-                ) : (
-                  <>
-                    <ToolItem>
-                      <ToolIcon $bgGradient={toolIconBgGradient}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M8.5 11L11.5 14L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </ToolIcon>
-                      <ToolInfo>
-                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
-                          Hello Insight SEL & PYD Evaluation Platform
-                        </ToolNameStyled>
-                        <ToolDescriptionStyled $color={toolDescriptionColor}>
-                          Primary assessment tool for all students
-                        </ToolDescriptionStyled>
-                      </ToolInfo>
-                    </ToolItem>
-
-                    <ToolItem>
-                      <ToolIcon $bgGradient={toolIconBgGradient}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M8 10H5V18H8M8 10V18M8 10V6C8 4.89543 8.89543 4 10 4H11.5C12.6046 4 13.5 4.89543 13.5 6V10M8 14H13.5M13.5 10H16.5M13.5 10V14M16.5 10H19.5V14M16.5 10V6C16.5 4.89543 17.3954 4 18.5 4H20C21.1046 4 22 4.89543 22 6V10M19.5 14H16.5M19.5 14V18H16.5V14" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      </ToolIcon>
-                      <ToolInfo>
-                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
-                          Satisfaction Surveys
-                        </ToolNameStyled>
-                        <ToolDescriptionStyled $color={toolDescriptionColor}>
-                          Student, parent, and partner feedback
-                        </ToolDescriptionStyled>
-                      </ToolInfo>
-                    </ToolItem>
-
-                    <ToolItem>
-                      <ToolIcon $bgGradient={toolIconBgGradient}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M3 16.5L12 21.5L21 16.5M3 12L12 17L21 12M3 7.5L12 12.5L21 7.5L12 2.5L3 7.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </ToolIcon>
-                      <ToolInfo>
-                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
-                          Artistic Progress Reports
-                        </ToolNameStyled>
-                        <ToolDescriptionStyled $color={toolDescriptionColor}>
-                          Quarterly assessments using the artistic scale measurement
-                        </ToolDescriptionStyled>
-                      </ToolInfo>
-                    </ToolItem>
-
-                    <ToolItem>
-                      <ToolIcon $bgGradient={toolIconBgGradient}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M8.4 8.5H15.6M8.4 11.5H12M15 16H9C7.34315 16 6 14.6569 6 13V7C6 5.34315 7.34315 4 9 4H15C16.6569 4 18 5.34315 18 7V13C18 14.6569 16.6569 16 15 16ZM13.5 16V19.5C13.5 19.7761 13.2761 20 13 20H11C10.7239 20 10.5 19.7761 10.5 19.5V16H13.5Z" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                      </ToolIcon>
-                      <ToolInfo>
-                        <ToolNameStyled className="tool-name" $color={toolNameColor}>
-                          Academic Achievement Data
-                        </ToolNameStyled>
-                        <ToolDescriptionStyled $color={toolDescriptionColor}>
-                          As observed from school records
-                        </ToolDescriptionStyled>
-                      </ToolInfo>
-                    </ToolItem>
-                  </>
-                )}
+                {toolItems.length > 0 && toolItems.map((tool) => (
+                  <ToolItem key={tool.id}>
+                    <ToolIcon $bgGradient={toolIconBgGradient}>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M3 7.8C3 6.11984 3 5.27976 3.32698 4.63803C3.6146 4.07354 4.07354 3.6146 4.63803 3.32698C5.27976 3 6.11984 3 7.8 3H16.2C17.8802 3 18.7202 3 19.362 3.32698C19.9265 3.6146 20.3854 4.07354 20.673 4.63803C21 5.27976 21 6.11984 21 7.8V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V7.8Z"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M8.5 11L11.5 14L16 9"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </ToolIcon>
+                    <ToolInfo>
+                      <ToolNameStyled className="tool-name" $color={toolNameColor}>
+                        {tool.title}
+                      </ToolNameStyled>
+                      <ToolDescriptionStyled $color={toolDescriptionColor}>
+                        {tool.description}
+                      </ToolDescriptionStyled>
+                    </ToolInfo>
+                  </ToolItem>
+                ))}
               </ToolsSection>
 
-              <SpotifySubtitle
-                $color={toolsFooterTextColor}
-                style={{
-                  fontSize: '0.95rem',
-                  margin: '1.5rem 0',
-                  textAlign: 'center',
-                }}
-              >
-                {toolsFooterText || `GOGO largely supports kids affected by systemic challenges that reduce their access to opportunities`}
-              </SpotifySubtitle>
+              {toolsFooterText && (
+                <SpotifySubtitle
+                  $color={toolsFooterTextColor}
+                  style={{
+                    fontSize: '0.95rem',
+                    margin: '1.5rem 0',
+                    textAlign: 'center',
+                  }}
+                >
+                  {toolsFooterText}
+                </SpotifySubtitle>
+              )}
             </div>
           </SpotifyGrid>
         </MeasurementWrapper>

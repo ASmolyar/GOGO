@@ -70,6 +70,13 @@ const ProgramsContainer = styled.section`
   background: linear-gradient(to bottom, #191919, #0d0d0d);
   position: relative;
   overflow: hidden;
+  --section-underline: linear-gradient(
+    to right,
+    ${COLORS.gogo_blue} 0%,
+    ${COLORS.gogo_purple} 33%,
+    ${COLORS.gogo_pink} 67%,
+    ${COLORS.gogo_blue} 100%
+  );
 `;
 
 const BackgroundPattern = styled.div`

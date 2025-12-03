@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { CustomTextField } from '../styles';
 import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
@@ -95,6 +96,10 @@ export function FinancialTabEditor({
   const [gradientPickerKey, setGradientPickerKey] = useState<FinancialGradientKey | null>(null);
   const [gradientPickerColorIndex, setGradientPickerColorIndex] = useState<number>(0);
   const gradientPickerOpen = Boolean(gradientPickerAnchor);
+
+  // Drag state for pie chart reordering
+  const [draggedPieItem, setDraggedPieItem] = useState<{ type: 'comesFrom' | 'goesTo'; index: number } | null>(null);
+  const [dragOverPieItem, setDragOverPieItem] = useState<{ type: 'comesFrom' | 'goesTo'; index: number } | null>(null);
 
   // Get default gradients
   const getDefaultGradient = (key: FinancialGradientKey): string => {
@@ -291,6 +296,35 @@ export function FinancialTabEditor({
     const data = type === 'comesFrom' ? [...comesFromData] : [...goesToData];
     data.splice(index, 1);
     onFinancialChange(type === 'comesFrom' ? 'comesFromData' : 'goesToData', data);
+  };
+
+  // Drag handlers for pie items
+  const handlePieDragStart = (type: 'comesFrom' | 'goesTo', index: number) => {
+    setDraggedPieItem({ type, index });
+  };
+
+  const handlePieDragOver = (e: React.DragEvent, type: 'comesFrom' | 'goesTo', index: number) => {
+    e.preventDefault();
+    if (draggedPieItem?.type === type && draggedPieItem.index !== index) {
+      setDragOverPieItem({ type, index });
+    }
+  };
+
+  const handlePieDragEnd = () => {
+    if (
+      draggedPieItem &&
+      dragOverPieItem &&
+      draggedPieItem.type === dragOverPieItem.type &&
+      draggedPieItem.index !== dragOverPieItem.index
+    ) {
+      const type = draggedPieItem.type;
+      const data = type === 'comesFrom' ? [...comesFromData] : [...goesToData];
+      const [removed] = data.splice(draggedPieItem.index, 1);
+      data.splice(dragOverPieItem.index, 0, removed);
+      onFinancialChange(type === 'comesFrom' ? 'comesFromData' : 'goesToData', data);
+    }
+    setDraggedPieItem(null);
+    setDragOverPieItem(null);
   };
 
   return (
@@ -712,62 +746,77 @@ export function FinancialTabEditor({
           />
         </Grid>
 
-        {comesFromData.map((item, idx) => (
-          <Grid item xs={12} key={item.id}>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                alignItems: 'center',
-                p: 2,
-                bgcolor: 'rgba(255,255,255,0.03)',
-                borderRadius: 2,
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <CustomTextField
-                label="Label"
-                value={item.label}
-                onChange={(e) => updatePieItem('comesFrom', idx, 'label', e.target.value)}
-                sx={{ flex: 2 }}
-              />
-              <CustomTextField
-                label="Value (%)"
-                type="number"
-                value={item.value}
-                onChange={(e) => updatePieItem('comesFrom', idx, 'value', Number(e.target.value))}
-                sx={{ width: 100 }}
-              />
-              <Button
-                variant="outlined"
-                onClick={(e) => openPieColorPicker(e, idx, 'comesFrom')}
+        {comesFromData.map((item, idx) => {
+          const isDragging = draggedPieItem?.type === 'comesFrom' && draggedPieItem?.index === idx;
+          const isDragOver = dragOverPieItem?.type === 'comesFrom' && dragOverPieItem?.index === idx;
+
+          return (
+            <Grid item xs={12} key={item.id}>
+              <Box
+                draggable
+                onDragStart={() => handlePieDragStart('comesFrom', idx)}
+                onDragOver={(e) => handlePieDragOver(e, 'comesFrom', idx)}
+                onDragEnd={handlePieDragEnd}
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'white',
-                  textTransform: 'none',
-                  minWidth: 50,
+                  display: 'flex',
+                  gap: 2,
+                  alignItems: 'center',
+                  p: 2,
+                  bgcolor: 'rgba(255,255,255,0.03)',
+                  borderRadius: 2,
+                  border: isDragOver
+                    ? '2px dashed rgba(30, 215, 96, 0.8)'
+                    : '1px solid rgba(255,255,255,0.08)',
+                  opacity: isDragging ? 0.5 : 1,
+                  cursor: 'grab',
+                  transition: 'border 0.15s ease',
                 }}
               >
-                <Box
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 1,
-                    bgcolor: item.color,
-                    border: '1px solid rgba(255,255,255,0.3)',
-                  }}
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <CustomTextField
+                  label="Label"
+                  value={item.label}
+                  onChange={(e) => updatePieItem('comesFrom', idx, 'label', e.target.value)}
+                  sx={{ flex: 2 }}
                 />
-              </Button>
-              <IconButton
-                onClick={() => removePieItem('comesFrom', idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-                disabled={comesFromData.length <= 1}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          </Grid>
-        ))}
+                <CustomTextField
+                  label="Value (%)"
+                  type="number"
+                  value={item.value}
+                  onChange={(e) => updatePieItem('comesFrom', idx, 'value', Number(e.target.value))}
+                  sx={{ width: 100 }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={(e) => openPieColorPicker(e, idx, 'comesFrom')}
+                  sx={{
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    color: 'white',
+                    textTransform: 'none',
+                    minWidth: 50,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 1,
+                      bgcolor: item.color,
+                      border: '1px solid rgba(255,255,255,0.3)',
+                    }}
+                  />
+                </Button>
+                <IconButton
+                  onClick={() => removePieItem('comesFrom', idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                  disabled={comesFromData.length <= 1}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            </Grid>
+          );
+        })}
 
         {/* Add Category button moved to bottom */}
         <Grid item xs={12}>
@@ -808,62 +857,77 @@ export function FinancialTabEditor({
           />
         </Grid>
 
-        {goesToData.map((item, idx) => (
-          <Grid item xs={12} key={item.id}>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                alignItems: 'center',
-                p: 2,
-                bgcolor: 'rgba(255,255,255,0.03)',
-                borderRadius: 2,
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              <CustomTextField
-                label="Label"
-                value={item.label}
-                onChange={(e) => updatePieItem('goesTo', idx, 'label', e.target.value)}
-                sx={{ flex: 2 }}
-              />
-              <CustomTextField
-                label="Value (%)"
-                type="number"
-                value={item.value}
-                onChange={(e) => updatePieItem('goesTo', idx, 'value', Number(e.target.value))}
-                sx={{ width: 100 }}
-              />
-              <Button
-                variant="outlined"
-                onClick={(e) => openPieColorPicker(e, idx, 'goesTo')}
+        {goesToData.map((item, idx) => {
+          const isDragging = draggedPieItem?.type === 'goesTo' && draggedPieItem?.index === idx;
+          const isDragOver = dragOverPieItem?.type === 'goesTo' && dragOverPieItem?.index === idx;
+
+          return (
+            <Grid item xs={12} key={item.id}>
+              <Box
+                draggable
+                onDragStart={() => handlePieDragStart('goesTo', idx)}
+                onDragOver={(e) => handlePieDragOver(e, 'goesTo', idx)}
+                onDragEnd={handlePieDragEnd}
                 sx={{
-                  borderColor: 'rgba(255,255,255,0.3)',
-                  color: 'white',
-                  textTransform: 'none',
-                  minWidth: 50,
+                  display: 'flex',
+                  gap: 2,
+                  alignItems: 'center',
+                  p: 2,
+                  bgcolor: 'rgba(255,255,255,0.03)',
+                  borderRadius: 2,
+                  border: isDragOver
+                    ? '2px dashed rgba(30, 215, 96, 0.8)'
+                    : '1px solid rgba(255,255,255,0.08)',
+                  opacity: isDragging ? 0.5 : 1,
+                  cursor: 'grab',
+                  transition: 'border 0.15s ease',
                 }}
               >
-                <Box
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 1,
-                    bgcolor: item.color,
-                    border: '1px solid rgba(255,255,255,0.3)',
-                  }}
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <CustomTextField
+                  label="Label"
+                  value={item.label}
+                  onChange={(e) => updatePieItem('goesTo', idx, 'label', e.target.value)}
+                  sx={{ flex: 2 }}
                 />
-              </Button>
-              <IconButton
-                onClick={() => removePieItem('goesTo', idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-                disabled={goesToData.length <= 1}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          </Grid>
-        ))}
+                <CustomTextField
+                  label="Value (%)"
+                  type="number"
+                  value={item.value}
+                  onChange={(e) => updatePieItem('goesTo', idx, 'value', Number(e.target.value))}
+                  sx={{ width: 100 }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={(e) => openPieColorPicker(e, idx, 'goesTo')}
+                  sx={{
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    color: 'white',
+                    textTransform: 'none',
+                    minWidth: 50,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 1,
+                      bgcolor: item.color,
+                      border: '1px solid rgba(255,255,255,0.3)',
+                    }}
+                  />
+                </Button>
+                <IconButton
+                  onClick={() => removePieItem('goesTo', idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                  disabled={goesToData.length <= 1}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            </Grid>
+          );
+        })}
 
         {/* Add Category button moved to bottom */}
         <Grid item xs={12}>

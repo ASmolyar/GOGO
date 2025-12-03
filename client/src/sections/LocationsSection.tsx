@@ -9,11 +9,13 @@ import {
 
 interface LocationsSectionWrapperProps {
   $bgColor?: string;
+  $underlineColor?: string;
 }
 
 const LocationsSectionWrapper = styled.div<LocationsSectionWrapperProps>`
   padding: 4rem 0 6rem;
   background: ${(p) => p.$bgColor || '#121212'};
+  --section-underline: ${(p) => p.$underlineColor || 'var(--spotify-green)'};
 `;
 
 const SectionContainer = styled.div`
@@ -119,7 +121,7 @@ function LocationsSection({
   const regions = effectiveData.regions || [];
 
   return (
-    <LocationsSectionWrapper id="locations" ref={sectionRef} $bgColor={sectionBgColor}>
+    <LocationsSectionWrapper id="locations" ref={sectionRef} $bgColor={sectionBgColor} $underlineColor={titleColor}>
       <SectionContainer>
         <SectionHeading $color={titleColor}>{title}</SectionHeading>
         <MapFrame>

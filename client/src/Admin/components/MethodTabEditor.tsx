@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { IconSelector } from '../../components/IconSelector';
 import { CustomTextField } from '../styles';
@@ -43,6 +44,10 @@ export function MethodTabEditor({
 }: MethodTabEditorProps) {
   const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
   const [colorPickerField, setColorPickerField] = useState<MethodColorPickerField | null>(null);
+
+  // Drag state for method items
+  const [draggedMethodIndex, setDraggedMethodIndex] = useState<number | null>(null);
+  const [dragOverMethodIndex, setDragOverMethodIndex] = useState<number | null>(null);
 
   // State for gradient color picker
   const [gradientPickerAnchor, setGradientPickerAnchor] = useState<HTMLElement | null>(null);
@@ -166,6 +171,33 @@ export function MethodTabEditor({
     onMethodChange('methodItems', updated);
   };
 
+  // Drag handlers for method items
+  const handleMethodDragStart = (index: number) => {
+    setDraggedMethodIndex(index);
+  };
+
+  const handleMethodDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedMethodIndex !== null && draggedMethodIndex !== index) {
+      setDragOverMethodIndex(index);
+    }
+  };
+
+  const handleMethodDragEnd = () => {
+    if (
+      draggedMethodIndex !== null &&
+      dragOverMethodIndex !== null &&
+      draggedMethodIndex !== dragOverMethodIndex
+    ) {
+      const items = [...methodItems];
+      const [removed] = items.splice(draggedMethodIndex, 1);
+      items.splice(dragOverMethodIndex, 0, removed);
+      onMethodChange('methodItems', items);
+    }
+    setDraggedMethodIndex(null);
+    setDragOverMethodIndex(null);
+  };
+
   return (
     <Grid container spacing={3}>
       {/* Color Picker Popover */}
@@ -202,8 +234,7 @@ export function MethodTabEditor({
           label="Section Background Gradient"
           value={getGradientValue('sectionBgGradient')}
           onChange={(gradient) => onMethodChange('sectionBgGradient', gradient)}
-          showTypeSelector
-          showThreeColorToggle
+          onPickColor={(el, colorIndex) => openGradientPicker(el, 'sectionBgGradient', colorIndex)}
         />
       </Grid>
 
@@ -255,8 +286,7 @@ export function MethodTabEditor({
           label="Title Gradient"
           value={getGradientValue('titleGradient')}
           onChange={(gradient) => onMethodChange('titleGradient', gradient)}
-          showTypeSelector
-          showThreeColorToggle
+          onPickColor={(el, colorIndex) => openGradientPicker(el, 'titleGradient', colorIndex)}
         />
       </Grid>
 
@@ -299,8 +329,7 @@ export function MethodTabEditor({
           label="Icon Background Gradient"
           value={getGradientValue('iconGradient')}
           onChange={(gradient) => onMethodChange('iconGradient', gradient)}
-          showTypeSelector
-          showThreeColorToggle
+          onPickColor={(el, colorIndex) => openGradientPicker(el, 'iconGradient', colorIndex)}
         />
       </Grid>
 
@@ -343,50 +372,65 @@ export function MethodTabEditor({
         </Typography>
       </Grid>
 
-      {methodItems.map((item, idx) => (
-        <Grid item xs={12} key={item.id}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              bgcolor: 'rgba(255,255,255,0.03)',
-              borderRadius: 2,
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            {/* First row: Icon selector + delete button */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ width: 200 }}>
-                <IconSelector
-                  label="Icon"
-                  value={item.iconKey ?? ''}
-                  onChange={(key) => updateMethodItem(idx, 'iconKey', key)}
-                  allowNone={false}
-                />
+      {methodItems.map((item, idx) => {
+        const isDragging = draggedMethodIndex === idx;
+        const isDragOver = dragOverMethodIndex === idx;
+
+        return (
+          <Grid item xs={12} key={item.id}>
+            <Box
+              draggable
+              onDragStart={() => handleMethodDragStart(idx)}
+              onDragOver={(e) => handleMethodDragOver(e, idx)}
+              onDragEnd={handleMethodDragEnd}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                p: 2,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+                border: isDragOver
+                  ? '2px dashed rgba(30, 215, 96, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                opacity: isDragging ? 0.5 : 1,
+                cursor: 'grab',
+                transition: 'border 0.15s ease',
+              }}
+            >
+              {/* First row: Drag handle + Icon selector + delete button */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <Box sx={{ width: 200 }}>
+                  <IconSelector
+                    label="Icon"
+                    value={item.iconKey ?? ''}
+                    onChange={(key) => updateMethodItem(idx, 'iconKey', key)}
+                    allowNone={false}
+                  />
+                </Box>
+                <Box sx={{ flex: 1 }} />
+                <IconButton
+                  onClick={() => removeMethodItem(idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                  disabled={methodItems.length <= 1}
+                >
+                  <DeleteIcon />
+                </IconButton>
               </Box>
-              <Box sx={{ flex: 1 }} />
-              <IconButton
-                onClick={() => removeMethodItem(idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-                disabled={methodItems.length <= 1}
-              >
-                <DeleteIcon />
-              </IconButton>
+              {/* Second row: Text field */}
+              <CustomTextField
+                label="Text"
+                value={item.text}
+                onChange={(e) => updateMethodItem(idx, 'text', e.target.value)}
+                fullWidth
+                multiline
+                rows={2}
+              />
             </Box>
-            {/* Second row: Text field */}
-            <CustomTextField
-              label="Text"
-              value={item.text}
-              onChange={(e) => updateMethodItem(idx, 'text', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-            />
-          </Box>
-        </Grid>
-      ))}
+          </Grid>
+        );
+      })}
 
       <Grid item xs={12}>
         <Button

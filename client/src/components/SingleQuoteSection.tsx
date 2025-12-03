@@ -17,6 +17,7 @@ interface SectionProps {
   $bgGradient?: string;
   $glowColor1?: string;
   $glowColor2?: string;
+  $underlineGradient?: string;
 }
 
 const Section = styled.section<SectionProps>`
@@ -34,6 +35,7 @@ const Section = styled.section<SectionProps>`
     ),
     #0b0b0b`};
   overflow: hidden;
+  --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
 `;
 
 const Container = styled.div`
@@ -285,6 +287,7 @@ function SingleQuoteSection({
       $bgGradient={sectionBgGradient}
       $glowColor1={glowColor1}
       $glowColor2={glowColor2}
+      $underlineGradient={nameGradient}
     >
       <Container>
         <Eyebrow $color={eyebrowColor}>{eyebrowText}</Eyebrow>

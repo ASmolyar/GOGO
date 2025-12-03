@@ -6,6 +6,7 @@ import { fetchCurriculumContent, CurriculumContent, CurriculumPedalCard, Curricu
 
 interface SectionProps {
   $bgGradient?: string;
+  $underlineGradient?: string;
 }
 
 const Section = styled.section<SectionProps>`
@@ -13,6 +14,7 @@ const Section = styled.section<SectionProps>`
   background: ${(p) => p.$bgGradient || 'linear-gradient(180deg, #171717 0%, #121212 100%)'};
   position: relative;
   overflow: hidden;
+  --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
 `;
 
 // Musical ambience
@@ -424,6 +426,7 @@ function CurriculumSection({
   const [internalData, setInternalData] = useState<CurriculumContent | null>(externalData || null);
   const headerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<HTMLDivElement[]>([]);
+  const hasAnimatedRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (externalData) {
@@ -481,6 +484,13 @@ function CurriculumSection({
   );
 
   useEffect(() => {
+    // Only animate once on initial mount, not on data changes
+    if (hasAnimatedRef.current) return;
+    // Wait for data to be available before animating
+    if (!pedalCards || pedalCards.length === 0) return;
+    
+    hasAnimatedRef.current = true;
+
     if (headerRef.current) {
       const nodes = headerRef.current.querySelectorAll('.animate');
       if (nodes && nodes.length > 0) {
@@ -526,7 +536,7 @@ function CurriculumSection({
   }
 
   return (
-    <Section $bgGradient={sectionBgGradient}>
+    <Section $bgGradient={sectionBgGradient} $underlineGradient={titleGradient}>
       <StaffBlock $top="10%" />
       <StaffBlock $top="72%" />
       <NoteCloud>

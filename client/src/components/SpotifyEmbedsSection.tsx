@@ -12,38 +12,15 @@ import {
   SpotifyEmbed,
 } from '../services/impact.api';
 
-// Default embeds for fallback
-const DEFAULT_FEATURED_EMBEDS: SpotifyEmbed[] = [
-  { id: 'default-1', url: 'https://open.spotify.com/embed/album/22CwQMUEzyzKzoOl6JN5T3', type: 'album' },
-  { id: 'default-2', url: 'https://open.spotify.com/embed/album/1vN52DIyTQxa3c5x5lPbHG', type: 'album' },
-  { id: 'default-3', url: 'https://open.spotify.com/embed/album/4dkhXFnrDTnwvr9Iy5hEEW', type: 'album' },
-];
-
-const DEFAULT_MENTOR_EMBEDS: SpotifyEmbed[] = [
-  { id: 'mentor-1', url: 'https://open.spotify.com/embed/artist/66CXWjxzNUsdJxJ2JdwvnR', type: 'artist' },
-  { id: 'mentor-2', url: 'https://open.spotify.com/embed/artist/6vWDO969PvNqNYHIOW5v0m', type: 'artist' },
-  { id: 'mentor-3', url: 'https://open.spotify.com/embed/artist/6eUKZXaKkcviH0Ku9w2n3V', type: 'artist' },
-  { id: 'mentor-4', url: 'https://open.spotify.com/embed/artist/0du5cEVh5yTK9QJze8zA0C', type: 'artist' },
-  { id: 'mentor-5', url: 'https://open.spotify.com/embed/artist/246dkjvS1zLTtiykXe5h60', type: 'artist' },
-  { id: 'mentor-6', url: 'https://open.spotify.com/embed/artist/1Xyo4u8uXC1ZmMpatF05PJ', type: 'artist' },
-];
-
-const DEFAULT_ALL_SONGS_EMBEDS: SpotifyEmbed[] = [
-  { id: 'song-1', url: 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M', type: 'playlist' },
-  { id: 'song-2', url: 'https://open.spotify.com/embed/playlist/37i9dQZF1DX4JAvHpjipBk', type: 'playlist' },
-  { id: 'song-3', url: 'https://open.spotify.com/embed/track/7ouMYWpwJ422jRcDASZB7P', type: 'track' },
-  { id: 'song-4', url: 'https://open.spotify.com/embed/track/3AJwUDP919kvQ9QcozQPxg', type: 'track' },
-  { id: 'song-5', url: 'https://open.spotify.com/embed/track/0VjIjW4GlUZAMYd2vXMi3b', type: 'track' },
-  { id: 'song-6', url: 'https://open.spotify.com/embed/track/35mvY5S1H3J2QZyna3TFe0', type: 'track' },
-];
-
 interface SectionProps {
   $bgGradient?: string;
+  $underlineGradient?: string;
 }
 
 const Section = styled.section<SectionProps>`
   padding: 5rem 0;
   background: ${(p) => p.$bgGradient || 'linear-gradient(to bottom, #121212, #0a0a0a)'};
+  --section-underline: ${(p) => p.$underlineGradient || 'var(--spotify-green)'};
 `;
 
 const Container = styled.div`
@@ -151,7 +128,7 @@ function SpotifyEmbedsSection({
   hearOurImpactData: externalData,
   previewMode = false,
   hearOurImpactOverride,
-}: SpotifyEmbedsSectionProps) {
+}: SpotifyEmbedsSectionProps): JSX.Element | null {
   const [internalData, setInternalData] = useState<HearOurImpactContent | null>(externalData || null);
   const [showMentorProfiles, setShowMentorProfiles] = useState(false);
   const [showAllSongs, setShowAllSongs] = useState(false);
@@ -168,34 +145,6 @@ function SpotifyEmbedsSection({
       });
     }
   }, [externalData, previewMode]);
-
-  // Merge data
-  const effectiveData: HearOurImpactContent = externalData
-    ? { ...externalData, ...(hearOurImpactOverride || {}) }
-    : { ...(internalData || {}), ...(hearOurImpactOverride || {}) };
-
-  // Extract values with fallbacks
-  const sectionBgGradient = effectiveData.sectionBgGradient || '';
-  const title = effectiveData.title || 'Hear our Impact';
-  const titleGradient = effectiveData.titleGradient || '';
-  const description = effectiveData.description || 'Explore our music on Spotify. Dive into mentor profiles and browse all our songs.';
-  const descriptionColor = effectiveData.descriptionColor || '';
-  const embedWrapperBgColor = effectiveData.embedWrapperBgColor || '';
-  const embedWrapperBorderColor = effectiveData.embedWrapperBorderColor || '';
-  const featuredEmbeds = effectiveData.featuredEmbeds?.length ? effectiveData.featuredEmbeds : DEFAULT_FEATURED_EMBEDS;
-  const mentorProfilesButtonText = effectiveData.mentorProfilesButtonText || 'Mentor Profiles';
-  const allSongsButtonText = effectiveData.allSongsButtonText || 'All Our Songs';
-  const buttonBgGradient = effectiveData.buttonBgGradient || '';
-  const buttonTextColor = effectiveData.buttonTextColor || '';
-  const mentorProfilesModalTitle = effectiveData.mentorProfilesModalTitle || 'Mentor Profiles';
-  const mentorProfileEmbeds = effectiveData.mentorProfileEmbeds?.length ? effectiveData.mentorProfileEmbeds : DEFAULT_MENTOR_EMBEDS;
-  const allSongsModalTitle = effectiveData.allSongsModalTitle || 'All Our Songs';
-  const allSongsEmbeds = effectiveData.allSongsEmbeds?.length ? effectiveData.allSongsEmbeds : DEFAULT_ALL_SONGS_EMBEDS;
-  const modalBgGradient = effectiveData.modalBgGradient || 'linear-gradient(180deg, rgba(22,22,22,0.96), rgba(10,10,10,0.96))';
-  const modalBorderColor = effectiveData.modalBorderColor || 'rgba(255,255,255,0.08)';
-  const modalTitleColor = effectiveData.modalTitleColor || 'white';
-  const modalCardBgColor = effectiveData.modalCardBgColor || 'rgba(255,255,255,0.06)';
-  const modalCardBorderColor = effectiveData.modalCardBorderColor || 'rgba(255,255,255,0.08)';
 
   // Light entrance animation similar to disciplines modal
   useEffect(() => {
@@ -225,8 +174,45 @@ function SpotifyEmbedsSection({
     };
   }, [setShowMentorProfiles, setShowAllSongs]);
 
+  // Merge data - in preview mode, override is sufficient to render
+  const baseData = externalData || internalData;
+  const effectiveData: HearOurImpactContent | null = 
+    previewMode && hearOurImpactOverride
+      ? { ...(baseData || {}), ...hearOurImpactOverride } as HearOurImpactContent
+      : baseData 
+        ? { ...baseData, ...(hearOurImpactOverride || {}) }
+        : null;
+
+  // If no data available, don't render anything
+  if (!effectiveData) {
+    return null;
+  }
+
+  // Extract values (no defaults - data must come from DB)
+  const sectionBgGradient = effectiveData.sectionBgGradient || '';
+  const title = effectiveData.title || '';
+  const titleGradient = effectiveData.titleGradient || '';
+  const description = effectiveData.description || '';
+  const descriptionColor = effectiveData.descriptionColor || '';
+  const embedWrapperBgColor = effectiveData.embedWrapperBgColor || '';
+  const embedWrapperBorderColor = effectiveData.embedWrapperBorderColor || '';
+  const featuredEmbeds = effectiveData.featuredEmbeds || [];
+  const mentorProfilesButtonText = effectiveData.mentorProfilesButtonText || '';
+  const allSongsButtonText = effectiveData.allSongsButtonText || '';
+  const buttonBgGradient = effectiveData.buttonBgGradient || '';
+  const buttonTextColor = effectiveData.buttonTextColor || '';
+  const mentorProfilesModalTitle = effectiveData.mentorProfilesModalTitle || '';
+  const mentorProfileEmbeds = effectiveData.mentorProfileEmbeds || [];
+  const allSongsModalTitle = effectiveData.allSongsModalTitle || '';
+  const allSongsEmbeds = effectiveData.allSongsEmbeds || [];
+  const modalBgGradient = effectiveData.modalBgGradient || '';
+  const modalBorderColor = effectiveData.modalBorderColor || '';
+  const modalTitleColor = effectiveData.modalTitleColor || '';
+  const modalCardBgColor = effectiveData.modalCardBgColor || '';
+  const modalCardBorderColor = effectiveData.modalCardBorderColor || '';
+
   return (
-    <Section ref={sectionRef} $bgGradient={sectionBgGradient}>
+    <Section ref={sectionRef} $bgGradient={sectionBgGradient} $underlineGradient={titleGradient}>
       <Container>
         <Header>
           <Title $gradient={titleGradient}>{title}</Title>

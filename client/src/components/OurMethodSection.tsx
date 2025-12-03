@@ -4,48 +4,22 @@ import COLORS from '../../assets/colors';
 import { fetchMethodContent, MethodContent, MethodItem } from '../services/impact.api';
 import { getImpactIconByKey } from './IconSelector';
 
-// Default method items for fallback
-const DEFAULT_METHOD_ITEMS: MethodItem[] = [
-  { id: '1', iconKey: 'handshakeOutlined', text: 'Trusting relationships with caring adults' },
-  { id: '2', iconKey: 'menuBook', text: 'High-quality, no-cost arts education during typically unsupervised hours' },
-  { id: '3', iconKey: 'lightbulb', text: 'Enriching, safe activities that foster self-esteem & creative self-expression' },
-  { id: '4', iconKey: 'tuneOutlined', text: 'Skill Development' },
-  { id: '5', iconKey: 'mic', text: 'Performance' },
-  { id: '6', iconKey: 'favoriteBorder', text: 'Trauma-informed mental health support' },
-];
-
-// Default content
-const DEFAULT_CONTENT: MethodContent = {
-  title: 'Our Method',
-  titleGradient: `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`,
-  subtitle: 'Our mentoring-centric approach is delivered by paid, professional musician mentors and helps alleviate primary challenges faced by youth in vulnerable communities by providing:',
-  subtitleColor: 'rgba(255, 255, 255, 0.8)',
-  sectionBgGradient: 'linear-gradient(180deg, #111111 0%, #0a0a0a 100%)',
-  glowColor1: COLORS.gogo_blue,
-  glowColor2: COLORS.gogo_teal,
-  cardBgColor: 'rgba(255, 255, 255, 0.02)',
-  cardBorderColor: 'rgba(255, 255, 255, 0.05)',
-  cardTitleColor: '#ffffff',
-  iconGradient: `linear-gradient(135deg, ${COLORS.gogo_blue}, ${COLORS.gogo_teal})`,
-  methodItems: DEFAULT_METHOD_ITEMS,
-  leadText: 'Our successful model pairs youth with a caring adult mentor, the unparalleled power of music, and trauma-informed mental health support.',
-  leadTextColor: '#ffffff',
-  secondaryText: 'Separately, these interventions increase academic and social-emotional development as well as future employability and economic potential. We uniquely combine these to maximize their collective effectiveness. Through weekly after-school music and art instruction, mentoring, trauma-informed care, and performance opportunities across Miami, Chicago, Los Angeles, and New York, GOGO is a platform for youth to learn, grow and unleash their leadership potential.',
-  secondaryTextColor: 'rgba(255, 255, 255, 0.6)',
-  secondaryBorderColor: COLORS.gogo_purple,
-};
-
 interface SectionProps {
   $bgGradient: string;
   $glowColor1: string;
   $glowColor2: string;
 }
 
-const Section = styled.section<SectionProps>`
+interface SectionWrapperProps extends SectionProps {
+  $underlineGradient?: string;
+}
+
+const Section = styled.section<SectionWrapperProps>`
   padding: 8rem 0;
   background: ${(p) => p.$bgGradient};
   position: relative;
   overflow: hidden;
+  --section-underline: ${(p) => p.$underlineGradient || p.$bgGradient || 'var(--spotify-green)'};
 
   /* Subtle background glow */
   &::before {
@@ -302,7 +276,7 @@ function OurMethodSection({
   methodData: externalData, 
   previewMode = false, 
   methodOverride 
-}: OurMethodSectionProps): JSX.Element {
+}: OurMethodSectionProps): JSX.Element | null {
   const [internalData, setInternalData] = useState<MethodContent | null>(externalData || null);
 
   useEffect(() => {
@@ -318,29 +292,38 @@ function OurMethodSection({
   }, [externalData, previewMode]);
 
   // Use externalData, fetched data, or override (for preview mode)
-  // In production (with externalData), no defaults are applied
-  const effectiveData: MethodContent = externalData 
-    ? { ...externalData, ...(methodOverride || {}) }
-    : { ...DEFAULT_CONTENT, ...(internalData || {}), ...(methodOverride || {}) };
+  // In preview mode, override data is sufficient to render
+  const baseData = externalData || internalData;
+  const effectiveData: MethodContent | null = 
+    previewMode && methodOverride
+      ? { ...(baseData || {}), ...methodOverride } as MethodContent
+      : baseData 
+        ? { ...baseData, ...(methodOverride || {}) }
+        : null;
 
-  // Extract values with defaults
-  const title = effectiveData.title ?? DEFAULT_CONTENT.title;
-  const titleGradient = effectiveData.titleGradient ?? DEFAULT_CONTENT.titleGradient;
-  const subtitle = effectiveData.subtitle ?? DEFAULT_CONTENT.subtitle;
-  const subtitleColor = effectiveData.subtitleColor ?? DEFAULT_CONTENT.subtitleColor;
-  const sectionBgGradient = effectiveData.sectionBgGradient ?? DEFAULT_CONTENT.sectionBgGradient;
-  const glowColor1 = effectiveData.glowColor1 ?? DEFAULT_CONTENT.glowColor1;
-  const glowColor2 = effectiveData.glowColor2 ?? DEFAULT_CONTENT.glowColor2;
-  const cardBgColor = effectiveData.cardBgColor ?? DEFAULT_CONTENT.cardBgColor;
-  const cardBorderColor = effectiveData.cardBorderColor ?? DEFAULT_CONTENT.cardBorderColor;
-  const cardTitleColor = effectiveData.cardTitleColor ?? DEFAULT_CONTENT.cardTitleColor;
-  const iconGradient = effectiveData.iconGradient ?? DEFAULT_CONTENT.iconGradient;
-  const methodItems = effectiveData.methodItems ?? DEFAULT_CONTENT.methodItems;
-  const leadText = effectiveData.leadText ?? DEFAULT_CONTENT.leadText;
-  const leadTextColor = effectiveData.leadTextColor ?? DEFAULT_CONTENT.leadTextColor;
-  const secondaryText = effectiveData.secondaryText ?? DEFAULT_CONTENT.secondaryText;
-  const secondaryTextColor = effectiveData.secondaryTextColor ?? DEFAULT_CONTENT.secondaryTextColor;
-  const secondaryBorderColor = effectiveData.secondaryBorderColor ?? DEFAULT_CONTENT.secondaryBorderColor;
+  // If no data available, don't render anything
+  if (!effectiveData) {
+    return null;
+  }
+
+  // Extract values directly from data (no defaults)
+  const title = effectiveData.title || '';
+  const titleGradient = effectiveData.titleGradient || '';
+  const subtitle = effectiveData.subtitle || '';
+  const subtitleColor = effectiveData.subtitleColor || '';
+  const sectionBgGradient = effectiveData.sectionBgGradient || '';
+  const glowColor1 = effectiveData.glowColor1 || COLORS.gogo_blue;
+  const glowColor2 = effectiveData.glowColor2 || COLORS.gogo_teal;
+  const cardBgColor = effectiveData.cardBgColor || '';
+  const cardBorderColor = effectiveData.cardBorderColor || '';
+  const cardTitleColor = effectiveData.cardTitleColor || '';
+  const iconGradient = effectiveData.iconGradient || '';
+  const methodItems = effectiveData.methodItems || [];
+  const leadText = effectiveData.leadText || '';
+  const leadTextColor = effectiveData.leadTextColor || '';
+  const secondaryText = effectiveData.secondaryText || '';
+  const secondaryTextColor = effectiveData.secondaryTextColor || '';
+  const secondaryBorderColor = effectiveData.secondaryBorderColor || '';
 
   // Render icon from iconKey
   const renderIcon = (iconKey: string) => {
@@ -355,35 +338,36 @@ function OurMethodSection({
 
   return (
     <Section
-      $bgGradient={sectionBgGradient!}
-      $glowColor1={glowColor1!}
-      $glowColor2={glowColor2!}
+      $bgGradient={sectionBgGradient}
+      $glowColor1={glowColor1}
+      $glowColor2={glowColor2}
+      $underlineGradient={titleGradient}
     >
       <Container>
         <Header className="animate-child">
-          <Title $gradient={titleGradient!}>{title}</Title>
-          <Subtitle $color={subtitleColor!}>{subtitle}</Subtitle>
+          <Title $gradient={titleGradient}>{title}</Title>
+          <Subtitle $color={subtitleColor}>{subtitle}</Subtitle>
         </Header>
 
         <Grid className="animate-child">
-          {methodItems!.map((item, index) => (
+          {methodItems.map((item, index) => (
             <Card
               key={item.id || index}
               className="method-card"
-              $bgColor={cardBgColor!}
-              $borderColor={cardBorderColor!}
+              $bgColor={cardBgColor}
+              $borderColor={cardBorderColor}
             >
-              <IconWrap $gradient={iconGradient!} aria-hidden>
+              <IconWrap $gradient={iconGradient} aria-hidden>
                 {renderIcon(item.iconKey)}
               </IconWrap>
-              <CardTitle $color={cardTitleColor!}>{item.text}</CardTitle>
+              <CardTitle $color={cardTitleColor}>{item.text}</CardTitle>
             </Card>
           ))}
         </Grid>
 
         <NarrativeContainer className="animate-child">
-          <LeadText $color={leadTextColor!}>{leadText}</LeadText>
-          <SecondaryText $color={secondaryTextColor!} $borderColor={secondaryBorderColor!}>
+          <LeadText $color={leadTextColor}>{leadText}</LeadText>
+          <SecondaryText $color={secondaryTextColor} $borderColor={secondaryBorderColor}>
             {secondaryText}
           </SecondaryText>
         </NarrativeContainer>

@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { CustomTextField } from '../styles';
 import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
@@ -49,6 +50,14 @@ export function CurriculumTabEditor({
   const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
   const [colorPickerField, setColorPickerField] = useState<CurriculumColorPickerField | null>(null);
   const [pedalColorPickerIndex, setPedalColorPickerIndex] = useState<number | null>(null);
+
+  // Drag state for pedal cards
+  const [draggedPedalIndex, setDraggedPedalIndex] = useState<number | null>(null);
+  const [dragOverPedalIndex, setDragOverPedalIndex] = useState<number | null>(null);
+
+  // Drag state for timeline items
+  const [draggedTimelineIndex, setDraggedTimelineIndex] = useState<number | null>(null);
+  const [dragOverTimelineIndex, setDragOverTimelineIndex] = useState<number | null>(null);
 
   // State for gradient color picker
   const [gradientPickerAnchor, setGradientPickerAnchor] = useState<HTMLElement | null>(null);
@@ -219,6 +228,60 @@ export function CurriculumTabEditor({
     onCurriculumChange('timelineItems', updated);
   };
 
+  // Drag handlers for pedal cards
+  const handlePedalDragStart = (index: number) => {
+    setDraggedPedalIndex(index);
+  };
+
+  const handlePedalDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedPedalIndex !== null && draggedPedalIndex !== index) {
+      setDragOverPedalIndex(index);
+    }
+  };
+
+  const handlePedalDragEnd = () => {
+    if (
+      draggedPedalIndex !== null &&
+      dragOverPedalIndex !== null &&
+      draggedPedalIndex !== dragOverPedalIndex
+    ) {
+      const cards = [...pedalCards];
+      const [removed] = cards.splice(draggedPedalIndex, 1);
+      cards.splice(dragOverPedalIndex, 0, removed);
+      onCurriculumChange('pedalCards', cards);
+    }
+    setDraggedPedalIndex(null);
+    setDragOverPedalIndex(null);
+  };
+
+  // Drag handlers for timeline items
+  const handleTimelineDragStart = (index: number) => {
+    setDraggedTimelineIndex(index);
+  };
+
+  const handleTimelineDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedTimelineIndex !== null && draggedTimelineIndex !== index) {
+      setDragOverTimelineIndex(index);
+    }
+  };
+
+  const handleTimelineDragEnd = () => {
+    if (
+      draggedTimelineIndex !== null &&
+      dragOverTimelineIndex !== null &&
+      draggedTimelineIndex !== dragOverTimelineIndex
+    ) {
+      const items = [...timelineItems];
+      const [removed] = items.splice(draggedTimelineIndex, 1);
+      items.splice(dragOverTimelineIndex, 0, removed);
+      onCurriculumChange('timelineItems', items);
+    }
+    setDraggedTimelineIndex(null);
+    setDragOverTimelineIndex(null);
+  };
+
   return (
     <Grid container spacing={3}>
       {/* Color Picker Popover */}
@@ -261,8 +324,7 @@ export function CurriculumTabEditor({
           label="Section Background Gradient"
           value={getGradientValue('sectionBgGradient')}
           onChange={(gradient) => onCurriculumChange('sectionBgGradient', gradient)}
-          showTypeSelector
-          showThreeColorToggle
+          onPickColor={(el, colorIndex) => openGradientPicker(el, 'sectionBgGradient', colorIndex)}
         />
       </Grid>
 
@@ -314,8 +376,7 @@ export function CurriculumTabEditor({
           label="Title Gradient"
           value={getGradientValue('titleGradient')}
           onChange={(gradient) => onCurriculumChange('titleGradient', gradient)}
-          showTypeSelector
-          showThreeColorToggle
+          onPickColor={(el, colorIndex) => openGradientPicker(el, 'titleGradient', colorIndex)}
         />
       </Grid>
 
@@ -422,69 +483,90 @@ export function CurriculumTabEditor({
       </Grid>
 
       {/* Pedal Cards List */}
-      {pedalCards.map((card, idx) => (
-        <Grid item xs={12} key={card.id}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              bgcolor: 'rgba(255,255,255,0.03)',
-              borderRadius: 2,
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            {/* First row: Title + accent color + delete */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <CustomTextField
-                label="Card Title"
-                value={card.title}
-                onChange={(e) => updatePedalCard(idx, 'title', e.target.value)}
-                sx={{ flex: 1 }}
-                placeholder="Enter card title..."
-              />
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={(e) => openPedalColorPicker(e.currentTarget, idx)}
-                sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)', minWidth: 120 }}
-              >
-                <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: card.accentColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
-                &nbsp;Accent
-              </Button>
-              <IconButton
-                onClick={() => removePedalCard(idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-                disabled={pedalCards.length <= 1}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-            {/* Second row: Text */}
-            <CustomTextField
-              label="Card Text"
-              value={card.text}
-              onChange={(e) => updatePedalCard(idx, 'text', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              placeholder="Enter card description..."
-            />
-            {/* Third row: Badges (comma-separated) */}
-            <CustomTextField
-              label="Badges (comma-separated)"
-              value={card.badges.join(', ')}
-              onChange={(e) => {
-                const badges = e.target.value.split(',').map((b) => b.trim()).filter(Boolean);
-                updatePedalCard(idx, 'badges', badges);
+      {pedalCards.map((card, idx) => {
+        const isDragging = draggedPedalIndex === idx;
+        const isDragOver = dragOverPedalIndex === idx;
+
+        return (
+          <Grid item xs={12} key={card.id}>
+            <Box
+              draggable
+              onDragStart={() => handlePedalDragStart(idx)}
+              onDragOver={(e) => handlePedalDragOver(e, idx)}
+              onDragEnd={handlePedalDragEnd}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                p: 2,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+                border: isDragOver
+                  ? '2px dashed rgba(30, 215, 96, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                opacity: isDragging ? 0.5 : 1,
+                cursor: 'grab',
+                transition: 'border 0.15s ease',
               }}
-              fullWidth
-              placeholder="Badge 1, Badge 2, Badge 3..."
-            />
-          </Box>
-        </Grid>
-      ))}
+            >
+              {/* First row: Drag handle + Title + accent color + delete */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <CustomTextField
+                  label="Card Title"
+                  value={card.title}
+                  onChange={(e) => updatePedalCard(idx, 'title', e.target.value)}
+                  sx={{ flex: 1 }}
+                  placeholder="Enter card title..."
+                />
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={(e) => openPedalColorPicker(e.currentTarget, idx)}
+                  sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)', minWidth: 120 }}
+                >
+                  <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: card.accentColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
+                  &nbsp;Accent
+                </Button>
+                <IconButton
+                  onClick={() => removePedalCard(idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                  disabled={pedalCards.length <= 1}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+              {/* Second row: Text */}
+              <CustomTextField
+                label="Card Text"
+                value={card.text}
+                onChange={(e) => updatePedalCard(idx, 'text', e.target.value)}
+                fullWidth
+                multiline
+                rows={2}
+                placeholder="Enter card description..."
+              />
+              {/* Third row: Badges (comma-separated) */}
+              <CustomTextField
+                label="Badges (comma-separated)"
+                value={card.badges.join(', ')}
+                onChange={(e) => {
+                  // Split and trim, but don't filter during editing - allows typing commas
+                  const badges = e.target.value.split(',').map((b) => b.trim());
+                  updatePedalCard(idx, 'badges', badges);
+                }}
+                onBlur={(e) => {
+                  // Filter out empty values on blur (when user is done typing)
+                  const badges = e.target.value.split(',').map((b) => b.trim()).filter(Boolean);
+                  updatePedalCard(idx, 'badges', badges);
+                }}
+                fullWidth
+                placeholder="Badge 1, Badge 2, Badge 3..."
+              />
+            </Box>
+          </Grid>
+        );
+      })}
 
       <Grid item xs={12}>
         <Button
@@ -568,49 +650,64 @@ export function CurriculumTabEditor({
       </Grid>
 
       {/* Timeline Items List */}
-      {timelineItems.map((item, idx) => (
-        <Grid item xs={12} key={item.id}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              bgcolor: 'rgba(255,255,255,0.03)',
-              borderRadius: 2,
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            {/* First row: Title + delete */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {timelineItems.map((item, idx) => {
+        const isDragging = draggedTimelineIndex === idx;
+        const isDragOver = dragOverTimelineIndex === idx;
+
+        return (
+          <Grid item xs={12} key={item.id}>
+            <Box
+              draggable
+              onDragStart={() => handleTimelineDragStart(idx)}
+              onDragOver={(e) => handleTimelineDragOver(e, idx)}
+              onDragEnd={handleTimelineDragEnd}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                p: 2,
+                bgcolor: 'rgba(255,255,255,0.03)',
+                borderRadius: 2,
+                border: isDragOver
+                  ? '2px dashed rgba(30, 215, 96, 0.8)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                opacity: isDragging ? 0.5 : 1,
+                cursor: 'grab',
+                transition: 'border 0.15s ease',
+              }}
+            >
+              {/* First row: Drag handle + Title + delete */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                <CustomTextField
+                  label="Step Title"
+                  value={item.title}
+                  onChange={(e) => updateTimelineItem(idx, 'title', e.target.value)}
+                  sx={{ flex: 1 }}
+                  placeholder="Enter step title..."
+                />
+                <IconButton
+                  onClick={() => removeTimelineItem(idx)}
+                  sx={{ color: 'rgba(255,255,255,0.5)' }}
+                  disabled={timelineItems.length <= 1}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+              {/* Second row: Text */}
               <CustomTextField
-                label="Step Title"
-                value={item.title}
-                onChange={(e) => updateTimelineItem(idx, 'title', e.target.value)}
-                sx={{ flex: 1 }}
-                placeholder="Enter step title..."
+                label="Step Description"
+                value={item.text}
+                onChange={(e) => updateTimelineItem(idx, 'text', e.target.value)}
+                fullWidth
+                multiline
+                rows={2}
+                placeholder="Enter step description..."
               />
-              <IconButton
-                onClick={() => removeTimelineItem(idx)}
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
-                disabled={timelineItems.length <= 1}
-              >
-                <DeleteIcon />
-              </IconButton>
             </Box>
-            {/* Second row: Text */}
-            <CustomTextField
-              label="Step Description"
-              value={item.text}
-              onChange={(e) => updateTimelineItem(idx, 'text', e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              placeholder="Enter step description..."
-            />
-          </Box>
-        </Grid>
-      ))}
+          </Grid>
+        );
+      })}
 
       <Grid item xs={12}>
         <Button
