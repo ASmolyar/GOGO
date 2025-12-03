@@ -1303,8 +1303,7 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
         const track = padConfigMap[padId];
         if (track) {
           setSrMessage(
-            `${track.label} step ${stepIndex + 1} ${
-              nextRow[stepIndex] ? "enabled" : "muted"
+            `${track.label} step ${stepIndex + 1} ${nextRow[stepIndex] ? "enabled" : "muted"
             }`,
           );
         }
@@ -1484,10 +1483,10 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
           elem.style.backgroundColor =
             burstColor && burstInfluence > 0
               ? mixHslColors(
-                  baseColor,
-                  burstColor,
-                  Math.min(1, burstInfluence * 1.3),
-                )
+                baseColor,
+                burstColor,
+                Math.min(1, burstInfluence * 1.3),
+              )
               : baseColor;
         },
       );
@@ -2306,9 +2305,8 @@ function HeroSection(props: HeroSectionProps = {}): JSX.Element {
                                   $active={isActive}
                                   $current={isCurrent}
                                   aria-pressed={isActive}
-                                  aria-label={`${pad.label} step ${
-                                    stepIdx + 1
-                                  } ${ariaState}`}
+                                  aria-label={`${pad.label} step ${stepIdx + 1
+                                    } ${ariaState}`}
                                   onClick={() =>
                                     handleStepToggle(pad.id, stepIdx)
                                   }

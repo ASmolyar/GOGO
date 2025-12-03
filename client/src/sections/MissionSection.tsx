@@ -22,7 +22,7 @@ import ComputerIcon from '@mui/icons-material/Computer';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import MissionStatement from '../components/MissionStatement';
-import COLORS from '../../assets/colors.ts';
+import COLORS from '../../assets/colors';
 import { fetchMissionContent, fetchNationalImpactContent, fetchHearOurImpactContent, type MissionContent, type NationalImpactContent, type HearOurImpactContent } from '../services/impact.api';
 import EnhancedLeafletMap from '../components/map/EnhancedLeafletMap';
 import { getImpactIconByKey } from '../components/IconSelector';
@@ -69,7 +69,7 @@ const pulseEqualizer = keyframes`
   }
 `;
 
-const SectionContainer = styled.section<{ 
+const SectionContainer = styled.section<{
   $textAlign?: 'left' | 'center' | 'right';
   $overlayColor1?: string | null;
   $overlayColor2?: string | null;
@@ -145,7 +145,7 @@ const SectionTitle = styled.h2<{
   background: ${(p) =>
     p.$useGradient
       ? p.$titleGradient ??
-        'linear-gradient(to right, rgb(126, 154, 255), rgb(191, 175, 255), rgb(178, 255, 241))'
+      'linear-gradient(to right, rgb(126, 154, 255), rgb(191, 175, 255), rgb(178, 255, 241))'
       : 'none'};
   background-size: 100% 100%;
   -webkit-background-clip: ${(p) => (p.$useGradient ? 'text' : 'initial')};
@@ -163,8 +163,8 @@ const SectionTitle = styled.h2<{
     width: 60px;
     height: 4px;
     background: ${(p) =>
-      p.$underlineGradient ??
-      'linear-gradient(to right, #5fa8d3, #7b7fd1)'};
+    p.$underlineGradient ??
+    'linear-gradient(to right, #5fa8d3, #7b7fd1)'};
     transition: width 0.3s ease;
   }
 
@@ -225,9 +225,9 @@ const AtGlanceLabel = styled.div<{ $color?: string | null }>`
     height: 2px;
     width: 60px;
     background: ${(p) =>
-      p.$color
-        ? `linear-gradient(90deg, ${p.$color}, transparent)`
-        : `linear-gradient(90deg, ${COLORS.gogo_blue}, transparent)`};
+    p.$color
+      ? `linear-gradient(90deg, ${p.$color}, transparent)`
+      : `linear-gradient(90deg, ${COLORS.gogo_blue}, transparent)`};
     border-radius: 2px;
   }
 `;
@@ -508,7 +508,7 @@ interface MissionSectionProps {
   missionOverride?: Partial<MissionContent>;
 }
 
-function MissionSection(props: MissionSectionProps = {}): JSX.Element {
+function MissionSection(props: MissionSectionProps = {}): JSX.Element | null {
   const { missionData, nationalImpactData, previewMode = false, missionOverride } = props;
   const [inView, setInView] = useState(true);
   const [showDisciplines, setShowDisciplines] = useState(false);
@@ -808,9 +808,8 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
       $overlayOpacity={mission?.overlayOpacity}
       $underlineGradient={mission?.titleUnderlineGradient || mission?.titleGradient}
       data-variant={layoutVariant}
-      className={`mission-section${
-        animationsEnabled && inView ? " fade-in" : ""
-      }`}
+      className={`mission-section${animationsEnabled && inView ? " fade-in" : ""
+        }`}
       style={sectionBackground ? { background: sectionBackground } : undefined}
     >
       <Content style={{ textAlign }}>
@@ -1012,9 +1011,7 @@ function MissionSection(props: MissionSectionProps = {}): JSX.Element {
         } : undefined}
       >
         <DialogTitle sx={{ m: 0, p: 2, color: "white", fontFamily: "'Century Gothic', 'Arial', sans-serif" }}>
-          {disciplinesModal?.title ||
-            mission?.modalTitle ||
-            "Artistic Disciplines"}
+          {disciplinesModal?.title || "Artistic Disciplines"}
           <IconButton
             aria-label="close"
             onClick={() => setShowDisciplines(false)}

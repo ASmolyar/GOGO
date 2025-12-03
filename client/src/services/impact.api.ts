@@ -177,7 +177,7 @@ export interface PopulationContent {
   sectionBadgeGradientDegree?: number;
   sectionTitle?: string;
   sectionTitleUnderlineColor?: string;
-  
+
   // Main Title
   title?: string;
   titleGradient?: string; // Full CSS gradient string
@@ -186,27 +186,27 @@ export interface PopulationContent {
   titleGradientEnd?: string;
   titleGradientDegree?: number;
   titleUnderlineColor?: string; // Animated underline under the main title
-  
+
   // Glow Blobs
   blob1ColorA?: string;
   blob1ColorB?: string;
   blob2ColorA?: string;
   blob2ColorB?: string;
-  
+
   // Info Cards
   infoCard1Text?: string;
   infoCard2Text?: string;
-  
+
   // Demographics Pie
   demographicsTitle?: string;
   demographicsData?: DemographicItem[];
   demographicsCaption?: string;
-  
+
   // Stats
   stat1Percent?: number;
   stat1Text?: string;
   stat1Color?: string;
-  
+
   stat2Percent?: number;
   stat2Text?: string;
   stat2Color?: string;
@@ -215,7 +215,7 @@ export interface PopulationContent {
   cgasTitle?: string;
   cgasTooltip?: string;
   cgasStats?: PopulationStat[]; // Array of 3
-  
+
   // Skills
   skillsTitle?: string;
   skillsList?: string[];
@@ -560,6 +560,101 @@ export interface DefaultsContent {
   colorSwatch?: string[] | null;
 }
 
+// =========================
+// Programs content interfaces
+// =========================
+export interface ProgramsProgram {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  color: string;
+  features: string[];
+  imageUrl?: string | null;
+}
+
+export interface ProgramsContent {
+  enabled?: boolean | null;
+  title?: string | null;
+  subtitle?: string | null;
+  programs?: ProgramsProgram[] | null;
+}
+
+// =========================
+// Impact content interfaces
+// =========================
+export interface ImpactStat {
+  id: string;
+  number: number;
+  label: string;
+}
+
+export interface ImpactCapacity {
+  id: string;
+  title: string;
+  iconKey?: string | null;
+}
+
+export interface ImpactContent {
+  enabled?: boolean | null;
+  title?: string | null;
+  statsTitle?: string | null;
+  stats?: ImpactStat[] | null;
+  highlightsTitle?: string | null;
+  highlightsSubtitle?: string | null;
+  capacities?: ImpactCapacity[] | null;
+}
+
+// =========================
+// Locations content interfaces
+// =========================
+export interface LocationsContent {
+  enabled?: boolean | null;
+  title?: string | null;
+}
+
+// =========================
+// Testimonials content interfaces
+// =========================
+export interface TestimonialsContent {
+  enabled?: boolean | null;
+  eyebrow?: string | null;
+  name?: string | null;
+  quote?: string | null;
+  attribution?: string | null;
+  imageUrl?: string | null;
+}
+
+// =========================
+// Partners content interfaces
+// =========================
+export interface PartnersSupporter {
+  id: string;
+  name: string;
+  descriptor?: string | null;
+  url?: string | null;
+  color: string;
+  category: 'Foundations' | 'Corporate & Individual' | 'Government' | 'Community & In‑Kind';
+}
+
+export interface PartnersContent {
+  enabled?: boolean | null;
+  title?: string | null;
+  subtitle?: string | null;
+  gridLabel?: string | null;
+  betweenNote?: string | null;
+  viewAllLink?: string | null;
+  donateLink?: string | null;
+  majorCounts?: {
+    Foundations?: number;
+    'Corporate & Individual'?: number;
+    Government?: number;
+    'Community & In‑Kind'?: number;
+  } | null;
+  supporters?: PartnersSupporter[] | null;
+}
+
 // Media upload flow:
 // 1) Use client/src/services/upload.api.ts -> uploadFile(file, { folder? })
 // 2) Persist the returned { key, publicUrl, ...metadata } in your domain model
@@ -579,6 +674,11 @@ export async function fetchHeroContent(): Promise<HeroContent | null> {
     });
 
     if (!response.ok) {
+      // 404 means data doesn't exist yet - that's okay, not an error
+      if (response.status === 404) {
+        console.log('[client][hero] GET not found (404) - data not yet created');
+        return null;
+      }
       console.warn('[client][hero] GET failed', { status: response.status });
       return null;
     }
@@ -587,8 +687,12 @@ export async function fetchHeroContent(): Promise<HeroContent | null> {
     console.log('[client][hero] GET success', { fields: Object.keys(payload?.data || {}) });
     return payload?.data ?? null;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('[ImpactReport] Failed to fetch hero content', error);
+    // Network errors (server not running, CORS, etc.)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('[ImpactReport] Network error fetching hero content - is the server running?', error);
+    } else {
+      console.error('[ImpactReport] Failed to fetch hero content', error);
+    }
     return null;
   }
 }
@@ -648,6 +752,11 @@ export async function fetchMissionContent(): Promise<MissionContent | null> {
       credentials: 'include',
     });
     if (!response.ok) {
+      // 404 means data doesn't exist yet - that's okay, not an error
+      if (response.status === 404) {
+        console.log('[client][mission] GET not found (404) - data not yet created');
+        return null;
+      }
       console.warn('[client][mission] GET failed', { status: response.status });
       return null;
     }
@@ -655,8 +764,12 @@ export async function fetchMissionContent(): Promise<MissionContent | null> {
     console.log('[client][mission] GET success', { fields: Object.keys(payload?.data || {}) });
     return payload?.data ?? null;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('[ImpactReport] Failed to fetch mission content', error);
+    // Network errors (server not running, CORS, etc.)
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('[ImpactReport] Network error fetching mission content - is the server running?', error);
+    } else {
+      console.error('[ImpactReport] Failed to fetch mission content', error);
+    }
     return null;
   }
 }
