@@ -32,7 +32,7 @@ router.put("/impact/defaults", requireAuth, async (req, res, next) => {
       slug,
       incomingKeys: Object.keys(data || {}),
     });
-    const allowedKeys = ["colorSwatch", "sectionOrder"];
+    const allowedKeys = ["colorSwatch", "sectionOrder", "disabledSections"];
     const sanitized: Record<string, unknown> = {};
     for (const key of allowedKeys) {
       if (key in data) sanitized[key] = (data as any)[key];
@@ -41,7 +41,7 @@ router.put("/impact/defaults", requireAuth, async (req, res, next) => {
     if (Array.isArray(sanitized.colorSwatch)) {
       sanitized.colorSwatch = (sanitized.colorSwatch as any[]).filter((c) => typeof c === "string");
     }
-    // Defensive: ensure sectionOrder is an array of valid section keys
+    // Defensive: ensure sectionOrder and disabledSections are arrays of valid section keys
     const validSectionKeys = [
       'hero', 'mission', 'population', 'financial', 'method', 'curriculum',
       'impactSection', 'hearOurImpact', 'testimonials', 'nationalImpact',
@@ -49,6 +49,11 @@ router.put("/impact/defaults", requireAuth, async (req, res, next) => {
     ];
     if (Array.isArray(sanitized.sectionOrder)) {
       sanitized.sectionOrder = (sanitized.sectionOrder as any[]).filter(
+        (s) => typeof s === "string" && validSectionKeys.includes(s)
+      );
+    }
+    if (Array.isArray(sanitized.disabledSections)) {
+      sanitized.disabledSections = (sanitized.disabledSections as any[]).filter(
         (s) => typeof s === "string" && validSectionKeys.includes(s)
       );
     }

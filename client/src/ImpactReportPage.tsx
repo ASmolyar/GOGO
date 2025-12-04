@@ -273,8 +273,9 @@ function ImpactReportPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [reportData, setReportData] = useState<ImpactReportData | null>(null);
-  // Section order from defaults
+  // Section order and disabled sections from defaults
   const [sectionOrder, setSectionOrder] = useState<ReorderableSectionKey[]>([...DEFAULT_SECTION_ORDER]);
+  const [disabledSections, setDisabledSections] = useState<ReorderableSectionKey[]>([]);
 
   // Refs for each section to animate
   const heroRef = useRef<HTMLDivElement>(null);
@@ -321,7 +322,7 @@ function ImpactReportPage() {
             fetchDefaults(),
           ]),
           timeoutPromise,
-        ]) as [HeroContent | null, MissionContent | null, PopulationContent | null, FinancialContent | null, MethodContent | null, { sectionOrder?: ReorderableSectionKey[] } | null];
+        ]) as [HeroContent | null, MissionContent | null, PopulationContent | null, FinancialContent | null, MethodContent | null, { sectionOrder?: ReorderableSectionKey[]; disabledSections?: ReorderableSectionKey[] } | null];
 
         // Clear timeout on success
         clearTimeout(timeoutId);
@@ -347,6 +348,11 @@ function ImpactReportPage() {
           const loadedOrder = defaults.sectionOrder as ReorderableSectionKey[];
           const missingSections = DEFAULT_SECTION_ORDER.filter(s => !loadedOrder.includes(s));
           setSectionOrder([...loadedOrder, ...missingSections]);
+        }
+        
+        // Load disabled sections from defaults
+        if (defaults?.disabledSections && Array.isArray(defaults.disabledSections)) {
+          setDisabledSections(defaults.disabledSections as ReorderableSectionKey[]);
         }
 
         setReportData({ hero, mission, population, financial, method });
@@ -630,6 +636,9 @@ function ImpactReportPage() {
   // Render a section based on its key
   const renderSection = (sectionKey: ReorderableSectionKey) => {
     if (!reportData) return null;
+    
+    // Skip disabled sections
+    if (disabledSections.includes(sectionKey)) return null;
     
     switch (sectionKey) {
       case 'hero':

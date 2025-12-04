@@ -22,6 +22,7 @@ export type ReorderableSectionKey =
 export interface DefaultsContent {
   colorSwatch?: string[] | null;
   sectionOrder?: ReorderableSectionKey[] | null;
+  disabledSections?: ReorderableSectionKey[] | null;
 }
 
 export interface DefaultsDocument extends DefaultsContent {

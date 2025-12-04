@@ -11,16 +11,20 @@ import COLORS from '../../../assets/colors';
 export interface DefaultsTabEditorProps {
   defaultSwatch: string[] | null;
   sectionOrder: ReorderableSectionKey[];
+  disabledSections: ReorderableSectionKey[];
   onSwatchChange: (swatch: string[]) => void;
   onSectionOrderChange: (order: ReorderableSectionKey[]) => void;
+  onDisabledSectionsChange: (disabled: ReorderableSectionKey[]) => void;
   onDirtyChange: () => void;
 }
 
 export function DefaultsTabEditor({
   defaultSwatch,
   sectionOrder,
+  disabledSections,
   onSwatchChange,
   onSectionOrderChange,
+  onDisabledSectionsChange,
   onDirtyChange,
 }: DefaultsTabEditorProps) {
   const [defaultsPickerAnchor, setDefaultsPickerAnchor] = useState<HTMLElement | null>(null);
@@ -153,8 +157,13 @@ export function DefaultsTabEditor({
           <Divider sx={{ my: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
           <SectionOrderEditor
             value={sectionOrder}
+            disabledSections={disabledSections}
             onChange={(newOrder) => {
               onSectionOrderChange(newOrder);
+              onDirtyChange();
+            }}
+            onDisabledChange={(disabled) => {
+              onDisabledSectionsChange(disabled);
               onDirtyChange();
             }}
           />

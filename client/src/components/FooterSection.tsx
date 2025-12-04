@@ -279,7 +279,15 @@ function FooterSection({ previewMode = false, footerOverride }: FooterProps) {
   if (footer?.visible === false) return null;
 
   // Show loading placeholder or fallback to defaults
-  const logo = footer?.logo ?? { imageUrl: gogoWideLogo, alt: 'Guitars Over Guns Logo', width: 180 };
+  const logoData = footer?.logo ?? { useDefaultLogo: true, imageUrl: '', alt: 'Guitars Over Guns Logo', width: 180 };
+  // Determine which logo image to use
+  const logoImageUrl = logoData.useDefaultLogo !== false || !logoData.imageUrl
+    ? gogoWideLogo
+    : logoData.imageUrl;
+  const logo = {
+    ...logoData,
+    imageUrl: logoImageUrl,
+  };
   const description = footer?.description ?? 
     'Guitars Over Guns is a 501(c)(3) organization that connects youth with professional musician mentors to help them overcome hardship, find their voice and reach their potential through music, art and mentorship.';
   const socialLinks = footer?.socialLinks ?? [];

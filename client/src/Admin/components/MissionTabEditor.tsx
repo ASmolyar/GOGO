@@ -223,24 +223,6 @@ export function MissionTabEditor({
         >
           Mission Section
         </Typography>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={mission.enabled}
-              onChange={(e) => onMissionChange('enabled', e.target.checked)}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: COLORS.gogo_blue,
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: COLORS.gogo_blue,
-                },
-              }}
-            />
-          }
-          label="Enable Section"
-          sx={{ color: 'white' }}
-        />
       </Box>
       <Divider sx={{ mb: 3, bgcolor: 'rgba(255,255,255,0.1)' }} />
 
@@ -275,26 +257,6 @@ export function MissionTabEditor({
               </MenuItem>
             ))}
           </CustomTextField>
-        </Grid>
-        <Grid item xs={12}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={mission.animationsEnabled}
-                onChange={(e) => onMissionChange('animationsEnabled', e.target.checked)}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: COLORS.gogo_blue,
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: COLORS.gogo_blue,
-                  },
-                }}
-              />
-            }
-            label="Enable Animations"
-            sx={{ color: 'white' }}
-          />
         </Grid>
 
         {/* ========================================== */}

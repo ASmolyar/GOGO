@@ -314,35 +314,6 @@ export function PartnersTabEditor({
       />
 
       {/* ─────────────────────────────────────────────────────────────────────── */}
-      {/* SECTION SETTINGS */}
-      {/* ─────────────────────────────────────────────────────────────────────── */}
-      <Grid item xs={12}>
-        <Typography variant="h6" sx={{ mb: 2, color: 'rgba(255,255,255,0.9)' }}>
-          Section Settings
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={partners.visible !== false}
-                onChange={(e) => onPartnersChange('visible', e.target.checked)}
-              />
-            }
-            label="Section visible"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={partners.animationsEnabled !== false}
-                onChange={(e) => onPartnersChange('animationsEnabled', e.target.checked)}
-              />
-            }
-            label="Animations enabled"
-          />
-        </Box>
-      </Grid>
-
-      {/* ─────────────────────────────────────────────────────────────────────── */}
       {/* SECTION BACKGROUND */}
       {/* ─────────────────────────────────────────────────────────────────────── */}
       <Grid item xs={12}>

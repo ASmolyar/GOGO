@@ -309,6 +309,8 @@ function ImpactReportCustomizationPage() {
   const [defaultSwatch, setDefaultSwatch] = useState<string[] | null>(null);
   // Section order state
   const [sectionOrder, setSectionOrder] = useState<ReorderableSectionKey[]>([...DEFAULT_SECTION_ORDER]);
+  // Disabled sections state
+  const [disabledSections, setDisabledSections] = useState<ReorderableSectionKey[]>([]);
 
   // Dynamic tabs based on section order
   const orderedTabs = useMemo(() => {
@@ -1076,6 +1078,11 @@ function ImpactReportCustomizationPage() {
         const missingSections = DEFAULT_SECTION_ORDER.filter(s => !loadedOrder.includes(s));
         setSectionOrder([...loadedOrder, ...missingSections]);
       }
+      
+      // Load disabled sections
+      if (defs?.disabledSections && Array.isArray(defs.disabledSections)) {
+        setDisabledSections(defs.disabledSections as ReorderableSectionKey[]);
+      }
     })();
   }, []);
 
@@ -1086,9 +1093,9 @@ function ImpactReportCustomizationPage() {
     const sectionKey = currentTabConfig?.routeKey ?? "defaults";
 
     try {
-      // Always save defaults (color swatch + section order) since they're shared
+      // Always save defaults (color swatch + section order + disabled sections) since they're shared
       if (defaultSwatch && defaultSwatch.length > 0) {
-        await saveDefaults({ colorSwatch: defaultSwatch, sectionOrder });
+        await saveDefaults({ colorSwatch: defaultSwatch, sectionOrder, disabledSections });
       }
 
       // Save the current section based on tab
@@ -1275,11 +1282,11 @@ function ImpactReportCustomizationPage() {
               impactReportForm.mission.ticketStripeGradientColor2,
             );
           const missionPayload: Record<string, unknown> = {
-            visible: impactReportForm.mission.enabled,
+            visible: true, // Visibility now controlled centrally via defaults
             ariaLabel: impactReportForm.mission.ariaLabel || undefined,
             layoutVariant: impactReportForm.mission.layoutVariant,
             textAlign: impactReportForm.mission.textAlign,
-            animationsEnabled: impactReportForm.mission.animationsEnabled,
+            animationsEnabled: true, // Animations always enabled (no longer a per-section toggle)
             backgroundGradient: missionBackgroundColor,
             title: impactReportForm.mission.title,
             titleColor: impactReportForm.mission.titleColor || undefined,
@@ -1523,6 +1530,8 @@ function ImpactReportCustomizationPage() {
           );
           const result = await savePartnersContent({
             ...impactReportForm.partners,
+            visible: true, // Visibility now controlled centrally via defaults
+            animationsEnabled: true, // Animations always enabled
           });
           if (!result)
             throw new Error("Failed to save Partners section.");
@@ -1607,6 +1616,13 @@ function ImpactReportCustomizationPage() {
         setSectionOrder([...loadedOrder, ...missingSections]);
       } else {
         setSectionOrder([...DEFAULT_SECTION_ORDER]);
+      }
+      
+      // Restore disabled sections
+      if (defs?.disabledSections && Array.isArray(defs.disabledSections)) {
+        setDisabledSections(defs.disabledSections as ReorderableSectionKey[]);
+      } else {
+        setDisabledSections([]);
       }
     } catch {}
 
@@ -1721,11 +1737,11 @@ function ImpactReportCustomizationPage() {
         impactReportForm.mission.gradientOpacity,
       );
     return {
-      enabled: impactReportForm.mission.enabled,
+      enabled: true, // Visibility now controlled centrally via defaults
       ariaLabel: impactReportForm.mission.ariaLabel,
       layoutVariant: impactReportForm.mission.layoutVariant,
       textAlign: impactReportForm.mission.textAlign,
-      animationsEnabled: impactReportForm.mission.animationsEnabled,
+      animationsEnabled: true, // Animations always enabled
       title: impactReportForm.mission.title,
       titleColor: impactReportForm.mission.titleColor || undefined,
       titleGradient: missionTitleGradient,
@@ -2186,8 +2202,10 @@ function ImpactReportCustomizationPage() {
           <DefaultsTabEditor
             defaultSwatch={defaultSwatch}
             sectionOrder={sectionOrder}
+            disabledSections={disabledSections}
             onSwatchChange={setDefaultSwatch}
             onSectionOrderChange={setSectionOrder}
+            onDisabledSectionsChange={setDisabledSections}
             onDirtyChange={() => setIsDirty(true)}
           />
         );

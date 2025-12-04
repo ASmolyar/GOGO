@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Grid,
   Box,
@@ -9,10 +9,14 @@ import {
   FormControlLabel,
   Switch,
   Slider,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ClearIcon from '@mui/icons-material/Clear';
 import ColorPickerPopover from '../../components/ColorPickerPopover';
 import { CustomTextField } from '../styles';
 import { GradientEditor, parseGradientString, composeGradient } from './GradientEditor';
@@ -28,8 +32,12 @@ import {
   FooterMailingAddress,
   FooterLogo,
 } from '../../services/impact.api';
+import { signUpload, uploadToSignedUrl } from '../../services/upload.api';
 import { v4 as uuidv4 } from 'uuid';
 import { normalizeUrl } from '../utils';
+
+// Default logo path
+import gogoWideLogo from '../../../assets/GOGO_LOGO_WIDE_WH.png';
 
 export interface FooterTabEditorProps {
   footer: FooterContent;
@@ -65,6 +73,7 @@ export function FooterTabEditor({
   defaultSwatch,
   onFooterChange,
 }: FooterTabEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
   const [colorPickerField, setColorPickerField] = useState<ColorPickerField | null>(null);
 
@@ -73,6 +82,9 @@ export function FooterTabEditor({
   const [gradientPickerKey, setGradientPickerKey] = useState<'sectionBgGradient' | 'topBorderGradient' | null>(null);
   const [gradientPickerColorIndex, setGradientPickerColorIndex] = useState<number>(0);
   const gradientPickerOpen = Boolean(gradientPickerAnchor);
+
+  // Logo upload state
+  const [uploading, setUploading] = useState(false);
 
   // Drag state for social links
   const [draggedSocialIndex, setDraggedSocialIndex] = useState<number | null>(null);
@@ -83,7 +95,7 @@ export function FooterTabEditor({
   const [dragOverColumnIndex, setDragOverColumnIndex] = useState<number | null>(null);
 
   // Get nested objects with defaults
-  const logo: FooterLogo = footer.logo ?? { imageUrl: '', alt: 'Logo', width: 180 };
+  const logo: FooterLogo = footer.logo ?? { useDefaultLogo: true, imageUrl: '', alt: 'Logo', width: 180 };
   const socialLinks: FooterSocialLink[] = footer.socialLinks ?? [];
   const columns: FooterColumn[] = footer.columns ?? [];
   const bottomBar: FooterBottomBar = footer.bottomBar ?? {
@@ -192,6 +204,62 @@ export function FooterTabEditor({
   // Logo helpers
   const updateLogo = (field: keyof FooterLogo, value: any) => {
     onFooterChange('logo', { ...logo, [field]: value });
+  };
+
+  // Handle logo file selection and upload
+  const handleLogoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+
+    // Validate file type - only PNG allowed for transparent backgrounds
+    const allowedTypes = ['image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      console.error('Invalid file type. Only PNG files are allowed for logo upload.');
+      return;
+    }
+
+    // Reset the input so the same file can be selected again
+    e.target.value = '';
+
+    // Upload the file
+    setUploading(true);
+    try {
+      const signed = await signUpload({
+        contentType: file.type,
+        extension: 'png',
+        folder: 'footer-logo',
+      });
+
+      const putRes = await uploadToSignedUrl({
+        uploadUrl: signed.uploadUrl,
+        file,
+        contentType: file.type,
+      });
+
+      if (!putRes.ok) {
+        throw new Error('Failed to upload logo');
+      }
+
+      // Update the logo URL
+      onFooterChange('logo', {
+        ...logo,
+        useDefaultLogo: false,
+        imageUrl: signed.publicUrl,
+      });
+    } catch (error) {
+      console.error('Failed to upload logo:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Clear custom logo and use default
+  const handleClearLogo = () => {
+    onFooterChange('logo', {
+      ...logo,
+      useDefaultLogo: true,
+      imageUrl: '',
+    });
   };
 
   // Social link CRUD
@@ -452,14 +520,115 @@ export function FooterTabEditor({
         </Typography>
       </Grid>
 
-      <Grid item xs={12} md={8}>
-        <CustomTextField
-          fullWidth
-          label="Logo Image URL"
-          value={logo.imageUrl || ''}
-          onChange={(e) => updateLogo('imageUrl', e.target.value)}
+      {/* Logo Source Toggle */}
+      <Grid item xs={12}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={logo.useDefaultLogo !== false}
+              onChange={(e) => updateLogo('useDefaultLogo', e.target.checked)}
+            />
+          }
+          label="Use default GOGO logo"
         />
       </Grid>
+
+      {/* Custom Logo Upload */}
+      {logo.useDefaultLogo === false && (
+        <>
+          <Grid item xs={12}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Upload a PNG image with transparent background for best results.
+            </Alert>
+          </Grid>
+          
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              <input
+                type="file"
+                accept="image/png"
+                onChange={handleLogoFileSelect}
+                style={{ display: 'none' }}
+                ref={fileInputRef}
+              />
+              <Button
+                variant="outlined"
+                startIcon={uploading ? <CircularProgress size={16} /> : <CloudUploadIcon />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
+              >
+                {uploading ? 'Uploading...' : 'Upload Logo (PNG)'}
+              </Button>
+              {logo.imageUrl && (
+                <Button
+                  variant="text"
+                  color="error"
+                  startIcon={<ClearIcon />}
+                  onClick={handleClearLogo}
+                  disabled={uploading}
+                >
+                  Use Default Instead
+                </Button>
+              )}
+            </Box>
+          </Grid>
+
+          {/* Logo Preview */}
+          {logo.imageUrl && (
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: 'rgba(255,255,255,0.7)' }}>
+                Current Logo Preview
+              </Typography>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 1,
+                  backgroundColor: 'rgba(0,0,0,0.4)',
+                  display: 'inline-block',
+                }}
+              >
+                <img
+                  src={logo.imageUrl}
+                  alt={logo.alt || 'Logo preview'}
+                  style={{
+                    maxWidth: logo.width || 180,
+                    height: 'auto',
+                    display: 'block',
+                  }}
+                />
+              </Box>
+            </Grid>
+          )}
+        </>
+      )}
+
+      {/* Default Logo Preview */}
+      {logo.useDefaultLogo !== false && (
+        <Grid item xs={12}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'rgba(255,255,255,0.7)' }}>
+            Default Logo Preview
+          </Typography>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 1,
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              display: 'inline-block',
+            }}
+          >
+            <img
+              src={gogoWideLogo}
+              alt="Default GOGO Logo"
+              style={{
+                maxWidth: logo.width || 180,
+                height: 'auto',
+                display: 'block',
+              }}
+            />
+          </Box>
+        </Grid>
+      )}
 
       <Grid item xs={12} md={4}>
         <CustomTextField

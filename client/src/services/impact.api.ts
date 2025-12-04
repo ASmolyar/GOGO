@@ -624,6 +624,7 @@ export const SECTION_DISPLAY_NAMES: Record<ReorderableSectionKey, string> = {
 export interface DefaultsContent {
   colorSwatch?: string[] | null;
   sectionOrder?: ReorderableSectionKey[] | null;
+  disabledSections?: ReorderableSectionKey[] | null;
 }
 
 // =========================
@@ -2255,6 +2256,7 @@ export interface FooterMailingAddress {
 
 // Logo configuration
 export interface FooterLogo {
+  useDefaultLogo?: boolean | null;
   imageUrl?: string | null;
   alt?: string | null;
   width?: number | null;
