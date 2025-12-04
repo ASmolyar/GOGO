@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ImpactReportPage from './src/ImpactReportPage.tsx';
 import { ImpactReportCustomizationPage, AdminLoginPage } from './src/Admin';
+import NotFoundPage from './src/pages/NotFoundPage';
 import ProtectedRoute from "./src/components/ProtectedRoute.tsx";
 import { Provider } from "react-redux";
 import { store } from "./src/util/redux/store.ts";
@@ -37,6 +38,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               </ProtectedRoute>
             }
           />
+          {/* Catch-all 404 route */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </SnackbarProvider>
