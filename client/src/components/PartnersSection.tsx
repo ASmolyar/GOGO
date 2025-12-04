@@ -1,37 +1,68 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import COLORS from '../../assets/colors';
+import { PartnersContent, PartnerItem, fetchPartnersContent } from '../services/impact.api';
 
-const PartnersSectionWrapper = styled.section`
+interface SectionProps {
+  $sectionBgGradient?: string | null;
+  $glowColor1?: string | null;
+  $glowColor2?: string | null;
+  $glowColor3?: string | null;
+  $titleGradient?: string | null;
+}
+
+const PartnersSectionWrapper = styled.section<SectionProps>`
   position: relative;
   padding: 8rem 0;
-  background: radial-gradient(
-      80rem 60rem at 10% -10%,
-      rgba(79, 70, 229, 0.25),
-      transparent
-    ),
-    radial-gradient(
-      70rem 50rem at 110% 10%,
-      rgba(16, 185, 129, 0.15),
-      transparent
-    ),
-    linear-gradient(180deg, #121212 0%, #0f0f10 100%);
+  background: ${(p) => p.$sectionBgGradient || 'linear-gradient(180deg, #121212 0%, #0f0f10 100%)'};
   overflow: hidden;
-  --section-underline: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+  --section-underline: ${(p) => p.$titleGradient || 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)'};
 
+  /* Glow 1 - top left */
   &:before {
     content: '';
     position: absolute;
-    inset: -20% -10% auto -10%;
-    height: 40rem;
+    top: -10%;
+    left: -10%;
+    width: 80rem;
+    height: 60rem;
     background: radial-gradient(
       closest-side,
-      rgba(56, 189, 248, 0.1),
+      ${(p) => p.$glowColor1 || 'rgba(79, 70, 229, 0.25)'},
       transparent
     );
-    filter: blur(60px);
     pointer-events: none;
   }
+
+  /* Glow 2 - top right */
+  &:after {
+    content: '';
+    position: absolute;
+    top: -5%;
+    right: -10%;
+    width: 70rem;
+    height: 50rem;
+    background: radial-gradient(
+      closest-side,
+      ${(p) => p.$glowColor2 || 'rgba(16, 185, 129, 0.15)'},
+      transparent
+    );
+    pointer-events: none;
+  }
+`;
+
+// Separate glow element for glow 3
+const Glow3 = styled.div<{ $glowColor3?: string | null }>`
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 40rem;
+  background: radial-gradient(
+    closest-side,
+    ${(p) => p.$glowColor3 || 'rgba(56, 189, 248, 0.1)'},
+    transparent
+  );
+  filter: blur(60px);
+  pointer-events: none;
 `;
 
 const SectionContainer = styled.div`
@@ -48,29 +79,41 @@ const Heading = styled.div`
   margin-bottom: 3rem;
 `;
 
-const Title = styled.h2`
+interface TitleProps {
+  $titleGradient?: string | null;
+}
+
+const Title = styled.h2<TitleProps>`
   margin: 0.9rem 0 0.4rem;
   font-size: 3rem;
   line-height: 1.1;
   font-weight: 900;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+  background: ${(p) => p.$titleGradient || 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)'};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 `;
 
-const SubTitle = styled.p`
+interface SubTitleProps {
+  $subtitleColor?: string | null;
+}
+
+const SubTitle = styled.p<SubTitleProps>`
   margin: 0.5rem auto 0;
   max-width: 760px;
-  color: #94a3b8;
+  color: ${(p) => p.$subtitleColor || '#94a3b8'};
   font-size: 1.1rem;
   line-height: 1.6;
 `;
 
-const GridLabel = styled.p`
+interface GridLabelProps {
+  $gridLabelColor?: string | null;
+}
+
+const GridLabel = styled.p<GridLabelProps>`
   margin: 1rem 0 0;
   text-align: left;
-  color: #cbd5e1;
+  color: ${(p) => p.$gridLabelColor || '#cbd5e1'};
   font-size: 0.95rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -85,15 +128,23 @@ const Grid = styled.div`
   margin-top: 1.5rem;
 `;
 
-const Badge = styled.a`
+interface BadgeProps {
+  $badgeBgColor?: string | null;
+  $badgeHoverBgColor?: string | null;
+  $badgeBorderColor?: string | null;
+  $badgeHoverBorderColor?: string | null;
+  $badgeBorderRadius?: number | null;
+}
+
+const Badge = styled.a<BadgeProps>`
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 1.25rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: ${(p) => p.$badgeBorderRadius ?? 16}px;
+  background: ${(p) => p.$badgeBgColor || 'rgba(255, 255, 255, 0.03)'};
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid ${(p) => p.$badgeBorderColor || 'rgba(255, 255, 255, 0.06)'};
   text-decoration: none;
   color: #f3f4f6;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -101,8 +152,8 @@ const Badge = styled.a`
 
   &:hover {
     transform: translateY(-4px) scale(1.02);
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.06);
+    border-color: ${(p) => p.$badgeHoverBorderColor || 'rgba(255, 255, 255, 0.1)'};
+    background: ${(p) => p.$badgeHoverBgColor || 'rgba(255, 255, 255, 0.06)'};
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   }
 `;
@@ -122,17 +173,29 @@ const BadgeText = styled.div`
   gap: 0.25rem;
 `;
 
-const BadgeTitle = styled.span`
+interface BadgeTitleProps {
+  $badgeTitleColor?: string | null;
+}
+
+const BadgeTitle = styled.span<BadgeTitleProps>`
   font-weight: 700;
   font-size: 1rem;
   line-height: 1.2;
-  color: #f1f5f9;
+  color: ${(p) => p.$badgeTitleColor || '#f1f5f9'};
 `;
 
-const BadgeSub = styled.span`
+interface BadgeSubProps {
+  $badgeDescriptorColor?: string | null;
+}
+
+const BadgeSub = styled.span<BadgeSubProps>`
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: ${(p) => p.$badgeDescriptorColor || '#94a3b8'};
 `;
+
+interface ScrollProps {
+  $speed?: number;
+}
 
 const scroll = keyframes`
   0% { transform: translateX(0); }
@@ -186,33 +249,46 @@ const ButtonsRow = styled.div`
   flex-wrap: wrap;
 `;
 
-const ViewAllLink = styled.a`
-  color: #e2e8f0;
+interface ViewAllLinkProps {
+  $viewAllBgColor?: string | null;
+  $viewAllTextColor?: string | null;
+  $viewAllBorderColor?: string | null;
+  $viewAllHoverBgColor?: string | null;
+}
+
+const ViewAllLink = styled.a<ViewAllLinkProps>`
+  color: ${(p) => p.$viewAllTextColor || '#e2e8f0'};
   text-decoration: none;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid ${(p) => p.$viewAllBorderColor || 'rgba(255, 255, 255, 0.1)'};
   padding: 0.75rem 1.5rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
+  background: ${(p) => p.$viewAllBgColor || 'rgba(255, 255, 255, 0.03)'};
   transition: all 0.2s ease;
   font-size: 0.95rem;
 
   &:hover {
     color: #fff;
-    background: rgba(255, 255, 255, 0.08);
+    background: ${(p) => p.$viewAllHoverBgColor || 'rgba(255, 255, 255, 0.08)'};
     border-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
   }
 `;
 
-const DonateButton = styled.a`
-  color: #fff;
+interface DonateButtonProps {
+  $donateBgGradient?: string | null;
+  $donateTextColor?: string | null;
+  $donateHoverBgGradient?: string | null;
+}
+
+const DonateButton = styled.a<DonateButtonProps>`
+  color: ${(p) => p.$donateTextColor || '#fff'};
   text-decoration: none;
   font-weight: 700;
   border: 1px solid transparent;
   padding: 0.75rem 2rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, ${COLORS.gogo_blue}, ${COLORS.gogo_purple});
+  background: ${(p) => p.$donateBgGradient || `linear-gradient(135deg, ${COLORS.gogo_blue}, ${COLORS.gogo_purple})`};
   transition: all 0.3s ease;
   font-size: 0.95rem;
   box-shadow: 0 4px 12px rgba(25, 70, 245, 0.3);
@@ -221,24 +297,33 @@ const DonateButton = styled.a`
     color: #fff;
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(25, 70, 245, 0.5);
+    ${(p) => p.$donateHoverBgGradient && css`background: ${p.$donateHoverBgGradient};`}
     filter: brightness(1.1);
   }
 `;
 
-const BetweenNote = styled.p`
+interface BetweenNoteProps {
+  $betweenNoteColor?: string | null;
+}
+
+const BetweenNote = styled.p<BetweenNoteProps>`
   margin: 0;
-  color: #94a3b8;
+  color: ${(p) => p.$betweenNoteColor || '#94a3b8'};
   font-size: 0.95rem;
   text-align: center;
   max-width: 600px;
 `;
 
-const TickerTrack = styled.div`
+interface TickerTrackProps {
+  $speed?: number;
+}
+
+const TickerTrack = styled.div<TickerTrackProps>`
   display: flex;
   width: max-content;
   gap: 1rem;
   padding: 0.5rem 0;
-  animation: ${scroll} 60s linear infinite;
+  animation: ${scroll} ${(p) => p.$speed || 60}s linear infinite;
   will-change: transform;
   @media (prefers-reduced-motion: reduce) {
     animation: none;
@@ -248,43 +333,65 @@ const TickerTrack = styled.div`
   }
 `;
 
-const TickerItem = styled.span`
+interface TickerItemProps {
+  $itemBgColor?: string | null;
+  $itemTextColor?: string | null;
+  $itemBorderColor?: string | null;
+  $itemHoverBgColor?: string | null;
+  $itemHoverTextColor?: string | null;
+}
+
+const TickerItem = styled.span<TickerItemProps>`
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
   padding: 0.6rem 1.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.02);
-  color: #cbd5e1;
+  border: 1px solid ${(p) => p.$itemBorderColor || 'rgba(255, 255, 255, 0.05)'};
+  background: ${(p) => p.$itemBgColor || 'rgba(255, 255, 255, 0.02)'};
+  color: ${(p) => p.$itemTextColor || '#cbd5e1'};
   font-weight: 500;
   font-size: 0.9rem;
   transition: all 0.2s;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    background: ${(p) => p.$itemHoverBgColor || 'rgba(255, 255, 255, 0.05)'};
+    color: ${(p) => p.$itemHoverTextColor || '#fff'};
     border-color: rgba(255, 255, 255, 0.1);
   }
 `;
 
-type CategoryKey =
-  | 'Foundations'
-  | 'Corporate & Individual'
-  | 'Government'
-  | 'Community & In‑Kind';
+// Default hardcoded data for fallback
+const DEFAULT_PARTNERS: PartnerItem[] = [
+  { id: '1', name: 'Helen V. Brach Foundation', dotColor: COLORS.gogo_blue },
+  { id: '2', name: 'The Barry & Mimi Sternlicht Foundation', dotColor: COLORS.gogo_purple },
+  { id: '3', name: 'Lovett‑Woodsum Foundation', dotColor: COLORS.gogo_teal },
+  { id: '4', name: 'Margaret & Daniel Loeb Family Foundation', dotColor: COLORS.gogo_yellow },
+  { id: '5', name: 'Cox‑Vadakan Foundation', dotColor: COLORS.gogo_green },
+  { id: '6', name: 'The Howard & Paula Trienens Fund', dotColor: COLORS.gogo_pink },
+  { id: '7', name: 'Shippy Foundation', dotColor: '#60a5fa' },
+  { id: '8', name: 'Daniel Lewis & Valerie Dillon', dotColor: COLORS.gogo_purple },
+  { id: '9', name: 'Savage Content', dotColor: COLORS.gogo_yellow },
+  { id: '10', name: 'Moss Foundation', dotColor: COLORS.gogo_green },
+  { id: '11', name: 'MJ & Fred Wright', dotColor: COLORS.gogo_teal },
+  { id: '12', name: 'Turner Investment Management', dotColor: '#f59e0b' },
+  { id: '13', name: 'Office of Senator Elgie R. Sims, Jr.', descriptor: "Illinois' 17th District", dotColor: '#86efac' },
+  { id: '14', name: 'Office of Senator Mattie Hunter', descriptor: "Illinois' 3rd District", dotColor: '#93c5fd' },
+  { id: '15', name: 'Office of Senator Robert Peters', descriptor: "Illinois' 13th District", dotColor: '#fda4af' },
+  { id: '16', name: 'McDermott Will & Emery', dotColor: '#c4b5fd' },
+];
 
-interface SupporterItem {
-  name: string;
-  descriptor?: string;
-  url?: string;
-  color: string;
+interface PartnersSectionProps {
+  previewMode?: boolean;
+  partnersOverride?: PartnersContent | null;
 }
 
-type SupporterDirectory = Record<CategoryKey, SupporterItem[]>;
-
-function PartnersSection(): JSX.Element {
+function PartnersSection({ previewMode = false, partnersOverride }: PartnersSectionProps): JSX.Element {
   const [inView, setInView] = useState(false);
+  const [fetchedData, setFetchedData] = useState<PartnersContent | null>(null);
+
+  // Use override in preview mode, otherwise use fetched data
+  const data = previewMode && partnersOverride ? partnersOverride : fetchedData;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -298,111 +405,83 @@ function PartnersSection(): JSX.Element {
     };
   }, []);
 
-  const data: SupporterDirectory = useMemo(
-    () => ({
-      Foundations: [
-        { name: 'Helen V. Brach Foundation', color: COLORS.gogo_blue },
-        {
-          name: 'The Barry & Mimi Sternlicht Foundation',
-          color: COLORS.gogo_purple,
-        },
-        { name: 'Lovett‑Woodsum Foundation', color: COLORS.gogo_teal },
-        {
-          name: 'Margaret & Daniel Loeb Family Foundation',
-          color: COLORS.gogo_yellow,
-        },
-        { name: 'Cox‑Vadakan Foundation', color: COLORS.gogo_green },
-        { name: 'The Howard & Paula Trienens Fund', color: COLORS.gogo_pink },
-        { name: 'Shippy Foundation', color: '#60a5fa' },
-      ],
-      'Corporate & Individual': [
-        { name: 'Daniel Lewis & Valerie Dillon', color: COLORS.gogo_purple },
-        { name: 'Savage Content', color: COLORS.gogo_yellow },
-        { name: 'Moss Foundation', color: COLORS.gogo_green },
-        { name: 'MJ & Fred Wright', color: COLORS.gogo_teal },
-        { name: 'Turner Investment Management', color: '#f59e0b' },
-      ],
-      Government: [
-        {
-          name: 'Office of Senator Elgie R. Sims, Jr.',
-          descriptor: "Illinois' 17th District",
-          color: '#86efac',
-        },
-        {
-          name: 'Office of Senator Mattie Hunter',
-          descriptor: "Illinois' 3rd District",
-          color: '#93c5fd',
-        },
-        {
-          name: 'Office of Senator Robert Peters',
-          descriptor: "Illinois' 13th District",
-          color: '#fda4af',
-        },
-      ],
-      'Community & In‑Kind': [
-        { name: 'McDermott Will & Emery', color: '#c4b5fd' },
-      ],
-    }),
-    [],
-  );
+  useEffect(() => {
+    if (!previewMode) {
+      fetchPartnersContent().then(setFetchedData);
+    }
+  }, [previewMode]);
 
-  // Partition donors into major vs other donors by category
-  const majorCounts: Record<CategoryKey, number> = useMemo(
-    () => ({
-      Foundations: 7,
-      'Corporate & Individual': 5,
-      Government: 3,
-      'Community & In‑Kind': 3,
-    }),
-    [],
-  );
+  // Use data from API or fall back to defaults
+  const partners = data?.partners ?? DEFAULT_PARTNERS;
+  const fallbackLink = data?.fallbackLink ?? { enabled: true, url: 'https://guitarsoverguns.org/supporters/' };
+  const carousel = data?.carousel ?? { enabled: true, showCustomItems: false, customItems: [], speed: 60 };
+  const cta = data?.cta ?? {
+    viewAllText: 'View all our supporters ↗',
+    viewAllUrl: 'https://guitarsoverguns.org/supporters/',
+    donateText: 'Donate',
+    donateUrl: 'https://www.classy.org/give/352794/#!/donation/checkout',
+  };
 
-  const majorDonors: SupporterItem[] = useMemo(() => {
-    return (Object.keys(data) as CategoryKey[]).flatMap((k) =>
-      data[k].slice(0, majorCounts[k] || 0),
-    );
-  }, [data, majorCounts]);
+  // All partners go in the grid
+  const majorPartners: PartnerItem[] = partners;
 
-  const otherDonorNames: string[] = useMemo(() => {
-    const names = (Object.keys(data) as CategoryKey[]).flatMap((k) =>
-      data[k].slice(majorCounts[k] || 0).map((i) => i.name),
-    );
+  // Carousel items - either custom items or partner names
+  const carouselNames: string[] = useMemo(() => {
+    if (carousel.showCustomItems && carousel.customItems.length > 0) {
+      let items = [...carousel.customItems];
+      // Repeat until we have enough items for smooth animation
+      const minItems = 40;
+      while (items.length < minItems && items.length > 0) {
+        items = [...items, ...items];
+      }
+      return items;
+    }
     
-    // If not enough other donors exist, just repeat existing major donors for the ticker effect
-    // to ensure we have enough items for the animation to look good.
+    // Use partner names
+    let names = partners.map((p) => p.name);
+    // Repeat until we have enough items for smooth animation
     const minItems = 40;
-    let result = [...names];
-    
-    if (result.length === 0) {
-       // Fallback to major donors if no "other" donors
-       result = majorDonors.map(d => d.name);
+    while (names.length < minItems && names.length > 0) {
+      names = [...names, ...names];
     }
-
-    // Repeat until we have enough items
-    while (result.length < minItems && result.length > 0) {
-        result = [...result, ...result];
-    }
-    
-    return result;
-  }, [data, majorCounts, majorDonors]);
+    return names;
+  }, [partners, carousel.showCustomItems, carousel.customItems]);
 
   const tickerNames = useMemo(() => {
-    // Create a seamless loop by duplicating the list multiple times
-    // Using 4 copies ensures that on very wide screens, we don't see the end
-    // before the beginning loops back around.
-    return [...otherDonorNames, ...otherDonorNames, ...otherDonorNames, ...otherDonorNames];
-  }, [otherDonorNames]);
+    // Create a seamless loop by duplicating the array
+    return [...carouselNames, ...carouselNames, ...carouselNames, ...carouselNames];
+  }, [carouselNames]);
 
-  const renderBadges = (items: SupporterItem[], delayBase = 0) =>
+  // Normalize URL to ensure it has a protocol
+  const normalizeUrl = (url: string): string => {
+    if (!url) return '#';
+    const trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    // Add https:// if no protocol
+    return `https://${trimmed}`;
+  };
+
+  const getPartnerUrl = (partner: PartnerItem): string => {
+    if (partner.url) return normalizeUrl(partner.url);
+    if (fallbackLink.enabled) return normalizeUrl(fallbackLink.url);
+    return '#';
+  };
+
+  const renderBadges = (items: PartnerItem[], delayBase = 0) =>
     items.map((item, idx) => (
       <Badge
-        key={item.name}
-        href={item.url || 'https://guitarsoverguns.org/supporters/'}
+        key={item.id}
+        href={getPartnerUrl(item)}
         target="_blank"
         rel="noreferrer noopener"
-        aria-label={`${item.name}${
-          item.descriptor ? `, ${item.descriptor}` : ''
-        }`}
+        aria-label={`${item.name}${item.descriptor ? `, ${item.descriptor}` : ''}`}
+        $badgeBgColor={data?.badgeBgColor}
+        $badgeHoverBgColor={data?.badgeHoverBgColor}
+        $badgeBorderColor={data?.badgeBorderColor}
+        $badgeHoverBorderColor={data?.badgeHoverBorderColor}
+        $badgeBorderRadius={data?.badgeBorderRadius}
         style={{
           opacity: inView ? 1 : 0,
           transform: inView ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
@@ -411,62 +490,91 @@ function PartnersSection(): JSX.Element {
           }s, transform .6s cubic-bezier(0.2, 0.8, 0.2, 1) ${delayBase + idx * 0.05}s`,
         }}
       >
-        <Dot $color={item.color} />
+        <Dot $color={item.dotColor} />
         <BadgeText>
-          <BadgeTitle>{item.name}</BadgeTitle>
-          {item.descriptor && <BadgeSub>{item.descriptor}</BadgeSub>}
+          <BadgeTitle $badgeTitleColor={data?.badgeTitleColor}>{item.name}</BadgeTitle>
+          {item.descriptor && <BadgeSub $badgeDescriptorColor={data?.badgeDescriptorColor}>{item.descriptor}</BadgeSub>}
         </BadgeText>
       </Badge>
     ));
 
+  if (data?.visible === false) return <></>;
+
   return (
-    <PartnersSectionWrapper className="partners-section">
+    <PartnersSectionWrapper 
+      className="partners-section"
+      $sectionBgGradient={data?.sectionBgGradient}
+      $glowColor1={data?.glowColor1}
+      $glowColor2={data?.glowColor2}
+      $glowColor3={data?.glowColor3}
+      $titleGradient={data?.titleGradient}
+    >
+      <Glow3 $glowColor3={data?.glowColor3} />
       <SectionContainer>
         <Heading>
-          <Title>Our Supporters</Title>
-          <SubTitle>
-            Thank you to every donor and partner—your generosity makes Guitars
-            Over Guns possible.
+          <Title $titleGradient={data?.titleGradient}>
+            {data?.title ?? 'Our Supporters'}
+          </Title>
+          <SubTitle $subtitleColor={data?.subtitleColor}>
+            {data?.subtitle ?? 'Thank you to every donor and partner—your generosity makes Guitars Over Guns possible.'}
           </SubTitle>
         </Heading>
 
-        <GridLabel>Major Supporters ($25,000+)</GridLabel>
-        <Grid aria-live="polite">{renderBadges(majorDonors)}</Grid>
+        <GridLabel $gridLabelColor={data?.gridLabelColor}>
+          {data?.gridLabel ?? 'Major Supporters ($25,000+)'}
+        </GridLabel>
+        <Grid aria-live="polite">{renderBadges(majorPartners)}</Grid>
 
-        <TickerRow>
-            <BetweenNote>
-            The supporters below represent additional donors who make our work
-            possible. Our $25,000+ list highlights a featured selection; please
-            see the full roll at the link below.
+        {carousel.enabled && (
+          <TickerRow>
+            <BetweenNote $betweenNoteColor={data?.betweenNoteColor}>
+              {data?.betweenNoteText ?? 'The supporters below represent additional donors who make our work possible. Our $25,000+ list highlights a featured selection; please see the full roll at the link below.'}
             </BetweenNote>
 
-          <TickerWrapper aria-hidden>
-            <TickerTrack>
-              {tickerNames.map((label, index) => (
-                <TickerItem key={`other-${index}-${label}`}>{label}</TickerItem>
-              ))}
-            </TickerTrack>
-          </TickerWrapper>
-          
-          <ButtonsRow>
-            <ViewAllLink
-              href="https://guitarsoverguns.org/supporters/"
-              target="_blank"
-              rel="noreferrer noopener"
-              aria-label="View all supporters on guitars over guns website"
-            >
-              View all our supporters ↗
-            </ViewAllLink>
-            <DonateButton
-              href="https://www.classy.org/give/352794/#!/donation/checkout"
-              target="_blank"
-              rel="noreferrer noopener"
-              aria-label="Donate to Guitars Over Guns"
-            >
-              Donate
-            </DonateButton>
-          </ButtonsRow>
-        </TickerRow>
+            <TickerWrapper aria-hidden>
+              <TickerTrack $speed={carousel.speed}>
+                {tickerNames.map((label, index) => (
+                  <TickerItem 
+                    key={`other-${index}-${label}`}
+                    $itemBgColor={carousel.itemBgColor}
+                    $itemTextColor={carousel.itemTextColor}
+                    $itemBorderColor={carousel.itemBorderColor}
+                    $itemHoverBgColor={carousel.itemHoverBgColor}
+                    $itemHoverTextColor={carousel.itemHoverTextColor}
+                  >
+                    {label}
+                  </TickerItem>
+                ))}
+              </TickerTrack>
+            </TickerWrapper>
+            
+            <ButtonsRow>
+              <ViewAllLink
+                href={normalizeUrl(cta.viewAllUrl)}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="View all supporters on guitars over guns website"
+                $viewAllBgColor={cta.viewAllBgColor}
+                $viewAllTextColor={cta.viewAllTextColor}
+                $viewAllBorderColor={cta.viewAllBorderColor}
+                $viewAllHoverBgColor={cta.viewAllHoverBgColor}
+              >
+                {cta.viewAllText}
+              </ViewAllLink>
+              <DonateButton
+                href={normalizeUrl(cta.donateUrl)}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="Donate to Guitars Over Guns"
+                $donateBgGradient={cta.donateBgGradient}
+                $donateTextColor={cta.donateTextColor}
+                $donateHoverBgGradient={cta.donateHoverBgGradient}
+              >
+                {cta.donateText}
+              </DonateButton>
+            </ButtonsRow>
+          </TickerRow>
+        )}
       </SectionContainer>
     </PartnersSectionWrapper>
   );

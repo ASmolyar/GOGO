@@ -236,7 +236,7 @@ export interface TestimonialSectionForm {
 }
 
 // Re-export content types from impact.api for convenience
-export type { PopulationContent, FinancialContent, MethodContent, CurriculumContent, ImpactSectionContent, FlexAContent, FlexBContent, FlexCContent, ImpactLevelsContent } from '../services/impact.api';
+export type { PopulationContent, FinancialContent, MethodContent, CurriculumContent, ImpactSectionContent, FlexAContent, FlexBContent, FlexCContent, ImpactLevelsContent, PartnersContent } from '../services/impact.api';
 
 export interface ImpactReportForm {
   hero: HeroSectionForm | null;
@@ -253,6 +253,7 @@ export interface ImpactReportForm {
   flexB: import('../services/impact.api').FlexBContent | null;
   flexC: import('../services/impact.api').FlexCContent | null;
   impactLevels: import('../services/impact.api').ImpactLevelsContent | null;
+  partners: import('../services/impact.api').PartnersContent | null;
   impact: ImpactSectionForm | null;
   programs: ProgramsSectionForm | null;
   locations: LocationsSectionForm | null;
@@ -275,6 +276,7 @@ export const ADMIN_TABS = [
   { label: 'Flex B', value: 12, routeKey: 'flexB' as const },
   { label: 'Flex C', value: 13, routeKey: 'flexC' as const },
   { label: 'Impact Levels', value: 14, routeKey: 'impactLevels' as const },
+  { label: 'Partners', value: 15, routeKey: 'partners' as const },
 ] as const;
 
 export type AdminTabRouteKey = (typeof ADMIN_TABS)[number]['routeKey'];

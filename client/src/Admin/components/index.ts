@@ -14,6 +14,7 @@ export { FlexATabEditor } from './FlexATabEditor';
 export { FlexBTabEditor } from './FlexBTabEditor';
 export { FlexCTabEditor } from './FlexCTabEditor';
 export { ImpactLevelsTabEditor } from './ImpactLevelsTabEditor';
+export { PartnersTabEditor } from './PartnersTabEditor';
 export { PlaceAutocomplete } from './PlaceAutocomplete';
 export type { PlaceSuggestion, PlaceAutocompleteProps } from './PlaceAutocomplete';
 export { 

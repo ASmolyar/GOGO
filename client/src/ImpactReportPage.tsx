@@ -62,7 +62,7 @@ let hasShownIntroInThisTab = false;
 // Styled components for Spotify-like footer
 const SpotifyFooter = styled.footer`
   background: #121212;
-  padding: 0;
+  padding: 4rem 0 2rem;
   position: relative;
   overflow: hidden;
 `;
@@ -175,7 +175,7 @@ const SocialIcon = styled.a`
 const FooterBottom = styled.div`
   max-width: 1400px;
   margin: 4rem auto 0;
-  padding: 2rem 2rem 0;
+  padding: 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;

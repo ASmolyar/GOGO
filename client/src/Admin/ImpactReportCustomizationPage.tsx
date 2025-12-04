@@ -47,6 +47,8 @@ import {
   saveFlexCContent,
   fetchImpactLevelsContent,
   saveImpactLevelsContent,
+  fetchPartnersContent,
+  savePartnersContent,
   fetchDefaults,
   saveDefaults,
   PopulationContent,
@@ -61,6 +63,7 @@ import {
   FlexBContent,
   FlexCContent,
   ImpactLevelsContent,
+  PartnersContent,
 } from '../services/impact.api';
 import '../../assets/fonts/fonts.css';
 import { useSnackbar } from 'notistack';
@@ -104,6 +107,7 @@ import {
   FlexBTabEditor,
   FlexCTabEditor,
   ImpactLevelsTabEditor,
+  PartnersTabEditor,
   validateFinancialPieCharts,
 } from './components';
 
@@ -118,6 +122,7 @@ import FlexA from '../components/FlexA';
 import FlexB from '../components/FlexB';
 import FlexC from '../components/FlexC';
 import ImpactLevelsSection from '../components/ImpactLevelsSection';
+import PartnersSection from '../components/PartnersSection';
 
 const MemoHeroSection = React.memo(HeroSection);
 const MemoMissionSection = React.memo(MissionSection);
@@ -133,6 +138,7 @@ const MemoFlexA = React.memo(FlexA);
 const MemoFlexB = React.memo(FlexB);
 const MemoFlexC = React.memo(FlexC);
 const MemoImpactLevelsSection = React.memo(ImpactLevelsSection);
+const MemoPartnersSection = React.memo(PartnersSection);
 
 // Reusable component for showing section load error state
 function SectionLoadError({ sectionName }: { sectionName: string }) {
@@ -935,6 +941,30 @@ function ImpactReportCustomizationPage() {
           break;
         }
 
+        case "partners": {
+          const partners = await fetchPartnersContent();
+          if (!partners) {
+            setSectionLoadError("partners");
+            enqueueSnackbar("Failed to load Partners data.", {
+              variant: "error",
+            });
+            break;
+          }
+          setImpactReportForm((prev) => {
+            const next = {
+              ...prev,
+              partners: { ...prev.partners, ...partners },
+            };
+            setSavedSnapshot((prevSnapshot) =>
+              prevSnapshot
+                ? { ...prevSnapshot, partners: next.partners }
+                : next,
+            );
+            return next;
+          });
+          break;
+        }
+
         case "defaults":
           // Defaults are loaded globally on mount
           break;
@@ -1415,6 +1445,19 @@ function ImpactReportCustomizationPage() {
             throw new Error("Failed to save Impact Levels section.");
           break;
         }
+
+        case "partners": {
+          console.log(
+            "[admin][partners] save payload",
+            impactReportForm.partners,
+          );
+          const result = await savePartnersContent({
+            ...impactReportForm.partners,
+          });
+          if (!result)
+            throw new Error("Failed to save Partners section.");
+          break;
+        }
       }
 
       const sectionLabel = currentTabConfig?.label ?? "Section";
@@ -1770,6 +1813,15 @@ function ImpactReportCustomizationPage() {
     300,
   );
 
+  const livePartnersOverride = useMemo(
+    () => impactReportForm.partners,
+    [impactReportForm.partners],
+  );
+  const debouncedPartnersOverride = useDebouncedValue(
+    livePartnersOverride,
+    300,
+  );
+
   // Viewport simulator
   const [viewportIdx, setViewportIdx] = useState<number>(0);
   const artboardRef = useRef<HTMLDivElement | null>(null);
@@ -1970,6 +2022,17 @@ function ImpactReportCustomizationPage() {
           <MemoImpactLevelsSection
             previewMode
             impactLevelsOverride={debouncedImpactLevelsOverride}
+          />
+        );
+      case 15:
+        // Only show error if section finished loading but has error or no data
+        if (loadedSections.has("partners") && (sectionLoadErrors.has("partners") || !impactReportForm.partners)) {
+          return <PreviewError sectionName="Partners" />;
+        }
+        return (
+          <MemoPartnersSection
+            previewMode
+            partnersOverride={debouncedPartnersOverride}
           />
         );
       default:
@@ -2227,6 +2290,22 @@ function ImpactReportCustomizationPage() {
             defaultSwatch={defaultSwatch}
             onImpactLevelsChange={(field, value) =>
               handleSectionChange("impactLevels", field, value)
+            }
+          />
+        );
+      case 15:
+        if (sectionLoading === "partners") {
+          return <LoadingEditor />;
+        }
+        if (sectionLoadErrors.has("partners") || !impactReportForm.partners) {
+          return <SectionLoadError sectionName="Partners" />;
+        }
+        return (
+          <PartnersTabEditor
+            partners={impactReportForm.partners}
+            defaultSwatch={defaultSwatch}
+            onPartnersChange={(field, value) =>
+              handleSectionChange("partners", field, value)
             }
           />
         );

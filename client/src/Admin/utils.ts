@@ -198,6 +198,34 @@ export function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
+/**
+ * Normalize a URL to ensure it has a protocol.
+ * Handles cases like "youtube.com" -> "https://youtube.com"
+ */
+export function normalizeUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  
+  // Already has a protocol
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  
+  // Handle mailto, tel, and other special protocols
+  if (/^(mailto:|tel:|javascript:|data:)/i.test(trimmed)) {
+    return trimmed;
+  }
+  
+  // Handle anchor links
+  if (trimmed.startsWith('#')) {
+    return trimmed;
+  }
+  
+  // Add https:// if no protocol
+  return `https://${trimmed}`;
+}
+
 
 
 

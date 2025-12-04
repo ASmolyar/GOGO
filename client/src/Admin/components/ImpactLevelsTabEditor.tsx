@@ -513,7 +513,8 @@ export function ImpactLevelsTabEditor({
         onClose={handleCropperClose}
         onCropComplete={handleCroppedImageUpload}
         aspectRatio={1}
-        freeformCrop={false}
+        outputWidth={500}
+        outputHeight={500}
       />
 
       {levels.map((level, idx) => {

@@ -629,30 +629,100 @@ export interface TestimonialsContent {
 // =========================
 // Partners content interfaces
 // =========================
-export interface PartnersSupporter {
+
+// Individual partner item
+export interface PartnerItem {
   id: string;
   name: string;
-  descriptor?: string | null;
-  url?: string | null;
-  color: string;
-  category: 'Foundations' | 'Corporate & Individual' | 'Government' | 'Community & In‑Kind';
+  descriptor?: string | null;  // Optional description
+  url?: string | null;  // Optional individual link
+  dotColor: string;
+}
+
+// Carousel settings
+export interface PartnersCarousel {
+  enabled: boolean;
+  showCustomItems: boolean;  // If false, just show names from overflow partners
+  customItems: string[];  // Custom names/items for carousel if showCustomItems is true
+  speed: number;  // Animation duration in seconds
+  itemBgColor?: string | null;
+  itemTextColor?: string | null;
+  itemBorderColor?: string | null;
+  itemHoverBgColor?: string | null;
+  itemHoverTextColor?: string | null;
+}
+
+// CTA buttons configuration
+export interface PartnersCTA {
+  viewAllText: string;
+  viewAllUrl: string;
+  viewAllBgColor?: string | null;
+  viewAllTextColor?: string | null;
+  viewAllBorderColor?: string | null;
+  viewAllHoverBgColor?: string | null;
+  donateText: string;
+  donateUrl: string;
+  donateBgGradient?: string | null;
+  donateTextColor?: string | null;
+  donateHoverBgGradient?: string | null;
+}
+
+// Fallback link settings
+export interface PartnersFallbackLink {
+  enabled: boolean;
+  url: string;  // Default: https://guitarsoverguns.org/supporters/
 }
 
 export interface PartnersContent {
-  enabled?: boolean | null;
+  // Section visibility
+  visible?: boolean | null;
+  animationsEnabled?: boolean | null;
+
+  // Section background
+  sectionBgGradient?: string | null;
+
+  // Ambient glow/blob colors
+  glowColor1?: string | null;
+  glowColor2?: string | null;
+  glowColor3?: string | null;
+
+  // Header styling
   title?: string | null;
+  titleGradient?: string | null;
   subtitle?: string | null;
+  subtitleColor?: string | null;
+
+  // Grid label styling
   gridLabel?: string | null;
-  betweenNote?: string | null;
-  viewAllLink?: string | null;
-  donateLink?: string | null;
-  majorCounts?: {
-    Foundations?: number;
-    'Corporate & Individual'?: number;
-    Government?: number;
-    'Community & In‑Kind'?: number;
-  } | null;
-  supporters?: PartnersSupporter[] | null;
+  gridLabelColor?: string | null;
+
+  // Badge/card styling
+  badgeBgColor?: string | null;
+  badgeHoverBgColor?: string | null;
+  badgeBorderColor?: string | null;
+  badgeHoverBorderColor?: string | null;
+  badgeTitleColor?: string | null;
+  badgeDescriptorColor?: string | null;
+  badgeBorderRadius?: number | null;
+
+  // Partners list
+  partners?: PartnerItem[] | null;
+
+  // Fallback link for partners without individual URLs
+  fallbackLink?: PartnersFallbackLink | null;
+
+  // Between note (text between grid and carousel)
+  betweenNoteText?: string | null;
+  betweenNoteColor?: string | null;
+
+  // Carousel settings
+  carousel?: PartnersCarousel | null;
+
+  // CTA buttons
+  cta?: PartnersCTA | null;
+
+  // Accessibility
+  ariaLabel?: string | null;
 }
 
 // Media upload flow:
@@ -1966,6 +2036,62 @@ export async function saveImpactLevelsContent(
     return payload?.data ?? null;
   } catch (error) {
     console.error('[ImpactReport] Failed to save impact-levels content', error);
+    return null;
+  }
+}
+
+// =========================
+// Partners content API
+// =========================
+export async function fetchPartnersContent(): Promise<PartnersContent | null> {
+  try {
+    const url = `${API_BASE_URL}/api/impact/partners`;
+    console.log('[client][partners] GET', { url });
+    const response = await fetch(url, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log('[client][partners] GET not found (404) - data not yet created');
+        return null;
+      }
+      console.warn('[client][partners] GET failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<PartnersContent>;
+    console.log('[client][partners] GET success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to fetch partners content', error);
+    return null;
+  }
+}
+
+export async function savePartnersContent(
+  data: Record<string, unknown>,
+  options?: { slug?: string },
+): Promise<PartnersContent | null> {
+  try {
+    const url = new URL(`${API_BASE_URL}/api/impact/partners`);
+    if (options?.slug) url.searchParams.set('slug', options.slug);
+    console.log('[client][partners] PUT', { url: url.toString(), keys: Object.keys(data || {}) });
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('[client][partners] PUT failed', { status: response.status });
+      return null;
+    }
+    const payload = (await response.json()) as HeroApiResponse<PartnersContent>;
+    console.log('[client][partners] PUT success', { fields: Object.keys(payload?.data || {}) });
+    return payload?.data ?? null;
+  } catch (error) {
+    console.error('[ImpactReport] Failed to save partners content', error);
     return null;
   }
 }
