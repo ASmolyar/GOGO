@@ -231,7 +231,7 @@ function ImpactReportCustomizationPage() {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-    } catch {}
+    } catch { }
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;
     document.documentElement.style.overflow = "hidden";
@@ -259,7 +259,7 @@ function ImpactReportCustomizationPage() {
         if (storedKey) {
           fromStorage = orderedTabs.find((t) => t.routeKey === storedKey);
         }
-      } catch {}
+      } catch { }
     }
 
     const fallback = fromUrl ?? fromStorage ?? orderedTabs[0];
@@ -273,7 +273,7 @@ function ImpactReportCustomizationPage() {
         LAST_ADMIN_TAB_STORAGE_KEY,
         fallback.routeKey,
       );
-    } catch {}
+    } catch { }
 
     if (tab !== fallback.routeKey) {
       navigate(`/admin/${fallback.routeKey}`, { replace: true });
@@ -287,12 +287,12 @@ function ImpactReportCustomizationPage() {
   // Error states
   const [errors, setErrors] = useState<{ general: string }>({ general: "" });
   const [sectionLoadErrors, setSectionLoadErrors] = useState<Set<AdminTabRouteKey>>(new Set());
-  
+
   // Helper to mark a section as having a load error
   const setSectionLoadError = (section: AdminTabRouteKey) => {
     setSectionLoadErrors(prev => new Set([...prev, section]));
   };
-  
+
   // Legacy alias for backward compatibility
   const missionLoadError = sectionLoadErrors.has("mission");
 
@@ -317,14 +317,14 @@ function ImpactReportCustomizationPage() {
   const orderedTabs = useMemo(() => {
     // Defaults tab is always first and not reorderable
     const defaultsTab = { label: 'Defaults', value: 0, routeKey: 'defaults' as const };
-    
+
     // Map section order to tab configs
     const sectionTabs = sectionOrder.map((sectionKey, index) => ({
       label: SECTION_DISPLAY_NAMES[sectionKey],
       value: index + 1, // +1 because defaults is at 0
       routeKey: sectionKey,
     }));
-    
+
     return [defaultsTab, ...sectionTabs];
   }, [sectionOrder]);
 
@@ -440,7 +440,7 @@ function ImpactReportCustomizationPage() {
               ? hero.textAlign
               : "center") as "left" | "center" | "right",
             layoutVariant: (hero.layoutVariant === "ticket" ||
-            hero.layoutVariant === "default"
+              hero.layoutVariant === "default"
               ? hero.layoutVariant
               : "default") as "ticket" | "default",
             titleColor: (hero as any)?.titleColor ?? null,
@@ -542,42 +542,42 @@ function ImpactReportCustomizationPage() {
               .filter((it: any) => it.name) ?? [];
           const sanitizedStats = Array.isArray((mission as any)?.stats)
             ? (mission as any).stats.map((s: any, idx: number) => {
-                const rawAction = s?.action || "none";
-                let action = "none";
-                if (
-                  [
-                    "openDisciplinesModal",
-                    "openStudentMusicModal",
-                    "openMentorMusicModal",
-                    "scrollToMap",
-                    "openMapModal",
-                  ].includes(rawAction)
-                ) {
-                  action = rawAction;
-                } else if (rawAction === "openModal") {
-                  action =
-                    s?.modalId === "disciplines"
-                      ? "openDisciplinesModal"
-                      : "none";
-                }
-                return {
-                  id: String(s?.id ?? idx),
-                  number: s?.number ?? "",
-                  label: s?.label ?? "",
-                  color: s?.color ?? "#ffffff",
-                  action,
-                  modalId: s?.modalId ?? null,
-                  iconKey:
-                    typeof s?.iconKey === "string" && s.iconKey.length > 0
-                      ? s.iconKey
-                      : null,
-                  numberSource:
-                    s?.numberSource === "modalItemsLength"
-                      ? "modalItemsLength"
-                      : "explicit",
-                  visible: s?.visible !== false,
-                };
-              })
+              const rawAction = s?.action || "none";
+              let action = "none";
+              if (
+                [
+                  "openDisciplinesModal",
+                  "openStudentMusicModal",
+                  "openMentorMusicModal",
+                  "scrollToMap",
+                  "openMapModal",
+                ].includes(rawAction)
+              ) {
+                action = rawAction;
+              } else if (rawAction === "openModal") {
+                action =
+                  s?.modalId === "disciplines"
+                    ? "openDisciplinesModal"
+                    : "none";
+              }
+              return {
+                id: String(s?.id ?? idx),
+                number: s?.number ?? "",
+                label: s?.label ?? "",
+                color: s?.color ?? "#ffffff",
+                action,
+                modalId: s?.modalId ?? null,
+                iconKey:
+                  typeof s?.iconKey === "string" && s.iconKey.length > 0
+                    ? s.iconKey
+                    : null,
+                numberSource:
+                  s?.numberSource === "modalItemsLength"
+                    ? "modalItemsLength"
+                    : "explicit",
+                visible: s?.visible !== false,
+              };
+            })
             : [];
           const eq = (mission as any)?.statsEqualizer ?? {};
           const eqBarCount = Number(eq?.barCount);
@@ -1063,15 +1063,15 @@ function ImpactReportCustomizationPage() {
       ];
       const incoming =
         defs?.colorSwatch &&
-        Array.isArray(defs.colorSwatch) &&
-        defs.colorSwatch.length > 0
+          Array.isArray(defs.colorSwatch) &&
+          defs.colorSwatch.length > 0
           ? defs.colorSwatch
           : brand;
       const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
         (_, i) => incoming[i] ?? brand[i % brand.length],
       );
       setDefaultSwatch(normalized);
-      
+
       // Load section order
       if (defs?.sectionOrder && Array.isArray(defs.sectionOrder) && defs.sectionOrder.length > 0) {
         // Ensure all sections are present (add any missing ones at the end)
@@ -1079,13 +1079,22 @@ function ImpactReportCustomizationPage() {
         const missingSections = DEFAULT_SECTION_ORDER.filter(s => !loadedOrder.includes(s));
         setSectionOrder([...loadedOrder, ...missingSections]);
       }
-      
+
       // Load disabled sections
       if (defs?.disabledSections && Array.isArray(defs.disabledSections)) {
         setDisabledSections(defs.disabledSections as ReorderableSectionKey[]);
       }
     })();
   }, []);
+
+  // Handle PDF download via Sejda's free web tool
+  // Opens Sejda with the print-ready page URL (includes cover slide + full webapp)
+  const handleDownloadPDF = () => {
+    // Use the print-ready page which includes the cover slide
+    const printUrl = encodeURIComponent('https://gogo-vercel.vercel.app/print');
+    const opts = ['save-link=' + printUrl, 'pageOrientation=auto'];
+    window.open('https://www.sejda.com/html-to-pdf?' + opts.join('&'));
+  };
 
   // Handle form submission - only saves the current section + defaults
   const handleSave = async () => {
@@ -1169,7 +1178,7 @@ function ImpactReportCustomizationPage() {
                 bytes: file.size,
                 tag: "hero-background",
               });
-            } catch {}
+            } catch { }
             backgroundImagePayload = signed.publicUrl;
             setImpactReportForm((prev) => ({
               ...prev,
@@ -1601,15 +1610,15 @@ function ImpactReportCustomizationPage() {
       ];
       const incoming =
         defs?.colorSwatch &&
-        Array.isArray(defs.colorSwatch) &&
-        defs.colorSwatch.length > 0
+          Array.isArray(defs.colorSwatch) &&
+          defs.colorSwatch.length > 0
           ? defs.colorSwatch
           : brand;
       const normalized = Array.from({ length: DEFAULT_SWATCH_SIZE }).map(
         (_, i) => incoming[i] ?? brand[i % brand.length],
       );
       setDefaultSwatch(normalized);
-      
+
       // Restore section order
       if (defs?.sectionOrder && Array.isArray(defs.sectionOrder) && defs.sectionOrder.length > 0) {
         const loadedOrder = defs.sectionOrder as ReorderableSectionKey[];
@@ -1618,14 +1627,14 @@ function ImpactReportCustomizationPage() {
       } else {
         setSectionOrder([...DEFAULT_SECTION_ORDER]);
       }
-      
+
       // Restore disabled sections
       if (defs?.disabledSections && Array.isArray(defs.disabledSections)) {
         setDisabledSections(defs.disabledSections as ReorderableSectionKey[]);
       } else {
         setDisabledSections([]);
       }
-    } catch {}
+    } catch { }
 
     // Refetch the current section (force reload since we just removed it from loadedSections)
     await loadSection(sectionKey, true);
@@ -1995,7 +2004,7 @@ function ImpactReportCustomizationPage() {
     // Use routeKey to determine which preview to show (supports dynamic tab ordering)
     const currentTabConfig = orderedTabs.find((t) => t.value === currentTab);
     const routeKey = currentTabConfig?.routeKey;
-    
+
     switch (routeKey) {
       case "defaults":
         return <DefaultsPreview defaultSwatch={defaultSwatch} />;
@@ -2196,7 +2205,7 @@ function ImpactReportCustomizationPage() {
 
     // Use routeKey to determine which editor to show (supports dynamic tab ordering)
     const routeKey = currentTabConfig?.routeKey;
-    
+
     switch (routeKey) {
       case "defaults":
         return (
@@ -2663,8 +2672,8 @@ function ImpactReportCustomizationPage() {
                         heroUploadPct !== null
                           ? "Please wait for the upload to finish"
                           : !validateFinancialPieCharts(
-                                impactReportForm.financial,
-                              )
+                            impactReportForm.financial,
+                          )
                             ? "Financial pie charts must add up to 100%"
                             : ""
                       }
@@ -2705,10 +2714,7 @@ function ImpactReportCustomizationPage() {
                     <Button
                       variant="contained"
                       startIcon={<PictureAsPdfIcon />}
-                      onClick={() => {
-                        // Open PDF preview in new window
-                        window.open('/admin/impact-report-pdf-preview', '_blank');
-                      }}
+                      onClick={handleDownloadPDF}
                       sx={{
                         bgcolor: COLORS.gogo_purple,
                         "&:hover": { bgcolor: "#513ea1" },
@@ -2741,7 +2747,7 @@ function ImpactReportCustomizationPage() {
                         LAST_ADMIN_TAB_STORAGE_KEY,
                         nextTab.routeKey,
                       );
-                    } catch {}
+                    } catch { }
 
                     navigate(`/admin/${nextTab.routeKey}`);
                   }}
