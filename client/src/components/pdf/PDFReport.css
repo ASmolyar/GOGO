@@ -1,0 +1,91 @@
+/* =========================================
+   PDF REPORT STYLES
+   ========================================= */
+
+/* Import GOGO fonts */
+@import url('../../../assets/fonts/fonts.css');
+
+.pdf-report-container {
+  font-family: 'Century Gothic', Arial, sans-serif;
+  background: white;
+  color: #333;
+}
+
+/* Base PDF Page Styles */
+.pdf-page {
+  width: 8.5in;
+  height: 11in;
+  background: white;
+  page-break-after: always;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  /* Ensure colors print */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  color-adjust: exact;
+}
+
+/* Hero Page - Full bleed */
+.pdf-hero-page {
+  padding: 0 !important;
+}
+
+/* Print Media Query */
+@media print {
+  .pdf-report-container {
+    width: 100%;
+  }
+
+  .pdf-page {
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure last page doesn't have extra break */
+  .pdf-page:last-child {
+    page-break-after: auto;
+  }
+
+  /* Force colors to print */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  /* Hide any browser UI */
+  @page {
+    margin: 0;
+    size: letter portrait;
+  }
+}
+
+/* Typography Overrides for PDF */
+.pdf-report-container h1,
+.pdf-report-container h2,
+.pdf-report-container h3,
+.pdf-report-container h4 {
+  font-family: 'Century Gothic', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.pdf-report-container p {
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure proper rendering */
+.pdf-report-container * {
+  box-sizing: border-box;
+}
+
+/* Prevent text selection during PDF generation */
+.pdf-report-container {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+

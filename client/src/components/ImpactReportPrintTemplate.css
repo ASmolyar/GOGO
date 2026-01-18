@@ -1,0 +1,709 @@
+/* =========================================
+   PRINT TEMPLATE STYLES
+   ========================================= */
+
+@import url('../../assets/fonts/fonts.css');
+
+.print-template {
+  width: 8.5in;
+  background: white;
+  color: #333;
+  font-family: 'Century Gothic', Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.6;
+  margin: 0 auto;
+}
+
+.print-container {
+  max-width: 7.5in;
+  margin: 0 auto;
+  padding: 0 0.5in;
+}
+
+.print-section {
+  page-break-inside: avoid;
+  padding: 1.5in 0.5in;
+  position: relative;
+}
+
+.print-section:not(:last-child) {
+  page-break-after: always;
+}
+
+/* =========================================
+   GRADIENT BAR
+   ========================================= */
+
+.print-gradient-bar {
+  display: flex;
+  height: 8px;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.print-gradient-bar > div {
+  height: 100%;
+}
+
+/* =========================================
+   TYPOGRAPHY
+   ========================================= */
+
+.print-section-title {
+  font-family: 'Century Gothic', Arial, sans-serif;
+  font-size: 28pt;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  color: #1946f5;
+  letter-spacing: -0.5px;
+}
+
+.print-subsection-title {
+  font-family: 'Century Gothic', Arial, sans-serif;
+  font-size: 20pt;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #333;
+}
+
+.print-subtitle {
+  font-size: 12pt;
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+}
+
+.print-description {
+  font-size: 11pt;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  color: #555;
+}
+
+.print-caption {
+  font-size: 9pt;
+  color: #888;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* =========================================
+   HERO SECTION
+   ========================================= */
+
+.print-hero {
+  min-height: 6in;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+  padding: 2in 1in;
+  position: relative;
+}
+
+.print-hero-content {
+  max-width: 6in;
+}
+
+.print-hero-year {
+  font-size: 14pt;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
+}
+
+.print-hero-title {
+  font-family: 'Century Gothic', Arial, sans-serif;
+  font-size: 48pt;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0 0 1rem 0;
+  letter-spacing: -1px;
+}
+
+.print-hero-subtitle {
+  font-size: 20pt;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  opacity: 0.95;
+}
+
+.print-hero-tagline {
+  font-size: 13pt;
+  margin: 0 0 1.5rem 0;
+  opacity: 0.85;
+}
+
+.print-hero-bubbles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.print-hero-bubble {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: 1px solid;
+  font-size: 10pt;
+  font-weight: 600;
+}
+
+/* =========================================
+   MISSION SECTION
+   ========================================= */
+
+.print-mission {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.print-mission-statement {
+  background: white;
+  padding: 1.5rem;
+  border-left: 4px solid #1946f5;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
+.print-mission-statement p {
+  font-size: 13pt;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.print-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2in, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.print-stat-card {
+  background: white;
+  padding: 1.25rem;
+  border-left: 5px solid;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
+.print-stat-number {
+  font-family: 'Century Gothic', Arial, sans-serif;
+  font-size: 32pt;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.print-stat-label {
+  font-size: 11pt;
+  color: #555;
+  font-weight: 600;
+}
+
+/* =========================================
+   POPULATION SECTION
+   ========================================= */
+
+.print-population {
+  background: #fafbfc;
+}
+
+.print-population-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(3in, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.print-info-card {
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.print-info-card p {
+  margin: 0;
+  font-size: 11pt;
+  line-height: 1.7;
+}
+
+.print-demographics {
+  margin: 2rem 0;
+}
+
+.print-demographics h4 {
+  font-size: 16pt;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.print-demo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.print-demo-item {
+  position: relative;
+}
+
+.print-demo-bar {
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  min-width: 50px;
+}
+
+.print-demo-label {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 10pt;
+  color: #555;
+}
+
+.print-demo-value {
+  font-weight: 700;
+  color: #333;
+}
+
+.print-skills {
+  margin: 2rem 0;
+}
+
+.print-skills h4 {
+  font-size: 16pt;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.print-skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.print-skill-chip {
+  padding: 0.4rem 0.75rem;
+  border-radius: 16px;
+  border: 2px solid;
+  font-size: 10pt;
+  font-weight: 600;
+}
+
+/* =========================================
+   FINANCIAL SECTION
+   ========================================= */
+
+.print-financial {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  color: white;
+}
+
+.print-financial .print-section-title {
+  color: #8ddda6;
+}
+
+.print-financial .print-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.print-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2in, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.print-kpi-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.print-kpi-label {
+  font-size: 10pt;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.print-kpi-value {
+  font-size: 24pt;
+  font-weight: 900;
+  font-family: 'Century Gothic', Arial, sans-serif;
+}
+
+.print-pie-section {
+  margin: 2rem 0;
+}
+
+.print-pie-section h4 {
+  font-size: 16pt;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.print-pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.print-pie-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.print-pie-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.print-pie-label {
+  flex: 1;
+  font-size: 11pt;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.print-pie-value {
+  font-weight: 700;
+  font-size: 12pt;
+  color: white;
+}
+
+/* =========================================
+   METHOD SECTION
+   ========================================= */
+
+.print-method {
+  background: white;
+}
+
+.print-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2.5in, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.print-pillar-card {
+  background: #f8f9fa;
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.print-pillar-icon {
+  font-size: 24pt;
+  color: #1946f5;
+  margin-bottom: 0.5rem;
+}
+
+.print-pillar-card h4 {
+  font-size: 14pt;
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.print-pillar-card p {
+  margin: 0;
+  font-size: 10pt;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* =========================================
+   CURRICULUM SECTION
+   ========================================= */
+
+.print-curriculum {
+  background: #fafbfc;
+}
+
+.print-disciplines {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.print-discipline {
+  background: white;
+  padding: 1.25rem;
+  border-left: 4px solid #1946f5;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.print-discipline h4 {
+  font-size: 14pt;
+  margin: 0 0 0.5rem 0;
+  color: #1946f5;
+}
+
+.print-discipline p {
+  margin: 0;
+  font-size: 10pt;
+  color: #555;
+}
+
+/* =========================================
+   IMPACT SECTION
+   ========================================= */
+
+.print-impact {
+  background: white;
+}
+
+.print-impact-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2in, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.print-impact-stat {
+  text-align: center;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+}
+
+.print-impact-number {
+  font-family: 'Century Gothic', Arial, sans-serif;
+  font-size: 36pt;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.print-impact-label {
+  font-size: 11pt;
+  color: #555;
+  font-weight: 600;
+}
+
+/* =========================================
+   TESTIMONIALS SECTION
+   ========================================= */
+
+.print-testimonials {
+  background: linear-gradient(135deg, #f0f4f8 0%, #ffffff 100%);
+}
+
+.print-quote {
+  background: white;
+  padding: 2rem;
+  border-left: 5px solid #1946f5;
+  margin: 2rem 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.print-quote p {
+  font-size: 14pt;
+  font-style: italic;
+  line-height: 1.8;
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.print-quote-author {
+  font-size: 11pt;
+  font-weight: 700;
+  color: #1946f5;
+  text-align: right;
+  font-style: normal;
+}
+
+.print-quote-role {
+  font-weight: 400;
+  color: #666;
+}
+
+/* =========================================
+   FLEX SECTIONS
+   ========================================= */
+
+.print-flex {
+  background: white;
+}
+
+.print-flex-content {
+  font-size: 11pt;
+  line-height: 1.7;
+}
+
+.print-flex-content h3 {
+  font-size: 16pt;
+  margin: 1.5rem 0 0.75rem 0;
+  color: #1946f5;
+}
+
+.print-flex-content p {
+  margin: 0.75rem 0;
+}
+
+.print-flex-content ul,
+.print-flex-content ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+/* =========================================
+   IMPACT LEVELS SECTION
+   ========================================= */
+
+.print-impact-levels {
+  background: #fafbfc;
+}
+
+.print-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.print-level {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.print-level h4 {
+  font-size: 16pt;
+  margin: 0 0 0.75rem 0;
+}
+
+.print-level p {
+  font-size: 11pt;
+  margin: 0 0 1rem 0;
+  color: #555;
+}
+
+.print-level-metrics {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.print-level-metrics li {
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  font-size: 10pt;
+  color: #555;
+}
+
+.print-level-metrics li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #8ddda6;
+  font-weight: 700;
+}
+
+/* =========================================
+   PARTNERS SECTION
+   ========================================= */
+
+.print-partners {
+  background: white;
+}
+
+.print-partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(1.5in, 1fr));
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.print-partner {
+  background: #f8f9fa;
+  padding: 1rem;
+  text-align: center;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  font-size: 10pt;
+  font-weight: 600;
+  color: #333;
+}
+
+/* =========================================
+   FOOTER SECTION
+   ========================================= */
+
+.print-footer {
+  background: #1a1a1a;
+  color: white;
+  padding: 1in 0.5in;
+}
+
+.print-footer-content {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.print-footer-content h3 {
+  font-family: 'Century Gothic', Arial, sans-serif;
+  font-size: 20pt;
+  margin: 1rem 0;
+  color: #8ddda6;
+}
+
+.print-footer-content p {
+  font-size: 11pt;
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.print-copyright {
+  margin-top: 1.5rem !important;
+  font-size: 9pt !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* =========================================
+   PRINT MEDIA QUERY
+   ========================================= */
+
+@media print {
+  .print-template {
+    width: 100%;
+  }
+
+  .print-section {
+    page-break-inside: avoid;
+  }
+
+  .print-section:not(:last-child) {
+    page-break-after: always;
+  }
+
+  /* Ensure colors print */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+

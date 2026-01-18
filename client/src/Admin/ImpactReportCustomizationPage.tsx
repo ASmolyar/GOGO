@@ -11,8 +11,10 @@ import {
   Tooltip,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ScreenGrid from '../components/ScreenGrid';
 import COLORS from '../../assets/colors';
+import { generateImpactReportPDF } from '../util/generatePDF';
 import HeroSection from '../components/HeroSection';
 import MissionSection from '../sections/MissionSection';
 import PopulationComponent from '../components/Population';
@@ -297,6 +299,7 @@ function ImpactReportCustomizationPage() {
 
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [heroUploadPct, setHeroUploadPct] = useState<number | null>(null);
@@ -1575,6 +1578,98 @@ function ImpactReportCustomizationPage() {
     }
   };
 
+  // Download PDF - generate a PDF version of the impact report
+  const handleDownloadPDF = async () => {
+    setIsPdfGenerating(true);
+    
+    try {
+      enqueueSnackbar('Generating PDF... This may take a moment.', {
+        variant: 'info',
+        autoHideDuration: 3000,
+      });
+
+      // Fetch all section data for PDF generation
+      const [
+        heroData,
+        missionData,
+        populationData,
+        financialData,
+        methodData,
+        curriculumData,
+        impactSectionData,
+        testimonialsData,
+        impactLevelsData,
+        partnersData,
+        footerData,
+      ] = await Promise.all([
+        fetchHeroContent(),
+        fetchMissionContent(),
+        fetchPopulationContent(),
+        fetchFinancialContent(),
+        fetchMethodContent(),
+        fetchCurriculumContent(),
+        fetchImpactSectionContent(),
+        fetchTestimonialsContent(),
+        fetchImpactLevelsContent(),
+        fetchPartnersContent(),
+        fetchFooterContent(),
+      ]);
+
+      // Log what data was fetched
+      console.log('[Admin] Fetched data for PDF:', {
+        hero: !!heroData,
+        mission: !!missionData,
+        population: !!populationData,
+        financial: !!financialData,
+        method: !!methodData,
+        curriculum: !!curriculumData,
+        impactSection: !!impactSectionData,
+        testimonials: !!testimonialsData,
+        impactLevels: !!impactLevelsData,
+        partners: !!partnersData,
+        footer: !!footerData,
+      });
+      
+      console.log('[Admin] Sample data check:', {
+        heroTitle: heroData?.title,
+        missionTitle: missionData?.title,
+        populationTitle: populationData?.title,
+      });
+
+      // Generate the PDF with fixed page layout
+      await generateImpactReportPDF({
+        hero: heroData,
+        mission: missionData,
+        population: populationData,
+        financial: financialData,
+        method: methodData,
+        curriculum: curriculumData,
+        impactSection: impactSectionData,
+        testimonials: testimonialsData,
+        impactLevels: impactLevelsData,
+        partners: partnersData,
+        footer: footerData,
+      });
+
+      enqueueSnackbar('PDF generated successfully!', {
+        variant: 'success',
+        autoHideDuration: 4000,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate PDF. Please try again.';
+      enqueueSnackbar(errorMessage, {
+        variant: 'error',
+        autoHideDuration: 6000,
+      });
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
+
   // Discard changes - refetch the current section from API
   const handleDiscard = async () => {
     const currentTabConfig = orderedTabs.find((t) => t.value === currentTab);
@@ -2693,6 +2788,23 @@ function ImpactReportCustomizationPage() {
                         </Button>
                       </span>
                     </Tooltip>
+                    <Button
+                      variant="outlined"
+                      startIcon={<PictureAsPdfIcon />}
+                      onClick={handleDownloadPDF}
+                      disabled={isPdfGenerating}
+                      sx={{
+                        borderColor: COLORS.gogo_green,
+                        color: COLORS.gogo_green,
+                        "&:hover": {
+                          borderColor: COLORS.gogo_blue,
+                          color: COLORS.gogo_blue,
+                          bgcolor: "rgba(29, 185, 84, 0.08)",
+                        },
+                      }}
+                    >
+                      {isPdfGenerating ? "Generating..." : "Download PDF"}
+                    </Button>
                     <Button
                       variant="outlined"
                       color="inherit"
