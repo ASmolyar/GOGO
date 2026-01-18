@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   Typography,
   Grid,
@@ -9,9 +9,14 @@ import {
   Tabs,
   Tab,
   Tooltip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  LinearProgress,
+  CircularProgress,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import HistoryIcon from '@mui/icons-material/History';
 import ScreenGrid from '../components/ScreenGrid';
 import COLORS from '../../assets/colors';
 import HeroSection from '../components/HeroSection';
@@ -117,7 +122,11 @@ import {
   PartnersTabEditor,
   FooterTabEditor,
   validateFinancialPieCharts,
+  VersionHistoryModal,
+  ComparisonView,
 } from './components';
+
+import { type ConfigSnapshot } from '../services/snapshot.api';
 
 import FinancialAnalysisSection from '../components/FinancialAnalysisSection';
 import OurMethodSection from '../components/OurMethodSection';
@@ -312,6 +321,11 @@ function ImpactReportCustomizationPage() {
   const [sectionOrder, setSectionOrder] = useState<ReorderableSectionKey[]>([...DEFAULT_SECTION_ORDER]);
   // Disabled sections state
   const [disabledSections, setDisabledSections] = useState<ReorderableSectionKey[]>([]);
+  
+  // Version history state
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [selectedSnapshot, setSelectedSnapshot] = useState<ConfigSnapshot | null>(null);
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
 
   // Dynamic tabs based on section order
   const orderedTabs = useMemo(() => {
@@ -1642,6 +1656,34 @@ function ImpactReportCustomizationPage() {
     enqueueSnackbar("Changes discarded", { variant: "info" });
   };
 
+  // Handle version history
+  const handleOpenHistory = useCallback(() => {
+    setIsHistoryModalOpen(true);
+  }, []);
+
+  const handleCloseHistory = useCallback(() => {
+    setIsHistoryModalOpen(false);
+  }, []);
+
+  const handleSelectSnapshot = useCallback((snapshot: ConfigSnapshot) => {
+    setSelectedSnapshot(snapshot);
+    setIsHistoryModalOpen(false);
+    setIsComparisonOpen(true);
+  }, []);
+
+  const handleCloseComparison = useCallback(() => {
+    setIsComparisonOpen(false);
+    setSelectedSnapshot(null);
+  }, []);
+
+  const handleRestoreComplete = useCallback(() => {
+    // Reload all sections after restore
+    enqueueSnackbar('Section restored successfully! Reloading data...', { variant: 'success' });
+    // Clear loaded sections to force reload
+    setLoadedSections(new Set());
+    setSectionLoadErrors(new Set());
+  }, [enqueueSnackbar]);
+
   // Build and debounce the preview hero override
   const liveHeroOverride = useMemo(() => {
     // Return null if hero data hasn't loaded yet
@@ -2722,6 +2764,24 @@ function ImpactReportCustomizationPage() {
                     >
                       Download PDF
                     </Button>
+                    <Tooltip title="View version history, create snapshots, and restore previous configurations">
+                      <Button
+                        variant="outlined"
+                        color="inherit"
+                        startIcon={<HistoryIcon />}
+                        onClick={handleOpenHistory}
+                        disabled={isDirty}
+                        sx={{
+                          borderColor: 'rgba(255,255,255,0.3)',
+                          '&:hover': {
+                            borderColor: COLORS.gogo_purple,
+                            bgcolor: 'rgba(255,255,255,0.05)',
+                          },
+                        }}
+                      >
+                        Version History
+                      </Button>
+                    </Tooltip>
                   </Box>
                 </Box>
               </CustomPaper>
@@ -2810,6 +2870,23 @@ function ImpactReportCustomizationPage() {
           )}
         </Grid>
       </ScreenGrid>
+      
+      {/* Version History Modal */}
+      <VersionHistoryModal
+        open={isHistoryModalOpen}
+        onClose={handleCloseHistory}
+        onSelectSnapshot={handleSelectSnapshot}
+      />
+
+      {/* Comparison View Modal */}
+      {selectedSnapshot && (
+        <ComparisonView
+          open={isComparisonOpen}
+          onClose={handleCloseComparison}
+          snapshot={selectedSnapshot}
+          onRestoreComplete={handleRestoreComplete}
+        />
+      )}
     </FrostedScope>
   );
 }

@@ -245,7 +245,9 @@ const MusicSectionTitle = styled.h2`
     ${COLORS.gogo_teal}
   );
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
   display: inline-block;
 `;
 
@@ -304,6 +306,10 @@ function ImpactReportPage({ printMode = false }: ImpactReportPageProps) {
   const flexRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
 
+  // Check for skipIntro query parameter (used by PDF export)
+  const shouldSkipIntro = typeof window !== 'undefined' && 
+    new URLSearchParams(window.location.search).get('skipIntro') === 'true';
+    
   // Only show the intro once per tab: initialize from the module-level flag.
   // In print mode, always skip the intro overlay.
   const [introComplete, setIntroComplete] = useState(printMode || hasShownIntroInThisTab);
@@ -786,7 +792,11 @@ function ImpactReportPage({ printMode = false }: ImpactReportPageProps) {
     <div className="impact-report">
       {!introComplete && <IntroOverlay onFinish={handleIntroFinish} isLoading={loading} />}
       <div className="spotify-gradient-background" />
-      <Header />
+      <Header 
+        sectionOrder={sectionOrder} 
+        disabledSections={disabledSections} 
+        heroYear={reportData?.hero?.year}
+      />
       <div className="main-content" style={{ paddingBottom: 0 }}>
         {reportData && (
           <>
