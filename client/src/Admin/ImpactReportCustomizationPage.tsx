@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import HistoryIcon from '@mui/icons-material/History';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ScreenGrid from '../components/ScreenGrid';
 import COLORS from '../../assets/colors';
 import HeroSection from '../components/HeroSection';
@@ -321,7 +322,7 @@ function ImpactReportCustomizationPage() {
   const [sectionOrder, setSectionOrder] = useState<ReorderableSectionKey[]>([...DEFAULT_SECTION_ORDER]);
   // Disabled sections state
   const [disabledSections, setDisabledSections] = useState<ReorderableSectionKey[]>([]);
-  
+
   // Version history state
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [selectedSnapshot, setSelectedSnapshot] = useState<ConfigSnapshot | null>(null);
@@ -2870,7 +2871,7 @@ function ImpactReportCustomizationPage() {
           )}
         </Grid>
       </ScreenGrid>
-      
+
       {/* Version History Modal */}
       <VersionHistoryModal
         open={isHistoryModalOpen}
