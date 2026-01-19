@@ -1,3 +1,5 @@
+import { API_BASE_URL } from './apiConfig';
+
 export interface SaveMediaRequest {
   key: string;
   publicUrl: string;
@@ -17,10 +19,6 @@ export interface SaveMediaResponse {
   data: Record<string, unknown>;
 }
 
-const DEFAULT_BACKEND_URL = 'http://localhost:4000';
-const API_BASE_URL =
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? DEFAULT_BACKEND_URL;
-
 export async function saveMedia(payload: SaveMediaRequest): Promise<SaveMediaResponse> {
   const res = await fetch(`${API_BASE_URL}/api/media`, {
     method: 'POST',
@@ -33,6 +31,3 @@ export async function saveMedia(payload: SaveMediaRequest): Promise<SaveMediaRes
   }
   return (await res.json()) as SaveMediaResponse;
 }
-
-
-

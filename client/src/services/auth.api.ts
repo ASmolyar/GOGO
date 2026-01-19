@@ -1,7 +1,4 @@
-const DEFAULT_BACKEND_URL = 'http://localhost:4000';
-
-const API_BASE_URL =
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? DEFAULT_BACKEND_URL;
+import { API_BASE_URL } from './apiConfig';
 
 export interface User {
   email: string;
@@ -60,4 +57,3 @@ export async function getCurrentUser(): Promise<User | null> {
     return null;
   }
 }
-

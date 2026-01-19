@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './apiConfig';
 export interface HeroApiResponse<T> {
   data: T;
 }
@@ -797,9 +798,7 @@ export interface PartnersContent {
 // 2) Persist the returned { key, publicUrl, ...metadata } in your domain model
 // 3) Render using the publicUrl
 
-const DEFAULT_BACKEND_URL = 'http://localhost:4000';
 
-const API_BASE_URL =
   (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? DEFAULT_BACKEND_URL;
 
 export async function fetchHeroContent(): Promise<HeroContent | null> {

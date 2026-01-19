@@ -4,6 +4,7 @@
  * Client-side functions for interacting with the version history/snapshot system.
  */
 
+import { API_BASE_URL } from './apiConfig';
 import type {
   HeroContent,
   MissionContent,
@@ -23,11 +24,6 @@ import type {
   PartnersContent,
   FooterContent,
 } from './impact.api';
-
-const DEFAULT_BACKEND_URL = 'http://localhost:4000';
-
-const API_BASE_URL =
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? DEFAULT_BACKEND_URL;
 
 // Snapshot trigger types
 export type SnapshotTrigger = 'manual' | 'auto' | 'pre-restore';
@@ -81,7 +77,7 @@ export async function listSnapshots(
   limit = 50,
   skip = 0
 ): Promise<ListSnapshotsResponse> {
-  const url = new URL(`${API_BASE_URL}/api/snapshots`);
+  const url = new URL(`${API_BASE_URL}/api/snapshots`, window.location.origin);
   url.searchParams.set('limit', String(limit));
   url.searchParams.set('skip', String(skip));
 

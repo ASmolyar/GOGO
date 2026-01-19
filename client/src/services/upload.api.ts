@@ -1,3 +1,5 @@
+import { API_BASE_URL } from './apiConfig';
+
 export interface SignUploadResponse {
   uploadUrl: string;
   key: string;
@@ -11,10 +13,6 @@ export interface SignUploadRequest {
   folder?: string;
   key?: string;
 }
-
-const DEFAULT_BACKEND_URL = 'http://localhost:4000';
-const API_BASE_URL =
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? DEFAULT_BACKEND_URL;
 
 export async function signUpload(
   payload: SignUploadRequest,
