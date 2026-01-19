@@ -130,7 +130,7 @@ const MaskSvg = styled.svg`
 
 const MaskLogoGroup = styled.g`
   /* Offset slightly right of center so the final zoomed position lands a bit further left */
-  transform-origin: 320px 297.5px;
+  transform-origin: 305px 297.5px;
   will-change: transform;
 
   &.grow-in {
