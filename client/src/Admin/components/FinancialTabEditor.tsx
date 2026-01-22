@@ -29,41 +29,6 @@ export interface FinancialTabEditorProps {
   onFinancialChange: (field: keyof FinancialContent, value: any) => void;
 }
 
-// Default data for initialization
-const DEFAULT_YEARS = [
-  '2015',
-  '2016',
-  '2017-18',
-  '2018-19',
-  '2019-20',
-  '2020-21',
-  '2021-22',
-  '2022-23',
-];
-
-const DEFAULT_REVENUE = [
-  200000, 300000, 800000, 1400000, 2300000, 2500000, 3200000, 3400000,
-];
-
-const DEFAULT_EXPENSES = [
-  150000, 280000, 500000, 1100000, 1500000, 2400000, 2950000, 3100000,
-];
-
-const DEFAULT_COMES_FROM: FinancialPieItem[] = [
-  { id: 'foundations', label: "Foundations & The Children's Trust", value: 41, color: COLORS.gogo_blue },
-  { id: 'individuals', label: 'Individuals', value: 19, color: COLORS.gogo_yellow },
-  { id: 'government', label: 'Government Grants', value: 18, color: COLORS.gogo_purple },
-  { id: 'program-services', label: 'Program Services & Earned Revenue', value: 15, color: COLORS.gogo_teal },
-  { id: 'special-events', label: 'Special Events', value: 5, color: COLORS.gogo_pink },
-  { id: 'corporate', label: 'Corporate Contributions', value: 2, color: '#bdbdbd' },
-];
-
-const DEFAULT_GOES_TO: FinancialPieItem[] = [
-  { id: 'program-services', label: 'Program Services', value: 75, color: COLORS.gogo_blue },
-  { id: 'admin', label: 'Administrative & General', value: 12, color: COLORS.gogo_purple },
-  { id: 'fundraising', label: 'Fundraising', value: 13, color: COLORS.gogo_yellow },
-];
-
 type FinancialColorPickerField =
   | 'subtitleColor'
   | 'decorationColor1'
@@ -101,22 +66,23 @@ export function FinancialTabEditor({
   const [draggedPieItem, setDraggedPieItem] = useState<{ type: 'comesFrom' | 'goesTo'; index: number } | null>(null);
   const [dragOverPieItem, setDragOverPieItem] = useState<{ type: 'comesFrom' | 'goesTo'; index: number } | null>(null);
 
-  // Get default gradients
-  const getDefaultGradient = (key: FinancialGradientKey): string => {
+  // Get gradient values from financial content (no fallback defaults)
+  const getGradientValue = (key: FinancialGradientKey): string => {
     switch (key) {
       case 'titleGradient':
-        return financial.titleGradient || `linear-gradient(90deg, ${COLORS.gogo_green}, ${COLORS.gogo_blue}, ${COLORS.gogo_purple})`;
+        return financial.titleGradient || '';
       case 'sectionBgGradient':
-        return financial.sectionBgGradient || 'linear-gradient(135deg, #121212, #1e1e1e)';
+        return financial.sectionBgGradient || '';
       default:
-        return `linear-gradient(90deg, ${COLORS.gogo_blue}, ${COLORS.gogo_purple})`;
+        return '';
     }
   };
 
   // Get current gradient color for the picker
   const getGradientPickerColor = (): string => {
     if (!gradientPickerKey) return '#000000';
-    const gradient = getDefaultGradient(gradientPickerKey);
+    const gradient = getGradientValue(gradientPickerKey);
+    if (!gradient) return '#000000';
     const parsed = parseGradientString(gradient);
     return parsed.colors[gradientPickerColorIndex] || '#000000';
   };
@@ -129,7 +95,13 @@ export function FinancialTabEditor({
 
   const handleGradientColorChange = (val: string) => {
     if (!gradientPickerKey) return;
-    const currentGradient = getDefaultGradient(gradientPickerKey);
+    const currentGradient = getGradientValue(gradientPickerKey);
+    if (!currentGradient) {
+      // Initialize a new gradient if none exists
+      const newGradient = `linear-gradient(90deg, ${val}, ${val})`;
+      onFinancialChange(gradientPickerKey, newGradient);
+      return;
+    }
     const parsed = parseGradientString(currentGradient);
     const newColors = [...parsed.colors];
     newColors[gradientPickerColorIndex] = val;
@@ -137,11 +109,11 @@ export function FinancialTabEditor({
     onFinancialChange(gradientPickerKey, newGradient);
   };
 
-  const years = financial.years ?? DEFAULT_YEARS;
-  const revenueData = financial.revenueData ?? DEFAULT_REVENUE;
-  const expenseData = financial.expenseData ?? DEFAULT_EXPENSES;
-  const comesFromData = financial.comesFromData ?? DEFAULT_COMES_FROM;
-  const goesToData = financial.goesToData ?? DEFAULT_GOES_TO;
+  const years = financial.years ?? [];
+  const revenueData = financial.revenueData ?? [];
+  const expenseData = financial.expenseData ?? [];
+  const comesFromData = financial.comesFromData ?? [];
+  const goesToData = financial.goesToData ?? [];
 
   // Calculate pie chart totals for validation
   const comesFromTotal = useMemo(() => comesFromData.reduce((sum, item) => sum + item.value, 0), [comesFromData]);
@@ -150,42 +122,42 @@ export function FinancialTabEditor({
 
   const getPickerValue = (): string => {
     if (pieItemPickerIndex !== null && pieItemPickerType === 'comesFrom') {
-      return comesFromData[pieItemPickerIndex]?.color ?? '#000000';
+      return comesFromData[pieItemPickerIndex]?.color ?? '';
     }
     if (pieItemPickerIndex !== null && pieItemPickerType === 'goesTo') {
-      return goesToData[pieItemPickerIndex]?.color ?? '#000000';
+      return goesToData[pieItemPickerIndex]?.color ?? '';
     }
     if (colorPickerField) {
       switch (colorPickerField) {
         case 'subtitleColor':
-          return financial.subtitleColor ?? 'rgba(255, 255, 255, 0.75)';
+          return financial.subtitleColor ?? '';
         case 'decorationColor1':
-          return financial.decorationColor1 ?? 'rgba(25, 70, 245, 0.08)';
+          return financial.decorationColor1 ?? '';
         case 'decorationColor2':
-          return financial.decorationColor2 ?? 'rgba(190, 43, 147, 0.08)';
+          return financial.decorationColor2 ?? '';
         case 'kpiValueColor':
-          return financial.kpiValueColor ?? '#ffffff';
+          return financial.kpiValueColor ?? '';
         case 'kpiNetPositiveColor':
-          return financial.kpiNetPositiveColor ?? '#9BE15D';
+          return financial.kpiNetPositiveColor ?? '';
         case 'kpiNetNegativeColor':
-          return financial.kpiNetNegativeColor ?? '#FF8A80';
+          return financial.kpiNetNegativeColor ?? '';
         case 'revenueLineColor':
-          return financial.revenueLineColor ?? COLORS.gogo_blue;
+          return financial.revenueLineColor ?? '';
         case 'expenseLineColor':
-          return financial.expenseLineColor ?? COLORS.gogo_pink;
+          return financial.expenseLineColor ?? '';
         case 'lineChartBgColor':
-          return financial.lineChartBgColor ?? 'rgba(255, 255, 255, 0.04)';
+          return financial.lineChartBgColor ?? '';
         case 'axisLineColor':
-          return financial.axisLineColor ?? '#666666';
+          return financial.axisLineColor ?? '';
         case 'axisLabelColor':
-          return financial.axisLabelColor ?? '#aaaaaa';
+          return financial.axisLabelColor ?? '';
         case 'breakdownTextColor':
-          return financial.breakdownTextColor ?? 'rgba(255, 255, 255, 0.9)';
+          return financial.breakdownTextColor ?? '';
         default:
-          return '#000000';
+          return '';
       }
     }
-    return '#000000';
+    return '';
   };
 
   const handlePickerChange = (val: string) => {
@@ -285,9 +257,9 @@ export function FinancialTabEditor({
     const data = type === 'comesFrom' ? [...comesFromData] : [...goesToData];
     data.push({
       id: `item-${Date.now()}`,
-      label: 'New Category',
+      label: '',
       value: 0,
-      color: COLORS.gogo_blue,
+      color: '',
     });
     onFinancialChange(type === 'comesFrom' ? 'comesFromData' : 'goesToData', data);
   };
@@ -618,7 +590,7 @@ export function FinancialTabEditor({
               onClick={(e) => openColorPicker(e.currentTarget, 'revenueLineColor')}
               sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
             >
-              <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: financial.revenueLineColor ?? COLORS.gogo_blue, border: '1px solid rgba(255,255,255,0.2)' }} />
+              <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: financial.revenueLineColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
               &nbsp;Revenue line color
             </Button>
             <Button
@@ -627,7 +599,7 @@ export function FinancialTabEditor({
               onClick={(e) => openColorPicker(e.currentTarget, 'expenseLineColor')}
               sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.9)' }}
             >
-              <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: financial.expenseLineColor ?? COLORS.gogo_pink, border: '1px solid rgba(255,255,255,0.2)' }} />
+              <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 3, background: financial.expenseLineColor || 'transparent', border: '1px solid rgba(255,255,255,0.2)' }} />
               &nbsp;Expense line color
             </Button>
           </Box>

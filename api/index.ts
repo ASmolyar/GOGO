@@ -1,112 +1,116 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import express from 'express';
-import cors from 'cors';
-import session from 'express-session';
-import MongoStore from 'connect-mongo';
+import { MongoClient } from 'mongodb';
 
-// Import routes
-import heroRoutes from '../server/src/routes/heroRoutes.js';
-import missionRoutes from '../server/src/routes/missionRoutes.js';
-import defaultsRoutes from '../server/src/routes/defaultsRoutes.js';
-import uploadRoutes from '../server/src/routes/uploadRoutes.js';
-import mediaRoutes from '../server/src/routes/mediaRoutes.js';
-import authRoutes from '../server/src/routes/authRoutes.js';
-import financialRoutes from '../server/src/routes/financialRoutes.js';
-import populationRoutes from '../server/src/routes/populationRoutes.js';
-import methodRoutes from '../server/src/routes/methodRoutes.js';
-import curriculumRoutes from '../server/src/routes/curriculumRoutes.js';
-import impactSectionRoutes from '../server/src/routes/impactSectionRoutes.js';
-import hearOurImpactRoutes from '../server/src/routes/hearOurImpactRoutes.js';
-import testimonialsRoutes from '../server/src/routes/testimonialsRoutes.js';
-import nationalImpactRoutes from '../server/src/routes/nationalImpactRoutes.js';
-import flexARoutes from '../server/src/routes/flexARoutes.js';
-import flexBRoutes from '../server/src/routes/flexBRoutes.js';
-import flexCRoutes from '../server/src/routes/flexCRoutes.js';
-import impactLevelsRoutes from '../server/src/routes/impactLevelsRoutes.js';
-import partnersRoutes from '../server/src/routes/partnersRoutes.js';
-import footerRoutes from '../server/src/routes/footerRoutes.js';
-import snapshotRoutes from '../server/src/routes/snapshotRoutes.js';
+let cachedClient: MongoClient | null = null;
 
-const app = express();
+async function getClient(): Promise<MongoClient> {
+  if (cachedClient) return cachedClient;
+  
+  const uri = process.env.MONGO_URI;
+  if (!uri) throw new Error('MONGO_URI not configured');
+  
+  cachedClient = new MongoClient(uri);
+  await cachedClient.connect();
+  return cachedClient;
+}
 
-// CORS configuration for production
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
-  process.env.FRONTEND_URL || '',
-].filter(Boolean);
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const path = req.url?.replace(/^\/api/, '') || '/';
+  
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, etc.)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.some(allowed => origin.startsWith(allowed) || allowed.includes(origin))) {
-        return callback(null, true);
+  try {
+    const client = await getClient();
+    const db = client.db(process.env.MONGO_DB_NAME || 'gogo-impact-report');
+
+    // Health check
+    if (path === '/health' || path === '/') {
+      return res.json({ status: 'ok', env: process.env.NODE_ENV });
+    }
+
+    // GET routes for impact content
+    if (req.method === 'GET') {
+      const sectionMap: Record<string, string> = {
+        '/impact/hero': 'hero',
+        '/impact/mission': 'mission',
+        '/impact/defaults': 'defaults',
+        '/impact/population': 'population',
+        '/impact/financial': 'financial',
+        '/impact/method': 'method',
+        '/impact/curriculum': 'curriculum',
+        '/impact/impact-section': 'impactSection',
+        '/impact/hear-our-impact': 'hearOurImpact',
+        '/impact/testimonials': 'testimonials',
+        '/impact/national-impact': 'nationalImpact',
+        '/impact/flex-a': 'flexA',
+        '/impact/flex-b': 'flexB',
+        '/impact/flex-c': 'flexC',
+        '/impact/impact-levels': 'impactLevels',
+        '/impact/partners': 'partners',
+        '/impact/footer': 'footer',
+      };
+
+      const collectionName = sectionMap[path];
+      if (collectionName) {
+        const doc = await db.collection(collectionName).findOne({});
+        if (!doc) {
+          return res.status(404).json({ error: 'Not found' });
+        }
+        const { _id, ...data } = doc;
+        return res.json({ data });
       }
-      // In production on Vercel, allow same-origin requests
-      if (process.env.VERCEL) {
-        return callback(null, true);
+    }
+
+    // PUT routes for impact content (requires auth in production)
+    if (req.method === 'PUT') {
+      const sectionMap: Record<string, string> = {
+        '/impact/hero': 'hero',
+        '/impact/mission': 'mission',
+        '/impact/defaults': 'defaults',
+        '/impact/population': 'population',
+        '/impact/financial': 'financial',
+        '/impact/method': 'method',
+        '/impact/curriculum': 'curriculum',
+        '/impact/impact-section': 'impactSection',
+        '/impact/hear-our-impact': 'hearOurImpact',
+        '/impact/testimonials': 'testimonials',
+        '/impact/national-impact': 'nationalImpact',
+        '/impact/flex-a': 'flexA',
+        '/impact/flex-b': 'flexB',
+        '/impact/flex-c': 'flexC',
+        '/impact/impact-levels': 'impactLevels',
+        '/impact/partners': 'partners',
+        '/impact/footer': 'footer',
+      };
+
+      const collectionName = sectionMap[path];
+      if (collectionName) {
+        const body = req.body;
+        await db.collection(collectionName).updateOne(
+          {},
+          { $set: body },
+          { upsert: true }
+        );
+        const doc = await db.collection(collectionName).findOne({});
+        const { _id, ...data } = doc || {};
+        return res.json({ data });
       }
-      callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-  })
-);
+    }
 
-app.use(express.json());
-
-// Session configuration
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
-      dbName: process.env.MONGO_DB_NAME || 'gogo-impact-report',
-      touchAfter: 24 * 3600,
-    }),
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    },
-  })
-);
-
-// Auth routes (public)
-app.use('/api/auth', authRoutes);
-
-// All content routes
-app.use('/api', heroRoutes);
-app.use('/api', missionRoutes);
-app.use('/api', defaultsRoutes);
-app.use('/api', uploadRoutes);
-app.use('/api', mediaRoutes);
-app.use('/api', financialRoutes);
-app.use('/api', populationRoutes);
-app.use('/api', methodRoutes);
-app.use('/api', curriculumRoutes);
-app.use('/api', impactSectionRoutes);
-app.use('/api', hearOurImpactRoutes);
-app.use('/api', testimonialsRoutes);
-app.use('/api', nationalImpactRoutes);
-app.use('/api', flexARoutes);
-app.use('/api', flexBRoutes);
-app.use('/api', flexCRoutes);
-app.use('/api', impactLevelsRoutes);
-app.use('/api', partnersRoutes);
-app.use('/api', footerRoutes);
-app.use('/api', snapshotRoutes);
-
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', env: process.env.NODE_ENV });
-});
-
-// Vercel serverless handler
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  return app(req as any, res as any);
+    return res.status(404).json({ error: 'Not found', path });
+  } catch (error) {
+    console.error('API Error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 }
