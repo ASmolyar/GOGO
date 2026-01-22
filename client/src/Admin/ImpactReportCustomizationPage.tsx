@@ -1106,7 +1106,7 @@ function ImpactReportCustomizationPage() {
   // Opens Sejda with the print-ready page URL (includes cover slide + full webapp)
   const handleDownloadPDF = () => {
     // Use the print-ready page which includes the cover slide
-    const printUrl = encodeURIComponent('https://gogo-vercel.vercel.app/print');
+    const printUrl = encodeURIComponent('https://gogoimpact.org/print');
     const opts = ['save-link=' + printUrl, 'pageOrientation=auto'];
     window.open('https://www.sejda.com/html-to-pdf?' + opts.join('&'));
   };
